@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Football Game</title>
+    <style>
+        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f0f0; }
+        #game-container { display: none; }
+        #startScreen, #endScreen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        button { font-size: 24px; padding: 10px 20px; margin-top: 20px; cursor: pointer; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+</head>
+<body>
+<div id="startScreen">
+    <h1>Football Game</h1>
+    <p>Player 1: A (Left), W (Jump), D (Right) | Player 2: J (Left), I (Jump), L (Right)</p>
+    <button onclick="startGame()">Start Game</button>
+</div>
+<div id="game-container"></div>
+<div id="endScreen" style="display: none;">
+    <h1 id="winnerText"></h1>
+    <button onclick="startGame()">Play Again</button>
+</div>
+
+<script>
+    let game;
+
+    function startGame() {
+        document.getElementById('startScreen').style.display = 'none';
+        document.getElementById('endScreen').style.display = 'none';
+        document.getElementById('game-container').style.display = 'block';
+
+        if (game) {
+            game.destroy(true);
+        }
+
+        class MainScene extends Phaser.Scene {
+            constructor() {
+                super({ key: 'MainScene' });
+            }
+
+            preload() {
+                // Preload any assets here
+            }
+
+            create() {
+                this.createField();
+                this.createPlayers();
+                this.createBall();
+                this.createGoals();
+                this.setupControls();
+                this.setupColliders();
+                this.setupScoreAndTimer();
+            }
+
+            createField() {
+                this.field = this.add.rectangle(this.scale.width / 2, this.scale.height - 50, this.scale.width, 100, 0x006400);
+                this.physics.add.existing(this.field, true);
+            }
+
+            createPlayers() {
+                this.player1 = this.add.rectangle(100, this.scale.height - 150, 30, 90, 0x0000FF);
+                this.player2 = this.add.rectangle(this.scale.width - 100, this.scale.height - 150, 30, 90, 0xFFD700);
+                this.physics.add.existing(this.player1);
+                this.physics.add.existing(this.player2);
+
+                this.player1.body.setCollideWorldBounds(true);
+                this.player2.body.setCollideWorldBounds(true);
+            }
+
+            createBall() {
+                this.ball = this.add.circle(this.scale.width / 2, this.scale.height - 120, 15, 0xFFFFFF);
+                this.physics.add.existing(this.ball);
+                this.ball.body.setCollideWorldBounds(true);
+                this.ball.body.setBounce(1.2, 1.2);
+            }
+
+            createGoals() {
+                this.goal1 = this.add.rectangle(50, this.scale.height - 150, 20, 100, 0x808080);
+                this.goal2 = this.add.rectangle(this.scale.width - 50, this.scale.height - 150, 20, 100, 0x808080);
+                this.physics.add.existing(this.goal1, true);
+                this.physics.add.existing(this.goal2, true);
+            }
+
+            setupControls() {
+                this.controls = {
+                    player1: {
+                        left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
+                        jump: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
+                        right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D),
+                    },
+                    player2: {
+                        left: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.J),
+                        jump: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.I),
+                        right: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.L),
+                    }
+                };
+            }
+
+            setupColliders() {
+                this.physics.add.collider(this.player1, this.field);
+                this.physics.add.collider(this.player2, this.field);
+                this.physics.add.collider(this.ball, this.field);
+                this.physics.add.collider(this.ball, this.player1);
+                this.physics.add.collider(this.ball, this.player2);
+                this.physics.add.collider(this.ball, this.goal1, () => this.handleGoal(2));
+                this.physics.add.collider(this.ball, this.goal2, () => this.handleGoal(1));
+            }
+
+            setupScoreAndTimer() {
+                this.player1Score = 0;
+                this.player2Score = 0;
+                this.timeLeft = 90;
+
+                this.scoreText1 = this.add.text(16, 16, 'Player 1 - 0 goal(s)', { fontSize: '24px', fill: '#000' });
+                this.scoreText2 = this.add.text(this.scale.width - 250, 16, 'Player 2 - 0 goal(s)', { fontSize: '24px', fill: '#000' });
+                this.timerText = this.add.text(this.scale.width / 2 - 50, 16, 'Time: 90', { fontSize: '24px', fill: '#000' });
+
+                this.time.addEvent({
+                    delay: 1000,
+                    callback: this.updateTimer,
+                    callbackScope: this,
+                    loop: true
+                });
+            }
+
+            updateTimer() {
+                this.timeLeft--;
+                this.timerText.setText('Time: ' + this.timeLeft);
+                if (this.timeLeft <= 0) {
+                    this.endGame();
+                }
+            }
+
+            handleGoal(scoringPlayer) {
+                if (scoringPlayer === 1) {
+                    this.player1Score++;
+                    this.scoreText1.setText('Player 1 - ' + this.player1Score + ' goal(s)');
+                } else {
+                    this.player2Score++;
+                    this.scoreText2.setText('Player 2 - ' + this.player2Score + ' goal(s)');
+                }
+                this.resetBall();
+            }
+
+            resetBall() {
+                this.ball.setPosition(this.scale.width / 2, this.scale.height - 120);
+                this.ball.body.setVelocity(0, 0);
+            }
+
+            endGame() {
+                this.scene.pause();
+                let winnerText = '';
+                if (this.player1Score > this.player2Score) {
+                    winnerText = 'Player 1 Wins!';
+                } else if (this.player2Score > this.player1Score) {
+                    winnerText = 'Player 2 Wins!';
+                } else {
+                    winnerText = 'It\'s a Draw!';
+                }
+                document.getElementById('winnerText').innerText = winnerText;
+                document.getElementById('game-container').style.display = 'none';
+                document.getElementById('endScreen').style.display = 'flex';
+            }
+
+            update() {
+                this.handlePlayerControls(this.player1, this.controls.player1);
+                this.handlePlayerControls(this.player2, this.controls.player2);
+            }
+
+            handlePlayerControls(player, controls) {
+                player.body.setVelocityX(0);
+
+                if (controls.left.isDown) {
+                    player.body.setVelocityX(-160);
+                }
+                if (controls.right.isDown) {
+                    player.body.setVelocityX(160);
+                }
+                if (controls.jump.isDown && player.body.touching.down) {
+                    player.body.setVelocityY(-200);
+                }
+            }
+        }
+
+        const config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 600,
+            parent: 'game-container',
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 300 },
+                    debug: false
+                }
+            },
+            scene: [MainScene],
+            scale: {
+                mode: Phaser.Scale.FIT,
+                autoCenter: Phaser.Scale.CENTER_BOTH
+            }
+        };
+
+        game = new Phaser.Game(config);
+    }
+</script>
+</body>
+</html>

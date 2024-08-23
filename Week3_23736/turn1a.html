@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Simple Phaser Football Game</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <style>
+        body { margin: 0; }
+    </style>
+</head>
+<body>
+
+<div id="gameContainer"></div>
+
+<script type="module">
+    const config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 300 },
+                debug: false
+            }
+        },
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        }
+    };
+
+    const game = new Phaser.Game(config);
+
+    function preload() {
+        // Preloading isn't necessary for shapes, but here for completeness
+    }
+
+    let player1, player2, ball, cursors, controls2, startButton, scoreText, score = {p1: 0, p2: 0};
+
+    function create() {
+        // Ground
+        this.add.rectangle(400, 580, 800, 40, 0x666666);
+
+        // Players
+        player1 = this.physics.add.rectangle(100, 500, 30, 60, 0xFF0000).setBounce(0.2);
+        player2 = this.physics.add.rectangle(700, 500, 30, 60, 0x0000FF).setBounce(0.2);
+
+        // Ball
+        ball = this.physics.add.circle(400, 300, 15, 0xFFFFFF).setBounce(1);
+
+        // Goals
+        this.physics.add.rectangle(40, 540, 80, 100, 0x00FF00).setImmovable(true);
+        this.physics.add.rectangle(760, 540, 80, 100, 0x00FF00).setImmovable(true);
+
+        // Controls
+        cursors = this.input.keyboard.createCursorKeys();
+        controls2 = this.input.keyboard.addKeys('W,A,D,J,I,L');
+
+        // UI
+        startButton = this.add.text(400, 300, 'Click to Start', { font: '32px Arial', fill: '#fff' }).setOrigin(0.5).setInteractive();
+        startButton.on('pointerdown', startGame, this);
+
+        scoreText = this.add.text(16, 16, 'Score: 0 - 0', { fontSize: '32px', fill: '#fff' });
+    }
+
+    function startGame() {
+        startButton.destroy();
+        this.physics.resume();
+    }
+
+    function update() {
+        if (!this.physics.world.isPaused) {
+            // Player 1 controls
+            if (cursors.left.isDown || controls2.A.isDown) player1.setVelocityX(-160);
+            else if (cursors.right.isDown || controls2.D.isDown) player1.setVelocityX(160);
+            else player1.setVelocityX(0);
+
+            if ((cursors.up.isDown || controls2.W.isDown) && player1.body.touching.down) player1.setVelocityY(-330);
+
+            // Player 2 controls
+            if (controls2.J.isDown) player2.setVelocityX(-160);
+            else if (controls2.L.isDown) player2.setVelocityX(160);
+            else player2.setVelocityX(0);
+
+            if (controls2.I.isDown && player2.body.touching.down) player2.setVelocityY(-330);
+
+            // Ball collision
+            this.physics.add.collider(ball, [player1, player2], ballHitPlayer, null, this);
+
+            // Goal detection would be implemented here, checking if the ball's x position is within goal area
+            // and updating scoreText accordingly
+        }
+    }
+
+    function ballHitPlayer(ball, player) {
+        // Simple collision logic
+        ball.setVelocity(ball.body.velocity.x * 1.1, ball.body.velocity.y * 1.1);
+    }
+
+</script>
+</body>
+</html>
