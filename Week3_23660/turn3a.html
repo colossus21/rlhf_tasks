@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Murder Mystery</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            background-color: #001f3f;
+            color: #fff;
+        }
+        .game-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            padding-top: 35px;
+            width: 100%;
+            max-width: 350px;
+        }
+        .hotel {
+            display: flex;
+            flex-direction: column-reverse;
+            width: 300px;
+            background-color: #333;
+            border: 2px solid #666;
+            height: 80vh;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+        .floor {
+            display: flex;
+            height: 40px;
+            border-top: 1px solid #555;
+        }
+        .room-number {
+            width: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            background-color: #444;
+            color: #ddd;
+        }
+        .window {
+            flex-grow: 1;
+            background-color: #222;
+            margin: 2px;
+            cursor: pointer;
+        }
+        .window.light-on { background-color: #ffff00; }
+        .window.murderer { background-color: #ff4136; }
+        .character {
+            position: absolute;
+            bottom: 20px;
+        }
+        #mrX { left: 10px; }
+        #detective { right: 10px; }
+        #message, #highScore { text-align: center; margin: 10px 0; }
+        #restart { display: none; margin-top: 10px; }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <div id="mrX" class="character">Mr. X</div>
+    <div class="hotel" id="hotel"></div>
+    <div id="detective" class="character">Detective</div>
+</div>
+<div id="message">Mr. X: Welcome to the Hotel Murder Mystery! Find the murderer!</div>
+<div id="highScore">High Score: <span id="score">0</span></div>
+<button id="restart" onclick="restartGame()">Restart Game</button>
+
+<audio id="bgMusic" loop>
+    <source src="bg.wav" type="audio/wav">
+    Your browser does not support the audio element.
+</audio>
+<audio id="lightSound">
+    <source src="light.wav" type="audio/wav">
+</audio>
+<audio id="murdererSound">
+    <source src="murderer.wav" type="audio/wav">
+</audio>
+<audio id="gameOverSound">
+    <source src="gameOver.wav" type="audio/wav">
+</audio>
+
+<script>
+    const hotel = document.getElementById('hotel');
+    const message = document.getElementById('message');
+    const highScoreDisplay = document.getElementById('score');
+    const restartButton = document.getElementById('restart');
+    let murdererFloor;
+    let turns = 0;
+    const highScore = localStorage.getItem('murderMysteryHighScore') || 0;
+
+    document.getElementById('bgMusic').play();
+
+    function playSound(soundId) {
+        document.getElementById(soundId).play();
+    }
+
+    function initializeGame() {
+        hotel.innerHTML = '';
+        murdererFloor = Math.floor(Math.random() * 50) + 1;
+        turns = 0;
+        for(let i = 1; i <= 50; i++) {
+            const floor = document.createElement('div');
+            floor.className = 'floor';
+            floor.innerHTML = `<div class="room-number">${i}</div><div class="window" onclick="checkGuess(${i})"></div>`;
+            hotel.appendChild(floor);
+        }
+        updateHighScore();
+    }
+
+    function checkGuess(floor) {
+        if (document.querySelectorAll('.window').forEach(w => w.onclick = null)) return; // Prevent clicks after game over
+        turns++;
+        const window = hotel.querySelector(`[onclick="checkGuess(${floor})"]`);
+        window.classList.add('light-on');
+        playSound('lightSound');
+
+        if (floor === murdererFloor) {
+            window.classList.add('murderer');
+            playSound('murdererSound');
+            setTimeout(() => {
+                playSound('gameOverSound');
+                endGame();
+            }, 1000);
+        } else {
+            message.textContent = floor < murdererFloor ? "Try a higher floor!" : "Try a lower floor!";
+        }
+    }
+
+    function endGame() {
+        message.textContent = `You found the murderer in ${turns} turns!`;
+        const score = 50 - turns;
+        if (score > highScore) {
+            localStorage.setItem('murderMysteryHighScore', score);
+            message.textContent += ' New High Score!';
+        }
+        restartButton.style.display = 'block';
+    }
+
+    function restartGame() {
+        restartButton.style.display = 'none';
+        initializeGame();
+        message.textContent = "Mr. X: A new murderer is hiding. Can you find them?";
+    }
+
+    function updateHighScore() {
+        highScoreDisplay.textContent = highScore;
+    }
+
+    initializeGame();
+</script>
+</body>
+</html>

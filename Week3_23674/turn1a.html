@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rock, Paper, Scissors: Elemental Edition</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+        .choice {
+            margin: 20px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .choice:hover {
+            transform: scale(1.1);
+        }
+        #gameArea {
+            display: none;
+        }
+        #result {
+            font-size: 24px;
+            margin: 20px;
+        }
+        #countdown {
+            font-size: 40px;
+            margin: 20px 0;
+        }
+        .reveal {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        #playerChoice {
+            left: 20%;
+        }
+        #aiChoice {
+            right: 20%;
+        }
+        .winnerMove {
+            transition: all 3s ease-in-out;
+            position: absolute;
+            left: 50% !important;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body>
+
+<div id="choiceArea">
+    <h1>Choose Your Element</h1>
+    <img src="earthquake.gif" alt="Earthquake" class="choice" data-choice="Earthquake">
+    <img src="tsunami.gif" alt="Tsunami" class="choice" data-choice="Tsunami">
+    <img src="firestorm.gif" alt="Firestorm" class="choice" data-choice="Firestorm">
+</div>
+
+<div id="gameArea">
+    <div id="countdown"></div>
+    <div id="playerChoice" class="reveal"></div>
+    <div id="aiChoice" class="reveal"></div>
+    <div id="result"></div>
+</div>
+
+<audio id="earthquakeSound" src="earthquake.wav"></audio>
+<audio id="tsunamiSound" src="tsunami.wav"></audio>
+<audio id="firestormSound" src="firestorm.wav"></audio>
+<audio id="tickSound" src="tick.wav"></audio>
+
+<script>
+    const choices = ['Earthquake', 'Tsunami', 'Firestorm'];
+    const gameArea = document.getElementById('gameArea');
+    const choiceArea = document.getElementById('choiceArea');
+    const playerChoiceDiv = document.getElementById('playerChoice');
+    const aiChoiceDiv = document.getElementById('aiChoice');
+    const resultDiv = document.getElementById('result');
+
+    // Event listeners for choices
+    document.querySelectorAll('.choice').forEach(item => {
+        item.addEventListener('click', function() {
+            const playerChoice = this.getAttribute('data-choice');
+            playSound(playerChoice.toLowerCase() + 'Sound');
+            choiceArea.style.display = 'none';
+            gameArea.style.display = 'block';
+            startGame(playerChoice);
+        });
+    });
+
+    function playSound(id) {
+        document.getElementById(id).play();
+    }
+
+    function startGame(playerChoice) {
+        let count = 3;
+        const countdownElement = document.getElementById('countdown');
+        const tickSound = document.getElementById('tickSound');
+
+        const interval = setInterval(() => {
+            tickSound.play();
+            countdownElement.textContent = count;
+            if (count === 0) {
+                clearInterval(interval);
+                revealChoices(playerChoice, getAIchoice());
+            }
+            count--;
+        }, 1000);
+    }
+
+    function getAIchoice() {
+        return choices[Math.floor(Math.random() * choices.length)];
+    }
+
+    function revealChoices(player, ai) {
+        playerChoiceDiv.innerHTML = `<img src="${player.toLowerCase()}.gif" alt="${player}">`;
+        aiChoiceDiv.innerHTML = `<img src="${ai.toLowerCase()}.gif" alt="${ai}">`;
+        setTimeout(() => determineWinner(player, ai), 1000);
+    }
+
+    function determineWinner(player, ai) {
+        if (player === ai) {
+            resultDiv.textContent = "It's a tie!";
+        } else if (
+            (player === 'Earthquake' && ai === 'Firestorm') ||
+            (player === 'Tsunami' && ai === 'Earthquake') ||
+            (player === 'Firestorm' && ai === 'Tsunami')
+        ) {
+            resultDiv.textContent = "You win!";
+            playerChoiceDiv.classList.add('winnerMove');
+        } else {
+            resultDiv.textContent = "AI wins!";
+            aiChoiceDiv.classList.add('winnerMove');
+        }
+
+        // Remove loser or tie images
+        setTimeout(() => {
+            if (playerChoiceDiv.classList.contains('winnerMove')) {
+                aiChoiceDiv.innerHTML = '';
+            } else if (aiChoiceDiv.classList.contains('winnerMove')) {
+                playerChoiceDiv.innerHTML = '';
+            } else {
+                playerChoiceDiv.innerHTML = '';
+                aiChoiceDiv.innerHTML = '';
+            }
+        }, 3000);
+    }
+</script>
+
+</body>
+</html>

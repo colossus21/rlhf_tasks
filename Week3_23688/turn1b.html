@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Wild Tic-Tac-Toe</title>
+    <style>
+        #gameBoard {
+            display: grid;
+            grid-template-columns: repeat(9, 50px);
+            grid-template-rows: repeat(9, 50px);
+            gap: 2px;
+            width: 462px; /* 9 * 50px + 8 * 2px (gaps) */
+            margin: 20px auto;
+        }
+
+        .cell {
+            width: 50px;
+            height: 50px;
+            background: #eee;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* Thick border for each 3x3 grid */
+        .mini-grid {
+            border: 3px solid black;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+        }
+
+        .line {
+            position: absolute;
+            background: red;
+            height: 5px;
+            transform-origin: left center;
+        }
+    </style>
+</head>
+<body>
+
+<div id="gameBoard"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const board = document.getElementById('gameBoard');
+        let currentPlayer = 'O';
+
+        // Create 9x9 grid
+        for (let i = 0; i < 81; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            if ((i + 1) % 3 === 0 && (i + 1) % 9 !== 0) cell.style.borderRight = '2px solid black';
+            if (Math.floor(i / 3) % 3 === 2 && i < 72) cell.style.borderBottom = '2px solid black';
+            cell.addEventListener('click', () => placeSymbol(cell, i));
+            board.appendChild(cell);
+        }
+
+        function placeSymbol(cell, index) {
+            if (cell.textContent) return; // If cell is already taken, do nothing
+            cell.textContent = currentPlayer;
+
+            // Check for win in the 3x3 sub-grid
+            if (checkWin(Math.floor(index / 9), index % 9)) {
+                drawLine(index);
+            }
+
+            currentPlayer = currentPlayer === 'O' ? 'X' : 'O';
+        }
+
+        function checkWin(grid, position) {
+            const startRow = Math.floor(grid / 3) * 3;
+            const startCol = (grid % 3) * 3;
+            const cells = Array.from(board.children);
+            const directions = [
+                [0, 1], [1, 0], [1, 1], [-1, 1] // horizontal, vertical, diagonal, anti-diagonal
+            ];
+
+            for (let dir of directions) {
+                let count = 0;
+                for (let i = -2; i <= 2; i++) {
+                    let newPos = (startRow + position - (position % 3) + dir[0] * i) * 9 + (startCol + position % 3 + dir[1] * i);
+                    if (cells[newPos] && cells[newPos].textContent === currentPlayer) {
+                        count++;
+                        if (count === 3) return true;
+                    } else {
+                        count = 0;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function drawLine(index) {
+            // This function would need more logic to draw a line across winning cells
+            // Here's a placeholder for where you'd implement line drawing
+            console.log('Win detected at index:', index);
+        }
+    });
+
+</script>
+</body>
+</html>

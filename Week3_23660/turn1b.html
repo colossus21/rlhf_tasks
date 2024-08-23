@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Guessing Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .game-container {
+            display: flex;
+            align-items: flex-end;
+        }
+        .hotel {
+            display: flex;
+            flex-direction: column-reverse;
+            width: 300px;
+            background-color: #ccc;
+            border: 2px solid #333;
+        }
+        .floor {
+            display: flex;
+            height: 30px;
+            border-bottom: 1px solid #333;
+        }
+        .room-number {
+            width: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            background-color: #eee;
+        }
+        .window {
+            flex-grow: 1;
+            background-color: #87CEEB;
+            margin: 2px;
+            cursor: pointer;
+        }
+        .window.light-on {
+            background-color: #FFFF00;
+        }
+        .character {
+            width: 50px;
+            height: 100px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: bottom;
+        }
+        #mrX {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200"><rect x="40" y="80" width="20" height="120" fill="black"/><circle cx="50" cy="50" r="30" fill="black"/></svg>');
+        }
+        #detective {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200"><rect x="40" y="80" width="20" height="120" fill="blue"/><circle cx="50" cy="50" r="30" fill="blue"/></svg>');
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div id="mrX" class="character"></div>
+        <div class="hotel" id="hotel"></div>
+        <div id="detective" class="character"></div>
+    </div>
+
+    <script>
+        const hotel = document.getElementById('hotel');
+        const numFloors = 50;
+
+        for (let i = numFloors; i > 0; i--) {
+            const floor = document.createElement('div');
+            floor.className = 'floor';
+
+            const roomNumber = document.createElement('div');
+            roomNumber.className = 'room-number';
+            roomNumber.textContent = i;
+
+            const window = document.createElement('div');
+            window.className = 'window';
+            window.addEventListener('click', () => {
+                window.classList.toggle('light-on');
+            });
+
+            floor.appendChild(roomNumber);
+            floor.appendChild(window);
+            hotel.appendChild(floor);
+        }
+    </script>
+</body>
+</html>

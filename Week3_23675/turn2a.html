@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cross the Road Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #222;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+        #gameCanvas {
+            border: 2px solid white;
+        }
+        #gameInfo {
+            position: absolute;
+            width: 400px;
+            display: flex;
+            justify-content: space-between;
+        }
+        #messages, #restartButton {
+            text-align: center;
+            margin-top: 10px;
+            color: white;
+        }
+        #restartButton {
+            padding: 10px 20px;
+            background-color: #555;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div id="gameInfo">
+    <div>Level: <span id="level">1</span></div>
+    <div>Score: <span id="score">0</span></div>
+</div>
+<canvas id="gameCanvas"></canvas>
+<div id="messages"></div>
+<button id="restartButton" style="display:none;">Restart Game</button>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const levelSpan = document.getElementById('level');
+    const scoreSpan = document.getElementById('score');
+    const messages = document.getElementById('messages');
+    const restartButton = document.getElementById('restartButton');
+
+    canvas.width = 400;
+    canvas.height = 600;
+
+    const player = {
+        x: canvas.width / 2 - 10,
+        y: canvas.height - 30,
+        width: 20,
+        height: 20,
+        color: 'white'
+    };
+
+    let roads = [];
+    let cars = [];
+    let level = 1;
+    let score = 0;
+
+    // Audio elements
+    const bgAudio = new Audio('bg.wav');
+    const deadAudio = new Audio('dead.wav');
+    bgAudio.loop = true;
+
+    function playBackgroundMusic() {
+        bgAudio.play().catch(error => {
+            console.log("Autoplay was prevented:", error);
+        });
+    }
+
+    function playDeadSound() {
+        deadAudio.play();
+    }
+
+    function createRoad(y) {
+        return { y: y, width: canvas.width, height: 60, color: '#444' };
+    }
+
+    function createCar(roadIndex) {
+        const road = roads[roadIndex];
+        const carWidth = Math.random() * 50 + 30; // Dynamic car size
+        return {
+            x: Math.random() < 0.5 ? -carWidth : canvas.width,
+            y: road.y + 10,
+            width: carWidth,
+            height: 40,
+            speed: Math.random() * 2 + 1,
+            color: `hsl(${Math.random() * 360}, 100%, 50%)`
+        };
+    }
+
+    function initLevel() {
+        roads = Array(level).fill().map((_, i) => createRoad(i * 100 + 100));
+        cars = roads.map((_, i) => createCar(i));
+        player.y = canvas.height - 30;
+    }
+
+    function gameLoop() {
+        ctx.fillStyle = '#222';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        drawRoads();
+        drawCars();
+        drawPlayer();
+        updateCars();
+
+        if (checkCollision()) {
+            endGame();
+            return;
+        }
+
+        if (player.y <= 0) {
+            level++;
+            score += 100;
+            initLevel();
+        }
+
+        updateDisplay();
+        requestAnimationFrame(gameLoop);
+    }
+
+    function endGame() {
+        playDeadSound();
+        messages.textContent = `Game Over! Your score: ${score}`;
+        restartButton.style.display = 'block';
+        bgAudio.pause();
+    }
+
+    function updateDisplay() {
+        levelSpan.textContent = level;
+        scoreSpan.textContent = score;
+    }
+
+    // Event listeners and game initialization
+    document.addEventListener('keydown', movePlayer);
+    restartButton.addEventListener('click', () => {
+        level = 1;
+        score = 0;
+        messages.textContent = '';
+        restartButton.style.display = 'none';
+        initLevel();
+        bgAudio.currentTime = 0;
+        playBackgroundMusic();
+        gameLoop();
+    });
+
+    function movePlayer(e) {
+        switch(e.key) {
+            case 'ArrowUp': if (player.y > 0) player.y -= 10; break;
+            case 'ArrowDown': if (player.y < canvas.height - player.height) player.y += 10; break;
+            case 'ArrowLeft': if (player.x > 0) player.x -= 10; break;
+            case 'ArrowRight': if (player.x < canvas.width - player.width) player.x += 10; break;
+        }
+    }
+
+    // Draw functions (drawPlayer, drawRoads, drawCars) and update functions (updateCars, checkCollision) remain similar but should be included in your script.
+
+    // Start the game
+    initLevel();
+    playBackgroundMusic();
+    gameLoop();
+</script>
+</body>
+</html>

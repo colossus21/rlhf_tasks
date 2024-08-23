@@ -1,0 +1,17 @@
+turn2a.js:43
+            nativeResults.push(radioactiveDecayNative(N0, lambda, t));
+                          ^
+
+RangeError: Invalid array length
+    at Array.push (<anonymous>)
+    at Benchmark.<anonymous> (C:\Users\Rafi\Desktop\Tasks\76\20000\turn2a.js:43:27)
+    at Benchmark.eval [as compiled] (eval at createCompiled (C:\Users\Rafi\node_modules\benchmark\benchmark.js:1725:16), <anonymous>:5:131)
+    at clock (C:\Users\Rafi\node_modules\benchmark\benchmark.js:1658:29)
+    at cycle (C:\Users\Rafi\node_modules\benchmark\benchmark.js:2007:49)
+    at Benchmark.run (C:\Users\Rafi\node_modules\benchmark\benchmark.js:2114:13)
+    at execute (C:\Users\Rafi\node_modules\benchmark\benchmark.js:860:74)
+    at Timeout._onTimeout (C:\Users\Rafi\node_modules\lodash\lodash.js:2792:43)
+    at listOnTimeout (node:internal/timers:573:17)
+    at process.processTimers (node:internal/timers:514:7)
+
+Node.js v21.7.3

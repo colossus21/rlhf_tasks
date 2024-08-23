@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Connect 4 with a Twist</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #222;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        #gameCanvas {
+            border: 1px solid white;
+        }
+    </style>
+</head>
+<body>
+
+<div id="gameContainer"></div>
+
+<script type="module">
+    const config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        },
+        physics: {
+            default: 'arcade',
+            arcade: {
+                debug: false
+            }
+        }
+    };
+
+    let game = new Phaser.Game(config);
+    let board;
+    const rows = 6;
+    const cols = 7;
+    let currentPlayer = 1;
+    let scores = {1: 0, 2: 0};
+
+    function preload() {
+        this.load.image('token', 'path_to_your_token_image.png'); // Replace with actual path or use a colored circle
+    }
+
+    function create() {
+        board = createBoard(this);
+        this.input.on('pointerdown', function (pointer) {
+            let col = Math.floor(pointer.x / (config.width / cols));
+            if (placeToken(col)) {
+                if (checkWin()) {
+                    scores[currentPlayer] += 1;
+                    if (scores[currentPlayer] === 3) {
+                        alert('Player ' + currentPlayer + ' wins the game!');
+                        this.scene.restart();
+                    } else {
+                        // Clear the connected 4
+                        clearWinningTokens();
+                        switchPlayer();
+                    }
+                } else if (isBoardFull()) {
+                    alert('Draw!');
+                    this.scene.restart();
+                } else {
+                    switchPlayer();
+                }
+            }
+        }, this);
+    }
+
+    function createBoard(scene) {
+        let board = [];
+        for (let i = 0; i < rows; i++) {
+            board[i] = [];
+            for (let j = 0; j < cols; j++) {
+                board[i][j] = null;
+            }
+        }
+        return board;
+    }
+
+    function placeToken(col) {
+        for (let row = rows - 1; row >= 0; row--) {
+            if (!board[row][col]) {
+                let token = game.scene.scenes[0].physics.add.image(col * (config.width / cols) + (config.width / cols / 2), 
+                                                                    row * (config.height / rows) + (config.height / rows / 2), 'token');
+                token.setTint(currentPlayer === 1 ? 0xff0000 : 0x0000ff); // Red for player 1, Blue for player 2
+                board[row][col] = currentPlayer;
+                return true;
+            }
+        }
+        return false; // Column full
+    }
+
+    function checkWin() {
+        // Check horizontal, vertical, and diagonals for win
+        // Implementation omitted for brevity, but should check for four connected tokens
+        // Return true if a win condition is met
+    }
+
+    function clearWinningTokens() {
+        // Logic to find and clear the four connected tokens
+        // This function should remove the tokens from the board and scene
+    }
+
+    function switchPlayer() {
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+    }
+
+    function isBoardFull() {
+        return board.every(row => row.every(cell => cell !== null));
+    }
+
+    function update() {
+        // Game loop if needed
+    }
+</script>
+
+</body>
+</html>

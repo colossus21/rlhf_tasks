@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Row a Boat</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        canvas {
+            border: 2px solid #333;
+        }
+    </style>
+</head>
+<body>
+<canvas id="gameCanvas" width="400" height="600"></canvas>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const boat = {
+        x: canvas.width / 2,
+        y: canvas.height - 50,
+        width: 40,
+        height: 60,
+        speed: 5
+    };
+
+    let obstacles = [];
+    let score = 0;
+    let gameOver = false;
+
+    function drawBoat() {
+        ctx.fillStyle = 'brown';
+        ctx.fillRect(boat.x, boat.y, boat.width, boat.height);
+    }
+
+    function drawObstacles() {
+        ctx.fillStyle = 'gray';
+        obstacles.forEach(obstacle => {
+            ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        });
+    }
+
+    function moveBoat(dx, dy) {
+        boat.x += dx * boat.speed;
+        boat.y += dy * boat.speed * 0.5; // Make vertical movement harder
+
+        // Keep the boat within canvas bounds
+        boat.x = Math.max(0, Math.min(canvas.width - boat.width, boat.x));
+        boat.y = Math.max(0, Math.min(canvas.height - boat.height, boat.y));
+    }
+
+    function createObstacle() {
+        const obstacle = {
+            x: Math.random() * (canvas.width - 30),
+            y: -30,
+            width: 30,
+            height: 30,
+            speed: 2 + Math.random() * 2
+        };
+        obstacles.push(obstacle);
+    }
+
+    function updateObstacles() {
+        obstacles.forEach(obstacle => {
+            obstacle.y += obstacle.speed;
+        });
+
+        obstacles = obstacles.filter(obstacle => obstacle.y < canvas.height);
+    }
+
+    function checkCollision() {
+        return obstacles.some(obstacle =>
+            boat.x < obstacle.x + obstacle.width &&
+            boat.x + boat.width > obstacle.x &&
+            boat.y < obstacle.y + obstacle.height &&
+            boat.y + boat.height > obstacle.y
+        );
+    }
+
+    function drawScore() {
+        ctx.fillStyle = 'black';
+        ctx.font = '20px Arial';
+        ctx.fillText(`Score: ${score}`, 10, 30);
+    }
+
+    function gameLoop() {
+        if (gameOver) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        drawBoat();
+        drawObstacles();
+        updateObstacles();
+        drawScore();
+
+        if (checkCollision()) {
+            gameOver = true;
+            alert(`Game Over! Your score: ${score}`);
+            return;
+        }
+
+        if (Math.random() < 0.02) {
+            createObstacle();
+        }
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (gameOver) return;
+
+        switch (e.key) {
+            case 'ArrowLeft':
+                moveBoat(-1, 0);
+                break;
+            case 'ArrowRight':
+                moveBoat(1, 0);
+                break;
+            case 'ArrowUp':
+                moveBoat(0, -1);
+                break;
+            case 'ArrowDown':
+                moveBoat(0, 1);
+                break;
+        }
+    });
+
+    setInterval(() => {
+        if (!gameOver) score++;
+    }, 1000);
+
+    gameLoop();
+</script>
+</body>
+</html>

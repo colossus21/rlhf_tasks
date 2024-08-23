@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cross the Road Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #222;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+        #gameContainer {
+            position: relative;
+        }
+        #gameCanvas {
+            border: 2px solid white;
+        }
+        #level {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+        }
+        #score {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        #message {
+            margin-top: 10px;
+            height: 20px;
+        }
+        #restartButton {
+            margin-top: 10px;
+            padding: 5px 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div id="gameContainer">
+    <canvas id="gameCanvas"></canvas>
+    <div id="level">Level: 1</div>
+    <div id="score">Score: 0</div>
+</div>
+<div id="message"></div>
+<button id="restartButton">Restart</button>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const levelDiv = document.getElementById('level');
+    const scoreDiv = document.getElementById('score');
+    const messageDiv = document.getElementById('message');
+    const restartButton = document.getElementById('restartButton');
+
+    canvas.width = 400;
+    canvas.height = 600;
+
+    const player = {
+        x: canvas.width / 2 - 10,
+        y: canvas.height - 30,
+        width: 20,
+        height: 20,
+        color: 'white'
+    };
+
+    let roads = [];
+    let cars = [];
+    let level = 1;
+    let score = 0;
+    let gameOver = false;
+
+    const bgSound = new Audio('bg.wav');
+    bgSound.loop = true;
+    const deadSound = new Audio('dead.wav');
+
+    function createRoad(y) {
+        return {
+            y: y,
+            width: canvas.width,
+            height: 60,
+            color: '#444'
+        };
+    }
+
+    function createCar(roadIndex) {
+        const road = roads[roadIndex];
+        const width = Math.random() * 30 + 40; // Dynamic car width between 40 and 70
+        const height = Math.random() * 20 + 30; // Dynamic car height between 30 and 50
+        return {
+            x: Math.random() < 0.5 ? -width : canvas.width,
+            y: road.y + (road.height - height) / 2,
+            width: width,
+            height: height,
+            speed: Math.random() * 2 + 1,
+            color: `hsl(${Math.random() * 360}, 100%, 50%)`
+        };
+    }
+
+    function initLevel() {
+        roads = [];
+        cars = [];
+        for (let i = 0; i < level; i++) {
+            roads.push(createRoad(i * 100 + 100));
+            cars.push(createCar(i));
+        }
+        player.y = canvas.height - 30;
+        gameOver = false;
+        bgSound.play();
+    }
+
+    function drawPlayer() {
+        ctx.fillStyle = player.color;
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+    }
+
+    function drawRoads() {
+        roads.forEach(road => {
+            ctx.fillStyle = road.color;
+            ctx.fillRect(0, road.y, road.width, road.height);
+        });
+    }
+
+    function drawCars() {
+        cars.forEach(car => {
+            ctx.fillStyle = car.color;
+            ctx.fillRect(car.x, car.y, car.width, car.height);
+        });
+    }
+
+    function updateCars() {
+        cars.forEach(car => {
+            if (car.x < canvas.width) {
+                car.x += car.speed;
+            } else {
+                car.x = -car.width;
+            }
+        });
+    }
+
+    function checkCollision() {
+        return cars.some(car =>
+            player.x < car.x + car.width &&
+            player.x + player.width > car.x &&
+            player.y < car.y + car.height &&
+            player.y + player.height > car.y
+        );
+    }
+
+    function gameLoop() {
+        if (gameOver) return;
+
+        ctx.fillStyle = '#222';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        drawRoads();
+        drawCars();
+        drawPlayer();
+        updateCars();
+
+        if (checkCollision()) {
+            gameOver = true;
+            bgSound.pause();
+            deadSound.play();
+            messageDiv.textContent = `Game Over! Your score: ${score}`;
+            return;
+        }
+
+        if (player.y <= 0) {
+            level++;
+            score += 100;
+            initLevel();
+        }
+
+        levelDiv.textContent = `Level: ${level}`;
+        scoreDiv.textContent = `Score: ${score}`;
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (gameOver) return;
+
+        switch (e.key) {
+            case 'ArrowUp':
+                if (player.y > 0) player.y -= 10;
+                break;
+            case 'ArrowDown':
+                if (player.y < canvas.height - player.height) player.y += 10;
+                break;
+            case 'ArrowLeft':
+                if (player.x > 0) player.x -= 10;
+                break;
+            case 'ArrowRight':
+                if (player.x < canvas.width - player.width) player.x += 10;
+                break;
+        }
+    });
+
+    restartButton.addEventListener('click', () => {
+        level = 1;
+        score = 0;
+        messageDiv.textContent = '';
+        initLevel();
+        gameLoop();
+    });
+
+    initLevel();
+    gameLoop();
+</script>
+</body>
+</html>

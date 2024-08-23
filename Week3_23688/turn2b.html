@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Wild Tic-Tac-Toe (9x9)</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 150px);
+            grid-gap: 10px;
+            background-color: #000;
+            padding: 10px;
+        }
+        .sub-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 50px);
+            grid-gap: 2px;
+            background-color: #000;
+            width: 150px;
+            height: 150px;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .win-line {
+            position: absolute;
+            background-color: red;
+            transition: all 0.5s;
+        }
+        .win-line.thick {
+            background-color: blue;
+            height: 5px !important;
+        }
+        .sub-grid.won {
+            font-size: 100px;
+            color: white;
+            justify-content: center;
+            align-items: center;
+            background: none;
+        }
+        .X { color: red; }
+        .O { color: blue; }
+    </style>
+</head>
+<body>
+<div class="game-board" id="gameBoard"></div>
+
+<script>
+    const gameBoard = document.getElementById('gameBoard');
+    let currentPlayer = 'O';
+
+    // Create the 9x9 grid
+    for (let i = 0; i < 9; i++) {
+        const subGrid = document.createElement('div');
+        subGrid.classList.add('sub-grid');
+        for (let j = 0; j < 9; j++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell', currentPlayer);
+            cell.dataset.row = i;
+            cell.dataset.col = j;
+            cell.addEventListener('click', handleCellClick);
+            subGrid.appendChild(cell);
+        }
+        gameBoard.appendChild(subGrid);
+    }
+
+    function handleCellClick(event) {
+        const cell = event.target;
+        if (cell.textContent === '') {
+            cell.textContent = currentPlayer;
+            cell.classList.add(currentPlayer);
+            if (checkSmallWin(cell)) {
+                replaceWithWinner(cell);
+                if (checkBigWin()) {
+                    drawThickWinLine();
+                }
+            }
+            currentPlayer = currentPlayer === 'O' ? 'X' : 'O';
+        }
+    }
+
+    function checkSmallWin(cell) {
+        const row = parseInt(cell.dataset.row);
+        const col = parseInt(cell.dataset.col);
+        const subGrid = cell.parentElement;
+        const cells = Array.from(subGrid.children);
+
+        const checkLine = (a, b, c) => cells[a].textContent === currentPlayer &&
+            cells[b].textContent === currentPlayer &&
+            cells[c].textContent === currentPlayer;
+
+        // Check rows, columns, and diagonals
+        return checkLine(0, 1, 2) || checkLine(3, 4, 5) || checkLine(6, 7, 8) || // rows
+            checkLine(0, 3, 6) || checkLine(1, 4, 7) || checkLine(2, 5, 8) || // columns
+            checkLine(0, 4, 8) || checkLine(2, 4, 6); // diagonals
+    }
+
+    function replaceWithWinner(cell) {
+        const subGrid = cell.parentElement;
+        subGrid.innerHTML = currentPlayer;
+        subGrid.classList.add('won', currentPlayer);
+    }
+
+    function checkBigWin() {
+        const subGrids = gameBoard.children;
+        const check = (a, b, c) => subGrids[a].classList.contains('won') &&
+            subGrids[b].classList.contains('won') &&
+            subGrids[c].classList.contains('won') &&
+            subGrids[a].textContent === subGrids[b].textContent &&
+            subGrids[b].textContent === subGrids[c].textContent;
+
+        // Check for a big win across rows, columns, and diagonals
+        for (let i = 0; i < 3; i++) {
+            if (check(i*3, i*3+1, i*3+2) || // rows
+                check(i, i+3, i+6)) return true; // columns
+        }
+        return check(0, 4, 8) || check(2, 4, 6); // diagonals
+    }
+
+    function drawThickWinLine() {
+        const line = document.createElement('div');
+        line.classList.add('win-line', 'thick');
+        // Here you would need to determine the orientation and position of the line
+        // This part requires more logic based on which line won (horizontal, vertical, or diagonal)
+        // For simplicity, let's just place a horizontal line at the center
+        const boardRect = gameBoard.getBoundingClientRect();
+        line.style.width = '450px';
+        line.style.height = '5px';
+        line.style.top = `${boardRect.top + boardRect.height / 2}px`;
+        line.style.left = `${boardRect.left}px`;
+        document.body.appendChild(line);
+    }
+</script>
+</body>
+</html>

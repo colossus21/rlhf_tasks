@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elemental Clash</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        #game-container {
+            text-align: center;
+            position: relative;
+        }
+        .choice {
+            margin: 20px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .choice:hover {
+            transform: scale(1.1);
+        }
+        .choice img {
+            width: 100px;
+            height: 100px;
+            border-radius: 10px;
+        }
+        #how-to-play {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 10px 15px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 10px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #battle-container {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+        }
+        #player-choice, #ai-choice {
+            width: 150px;
+            height: 150px;
+            transition: all 0.5s ease;
+        }
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+        @keyframes wave {
+            0% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(-10px) rotate(-5deg); }
+            50% { transform: translateX(10px) rotate(5deg); }
+            75% { transform: translateX(-10px) rotate(-5deg); }
+            100% { transform: translateX(0) rotate(0deg); }
+        }
+        @keyframes flip {
+            0% { transform: perspective(400px) rotateY(0); }
+            100% { transform: perspective(400px) rotateY(360deg); }
+        }
+        .winner-effect {
+            animation-duration: 0.5s;
+            animation-fill-mode: forwards;
+        }
+        #restart {
+            margin-top: 20px;
+            display: none;
+            padding: 10px 20px;
+            background-color: #5cb85c;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div id="game-container">
+    <button id="how-to-play">How to Play</button>
+    <h2>Choose your move:</h2>
+    <div id="choices">
+        <!-- Choices remain the same -->
+    </div>
+    <div id="countdown"></div>
+    <div id="battle-container">
+        <img id="player-choice" src="" alt="Player's choice">
+        <img id="ai-choice" src="" alt="AI's choice">
+    </div>
+    <div id="result"></div>
+    <button id="restart">Restart Game</button>
+</div>
+
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>How to Play</h2>
+        <p>Choose between Earthquake, Tsunami, and Firestorm. Here are the rules:</p>
+        <ul>
+            <li>Earthquake beats Firestorm (smothers fire)</li>
+            <li>Tsunami beats Earthquake (water erodes earth)</li>
+            <li>Firestorm beats Tsunami (fire evaporates water)</li>
+        </ul>
+        <p>Click on your choice to start the battle!</p>
+    </div>
+</div>
+
+<audio id="earthquake-sound" src="earthquake.wav"></audio>
+<audio id="tsunami-sound" src="tsunami.wav"></audio>
+<audio id="firestorm-sound" src="firestorm.wav"></audio>
+<audio id="tick-sound" src="tick.wav"></audio>
+
+<script>
+    // Your JavaScript logic here (including modal handling, game logic, etc.)
+    const modal = document.getElementById('modal');
+    const btn = document.getElementById("how-to-play");
+    const span = document.getElementsByClassName("close")[0];
+
+    btn.onclick = function() {
+        modal.style.display = "block";
+    }
+
+    span.onclick = function() {
+        modal.style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+
+    function makeChoice(choice) {
+        // Existing game logic...
+        // Add effects for winning choice
+        const winningElement = document.querySelector('.winner');
+        if (winningElement) {
+            if (choice === 'earthquake') {
+                winningElement.classList.add('winner-effect');
+                winningElement.style.animationName = 'shake';
+            } else if (choice === 'tsunami') {
+                winningElement.classList.add('winner-effect');
+                winningElement.style.animationName = 'wave';
+            } else if (choice === 'firestorm') {
+                winningElement.classList.add('winner-effect');
+                winningElement.style.animationName = 'flip';
+            }
+        }
+    }
+
+    function restartGame() {
+        // Reset game state, show choices, hide result and restart button
+        document.getElementById('choices').style.display = 'block';
+        document.getElementById('result').textContent = '';
+        document.getElementById('restart').style.display = 'none';
+        document.getElementById('player-choice').src = '';
+        document.getElementById('ai-choice').src = '';
+        document.getElementById('player-choice').style.display = 'block';
+        document.getElementById('ai-choice').style.display = 'block';
+    }
+
+    document.getElementById('restart').addEventListener('click', restartGame);
+
+    // Continue with your existing game logic for choice making, countdown, reveal, etc.
+</script>
+</body>
+</html>

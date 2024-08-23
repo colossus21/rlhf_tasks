@@ -1,0 +1,17 @@
+turn2b.js:16
+    return new BigNumber(N0).times(BigNumber.exp(new BigNumber(-lambda).times(t)));
+                                             ^
+
+TypeError: BigNumber.exp is not a function
+    at bigNumberDecay (C:\Users\Rafi\Desktop\Tasks\76\20000\turn2b.js:16:46)
+    at C:\Users\Rafi\Desktop\Tasks\76\20000\turn2b.js:32:13
+    at Array.forEach (<anonymous>)
+    at runBenchmark (C:\Users\Rafi\Desktop\Tasks\76\20000\turn2b.js:31:21)
+    at Object.<anonymous> (C:\Users\Rafi\Desktop\Tasks\76\20000\turn2b.js:49:1)
+    at Module._compile (node:internal/modules/cjs/loader:1368:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1426:10)
+    at Module.load (node:internal/modules/cjs/loader:1205:32)
+    at Module._load (node:internal/modules/cjs/loader:1021:12)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:142:12)
+
+Node.js v21.7.3

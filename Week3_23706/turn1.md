@@ -1,0 +1,273 @@
+Here is the full implementation of the Connect 4 game with a twist using PhaserJS, provided as a single HTML file:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect 4 with a Twist</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #282c34;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+<script>
+    const config = {
+        type: Phaser.AUTO,
+        width: 600,
+        height: 600,
+        backgroundColor: '#282c34',
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        }
+    };
+
+    const ROWS = 6;
+    const COLS = 7;
+    const WINNING_SCORE = 3;
+    let grid = [];
+    let currentPlayer = 1;
+    let player1Score = 0;
+    let player2Score = 0;
+    let gameOver = false;
+    let highlightedColumn = -1;
+
+    const game = new Phaser.Game(config);
+
+    function preload() {}
+
+    function create() {
+        grid = [];
+        createBoard(this);
+        this.input.on('pointerdown', (pointer) => {
+            if (!gameOver) {
+                handlePointerDown(pointer, this);
+            }
+        });
+
+        this.add.text(0, 10, 'Player 1 (Red): 0', { fontSize: '20px', fill: '#fff' }).setName('player1Score');
+        this.add.text(280, 10, 'Player 2 (Yellow): 0', { fontSize: '20px', fill: '#fff' }).setName('player2Score');
+    }
+
+    function update() {}
+
+    function createBoard(scene) {
+        const cellSize = 75;
+        const startX = (config.width - (COLS * cellSize)) / 2;
+        const startY = (config.height - (ROWS * cellSize)) / 2;
+
+        for (let row = 0; row < ROWS; row++) {
+            grid[row] = [];
+            for (let col = 0; col < COLS; col++) {
+                const cell = scene.add.rectangle(startX + col * cellSize, startY + row * cellSize, cellSize, cellSize, 0xffffff).setOrigin(0.5);
+                cell.setStrokeStyle(2, 0x000000);
+                cell.setInteractive();
+
+                // Add hover effects
+                cell.on('pointerover', () => {
+                    if (!gameOver && grid[row][col].player === 0) {
+                        if (highlightedColumn !== col) {
+                            unhighlightColumn(highlightedColumn);  // Remove previous highlight
+                            highlightColumn(col, 0xffe4b5);  // Use a lighter color (e.g., moccasin)
+                            highlightedColumn = col;  // Update highlighted column
+                        }
+                    }
+                });
+
+                grid[row][col] = {
+                    cell: cell,
+                    player: 0
+                };
+            }
+        }
+    }
+
+    function highlightColumn(col, color) {
+        for (let row = 0; row < ROWS; row++) {
+            if (grid[row][col].player === 0) {
+                grid[row][col].cell.setFillStyle(color);
+            }
+        }
+    }
+
+    function unhighlightColumn(col) {
+        if (col !== -1) { // Ensure it's a valid column
+            for (let row = 0; row < ROWS; row++) {
+                if (grid[row][col].player === 0) {
+                    grid[row][col].cell.setFillStyle(0xffffff);
+                }
+            }
+        }
+    }
+
+    function handlePointerDown(pointer, scene) {
+        if (highlightedColumn >= 0 && highlightedColumn < COLS) {
+            for (let row = ROWS - 1; row >= 0; row--) {
+                if (grid[row][highlightedColumn].player === 0) {
+                    grid[row][highlightedColumn].player = currentPlayer;
+                    grid[row][highlightedColumn].cell.setFillStyle(currentPlayer === 1 ? 0xff0000 : 0xffff00);
+
+                    if (checkForWin(row, highlightedColumn, currentPlayer, scene)) {
+                        updateScores(scene);
+                        dropTokens();
+                        checkForWinner(scene);
+                    }
+
+                    if (!gameOver) {
+                        currentPlayer = currentPlayer === 1 ? 2 : 1;
+                    }
+
+                    break;
+                }
+            }
+        }
+    }
+
+    function checkForWin(row, col, player, scene) {
+        return (
+                checkDirection(row, col, player, 1, 0) || // Horizontal
+                checkDirection(row, col, player, 0, 1) || // Vertical
+                checkDirection(row, col, player, 1, 1) || // Diagonal down-right
+                checkDirection(row, col, player, 1, -1)   // Diagonal down-left
+        );
+    }
+
+    function checkDirection(row, col, player, rowDir, colDir) {
+        let count = 0;
+        let r = row;
+        let c = col;
+
+        while (isValidCell(r, c) && grid[r][c].player === player) {
+            count++;
+            r += rowDir;
+            c += colDir;
+        }
+
+        r = row - rowDir;
+        c = col - colDir;
+
+        while (isValidCell(r, c) && grid[r][c].player === player) {
+            count++;
+            r -= rowDir;
+            c -= colDir;
+        }
+
+        if (count >= 4) {
+            removeTokens(row, col, rowDir, colDir);
+            return true;
+        }
+
+        return false;
+    }
+
+    function isValidCell(row, col) {
+        return row >= 0 && row < ROWS && col >= 0 && col < COLS;
+    }
+
+    function removeTokens(row, col, rowDir, colDir) {
+        let r = row;
+        let c = col;
+
+        while (isValidCell(r, c) && grid[r][c].player === currentPlayer) {
+            grid[r][c].player = 0;
+            grid[r][c].cell.setFillStyle(0xffffff);
+            r += rowDir;
+            c += colDir;
+        }
+
+        r = row - rowDir;
+        c = col - colDir;
+
+        while (isValidCell(r, c) && grid[r][c].player === currentPlayer) {
+            grid[r][c].player = 0;
+            grid[r][c].cell.setFillStyle(0xffffff);
+            r -= rowDir;
+            c -= colDir;
+        }
+    }
+
+    function dropTokens() {
+        for (let col = 0; col < COLS; col++) {
+            for (let row = ROWS - 1; row >= 0; row--) {
+                if (grid[row][col].player === 0) {
+                    for (let aboveRow = row - 1; aboveRow >= 0; aboveRow--) {
+                        if (grid[aboveRow][col].player !== 0) {
+                            grid[row][col].player = grid[aboveRow][col].player;
+                            grid[row][col].cell.setFillStyle(grid[aboveRow][col].cell.fillColor);
+                            grid[aboveRow][col].player = 0;
+                            grid[aboveRow][col].cell.setFillStyle(0xffffff);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    function updateScores(scene) {
+        if (currentPlayer === 1) {
+            player1Score++;
+            scene.children.getByName('player1Score').setText('Player 1 (Red): ' + player1Score);
+        } else {
+            player2Score++;
+            scene.children.getByName('player2Score').setText('Player 2 (Yellow): ' + player2Score);
+        }
+    }
+
+    function checkForWinner(scene) {
+        if (player1Score >= WINNING_SCORE) {
+            endGame(scene, 'Player 1 Wins!', 0xff0000);
+        } else if (player2Score >= WINNING_SCORE) {
+            endGame(scene, 'Player 2 Wins!', 0xffff00);
+        }
+    }
+
+    function endGame(scene, message, color) {
+        gameOver = true;
+        scene.add.rectangle(config.width / 2, config.height / 2, 400, 100, color).setOrigin(0.5).setAlpha(0.8);
+        scene.add.text(config.width / 2, config.height / 2 - 10, message, { fontSize: '48px', fill: '#000' }).setOrigin(0.5);
+        scene.add.text(config.width / 2, config.height / 2 + 40, 'Click to Restart', { fontSize: '24px', fill: '#fff' }).setOrigin(0.5);
+        scene.input.once('pointerdown', () => {
+            gameOver = false;
+            player1Score = 0;
+            player2Score = 0;
+            currentPlayer = 1;
+            highlightedColumn = -1;
+            scene.scene.restart();
+        });
+    }
+</script>
+
+</body>
+</html>
+```
+
+Here’s the implementation of your Connect 4 game with a twist using PhaserJS:
+
+1. **Two-Player Mode:** The game is designed for two human players, starting with Player 1. Players take turns dropping tokens into the columns.
+2. **Token Removal and Scoring:** Once four tokens of the same color are connected, they disappear from the board, and the corresponding player’s score is incremented by 1.
+3. **Winning Condition:** The game continues until one player reaches 3 points, at which point they are declared the winner.
+
+To get started:
+
+1. Save this code as an HTML file.
+2. Open it in a web browser.
+3. Players take turns by clicking on columns to drop their tokens.
+4. The game will automatically detect when four tokens are connected, remove them, and update the player's score.
+5. The game continues until one player reaches 3 points, at which point a win message will be displayed.
+6. Click the "Restart" option to play again.

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cricket Card Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+        #gameArea {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        #cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .card {
+            padding: 20px;
+            background: #ddd;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .card:hover {
+            background: #ccc;
+        }
+        #status, #over {
+            position: absolute;
+            top: 10px;
+        }
+        #status {
+            left: 10px;
+        }
+        #over {
+            right: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="gameArea">
+    <div id="status">Toss to decide who bats first</div>
+    <div id="over">Over: 0.0</div>
+    <button onclick="toss()">Toss</button>
+    <div id="cards"></div>
+</div>
+
+<script>
+    const cards = [1, 2, 3, 4, 6, 'Wide', 'Catch Out', 'Bold Out'];
+    let currentPlayer = 1;
+    let player1Score = 0, player2Score = 0;
+    let ballsPlayed = 0;
+    let currentOver = 0;
+
+    function toss() {
+        if (Math.random() > 0.5) {
+            currentPlayer = 1;
+        } else {
+            currentPlayer = 2;
+        }
+        document.getElementById('status').innerHTML = `Player ${currentPlayer} will bat first.`;
+        setupGame();
+    }
+
+    function setupGame() {
+        let gameCards = [...cards, ...cards].sort(() => Math.random() - 0.5).slice(0, 8);
+        let cardsHtml = '';
+        gameCards.forEach((_, index) => {
+            cardsHtml += `<button class="card" onclick="playTurn(${index})"></button>`;
+        });
+        document.getElementById('cards').innerHTML = cardsHtml;
+    }
+
+    function playTurn(cardIndex) {
+        let cardValue = cards[Math.floor(Math.random() * cards.length)]; // Simulate card pick
+        if (['Catch Out', 'Bold Out'].includes(cardValue)) {
+            endInnings();
+        } else if (cardValue === 'Wide') {
+            updateScore(1, false);
+            // Player gets another turn for wide but we won't simulate another card pick here for simplicity
+        } else {
+            updateScore(cardValue, true);
+        }
+    }
+
+    function updateScore(runs, countBall = true) {
+        if (currentPlayer === 1) player1Score += runs;
+        else player2Score += runs;
+
+        if (countBall) ballsPlayed++;
+        if (ballsPlayed >= 6) endInnings();
+
+        document.getElementById('status').innerHTML = `Player ${currentPlayer}: ${currentPlayer === 1 ? player1Score : player2Score} runs`;
+        updateOver();
+    }
+
+    function updateOver() {
+        currentOver = Math.floor(ballsPlayed / 6) + (ballsPlayed % 6) / 10;
+        document.getElementById('over').innerHTML = `Over: ${currentOver.toFixed(1)}`;
+    }
+
+    function endInnings() {
+        if (currentPlayer === 1) currentPlayer = 2;
+        else {
+            currentPlayer = 1;
+            // Here you could compare scores and announce the winner
+        }
+        ballsPlayed = 0;
+        updateOver();
+        setupGame();
+        document.getElementById('status').innerHTML = `Player ${currentPlayer}'s turn to bat.`;
+    }
+</script>
+
+</body>
+</html>

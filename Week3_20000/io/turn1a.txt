@@ -1,0 +1,7 @@
+node turn1a.js
+At time t = 1, remaining quantity: 999.9000049998333375
+At time t = 10, remaining quantity: 999.00049983337499167
+At time t = 100, remaining quantity: 990.04983374916805357
+At time t = 1000, remaining quantity: 904.83741803595957316
+At time t = 10000, remaining quantity: 367.8794411714423216
+At time t = 100000, remaining quantity: 0.045399929762484851536

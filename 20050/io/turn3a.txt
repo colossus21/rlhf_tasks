@@ -1,0 +1,63 @@
+Input:
+-----------------------------
+node turn3a.js
+-----------------------------
+output:
+-----------------------------
+Player X's turn:
+Making move: (1, 1)
+  |   |
+---------
+  | X |
+---------
+  |   |
+
+Player O's turn:
+Making move: (0, 0)
+O |   |
+---------
+  | X |
+---------
+  |   |
+
+Player X's turn:
+Making move: (0, 1)
+O | X |
+---------
+  | X |
+---------
+  |   |
+
+Player O's turn:
+Making move: (2, 2)
+O | X |
+---------
+  | X |
+---------
+  |   | O
+
+Player X's turn:
+Making move: (0, 2)
+O | X | X
+---------
+  | X |
+---------
+  |   | O
+
+Player O's turn:
+Making move: (1, 0)
+O | X | X
+---------
+O | X |
+---------
+  |   | O
+
+Player X's turn:
+Making move: (2, 0)
+O | X | X
+---------
+O | X |
+---------
+X |   | O
+Player X wins!
+Making move: (1, 2)

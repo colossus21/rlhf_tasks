@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Murder Mystery</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #001f3f;
+            color: #fff;
+        }
+        .game-container {
+            display: flex;
+            align-items: flex-end;
+            margin-bottom: 20px;
+        }
+        .hotel {
+            display: flex;
+            flex-direction: column;
+            width: 300px;
+            background-color: #333;
+            border: 2px solid #666;
+            margin-top: 100px;
+        }
+        .floor {
+            display: flex;
+            height: 20px;
+            border-top: 1px solid #555;
+        }
+        .room-number {
+            width: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            background-color: #444;
+            color: #ddd;
+        }
+        .window {
+            flex-grow: 1;
+            background-color: #222;
+            margin: 2px;
+            cursor: pointer;
+        }
+        .window.light-on {
+            background-color: #ffff00;
+        }
+        .window.murderer {
+            background-color: #ff4136;
+        }
+        .character {
+            width: 50px;
+            height: 100px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: bottom;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .character-label {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 2px 5px;
+            border-radius: 3px;
+            margin-bottom: 5px;
+        }
+        #mrX {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200"><rect x="40" y="80" width="20" height="120" fill="white"/><circle cx="50" cy="50" r="30" fill="white"/></svg>');
+        }
+        #detective {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 200"><rect x="40" y="80" width="20" height="120" fill="yellow"/><circle cx="50" cy="50" r="30" fill="yellow"/></svg>');
+        }
+        #message {
+            margin-top: 20px;
+            font-size: 18px;
+            text-align: center;
+        }
+        #guessInput {
+            margin-top: 10px;
+            padding: 5px;
+            font-size: 16px;
+        }
+        #guessButton {
+            margin-top: 10px;
+            padding: 5px 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <div id="mrX" class="character">
+        <span class="character-label">Mr. X</span>
+    </div>
+    <div class="hotel" id="hotel"></div>
+    <div id="detective" class="character">
+        <span class="character-label">Detective</span>
+    </div>
+</div>
+<div id="message">Welcome to the Hotel Murder Mystery! Guess the floor where the murderer is hiding.</div>
+<input type="number" id="guessInput" min="1" max="50" placeholder="Enter floor number">
+<button id="guessButton">Guess</button>
+
+<script>
+    const hotel = document.getElementById('hotel');
+    const message = document.getElementById('message');
+    const guessInput = document.getElementById('guessInput');
+    const guessButton = document.getElementById('guessButton');
+    const numFloors = 50;
+    const professions = [
+        'Doctor', 'Lawyer', 'Teacher', 'Engineer', 'Artist', 'Chef', 'Accountant',
+        'Scientist', 'Nurse', 'Pilot', 'Architect', 'Journalist', 'Musician', 'Athlete',
+        'Photographer', 'Dentist', 'Veterinarian', 'Librarian', 'Firefighter', 'Police Officer'
+    ];
+    let murdererFloor;
+
+    function initializeGame() {
+        hotel.innerHTML = '';
+        murdererFloor = Math.floor(Math.random() * numFloors) + 1;
+
+        for (let i = 1; i <= numFloors; i++) {
+            const floor = document.createElement('div');
+            floor.className = 'floor';
+
+            const roomNumber = document.createElement('div');
+            roomNumber.className = 'room-number';
+            roomNumber.textContent = i;
+
+            const window = document.createElement('div');
+            window.className = 'window';
+            window.dataset.floor = i;
+
+            floor.appendChild(roomNumber);
+            floor.appendChild(window);
+            hotel.appendChild(floor);
+        }
+    }
+
+    function checkGuess() {
+        const guess = parseInt(guessInput.value);
+        if (isNaN(guess) || guess < 1 || guess > numFloors) {
+            message.textContent = `Please enter a valid floor number between 1 and ${numFloors}.`;
+            return;
+        }
+
+        const window = hotel.querySelector(`.window[data-floor="${guess}"]`);
+        window.classList.add('light-on');
+
+        if (guess === murdererFloor) {
+            window.classList.add('murderer');
+            message.textContent = "Congratulations! You've found the murderer!";
+            guessButton.disabled = true;
+        } else {
+            const profession = professions[Math.floor(Math.random() * professions.length)];
+            if (guess < murdererFloor) {
+                message.textContent = `The ${profession} lives here! The murderer lives on a higher floor!`;
+            } else {
+                message.textContent = `The ${profession} lives here! The murderer lives on a lower floor!`;
+            }
+        }
+    }
+
+    guessButton.addEventListener('click', checkGuess);
+    initializeGame();
+</script>
+</body>
+</html>

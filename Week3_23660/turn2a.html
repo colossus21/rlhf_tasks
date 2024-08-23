@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mystery Hotel</title>
+    <style>
+        body {
+            background-color: #1a1a2e;
+            font-family: 'Arial', sans-serif;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: start;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        .game-container {
+            margin-top: 100px; /* Space for sky */
+            text-align: center;
+        }
+        .hotel {
+            background: #2c3e50;
+            border: 3px solid #34495e;
+            width: 350px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        .floor {
+            display: flex;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px solid #34495e;
+        }
+        .room-number {
+            width: 50px;
+            text-align: center;
+            color: #ffffff;
+            font-weight: bold;
+        }
+        .window {
+            flex: 1;
+            height: 30px;
+            margin: 2px;
+            background-color: #34495e;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .window.light-on {
+            background-color: #f1c40f;
+        }
+        .window.murderer {
+            background-color: #e74c3c;
+        }
+        .character {
+            width: 60px;
+            display: inline-block;
+            margin: 0 20px;
+        }
+        .label {
+            color: #fff;
+            margin-top: 5px;
+        }
+        #gameFeedback {
+            color: #fff;
+            margin: 10px 0;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <div id="mrX" class="character"><div class="label">Mr. X</div></div>
+    <div class="hotel" id="hotel"></div>
+    <div id="detective" class="character"><div class="label">Detective</div></div>
+    <div id="gameFeedback"></div>
+</div>
+
+<script>
+    const hotel = document.getElementById('hotel');
+    const feedback = document.getElementById('gameFeedback');
+    const professions = ['Doctor', 'Teacher', 'Engineer', 'Artist', 'Chef', 'Lawyer', 'Scientist', 'Musician', 'Athlete', 'Journalist'];
+    let murdererRoom = Math.floor(Math.random() * 50) + 1;
+    let guessed = false;
+
+    // Function to generate professions randomly but ensure 'Murderer' is only once
+    function generateProfessions() {
+        let profs = professions.slice();
+        profs.splice(Math.floor(Math.random() * profs.length), 0, 'Murderer');
+        return profs;
+    }
+
+    const floorProfessions = generateProfessions();
+
+    for (let i = 1; i <= 50; i++) {
+        const floor = document.createElement('div');
+        floor.className = 'floor';
+
+        const roomNumber = document.createElement('div');
+        roomNumber.className = 'room-number';
+        roomNumber.textContent = i;
+
+        const window = document.createElement('div');
+        window.className = 'window';
+        window.onclick = function() {
+            if (guessed) return;
+
+            if (i === murdererRoom) {
+                this.classList.add('murderer');
+                feedback.textContent = "You've caught the Murderer! Mr. X is apprehended.";
+                guessed = true;
+            } else {
+                this.classList.toggle('light-on');
+                let direction = i < murdererRoom ? 'higher' : 'lower';
+                feedback.textContent = `The ${floorProfessions[i-1]} lives here! The murderer lives on a ${direction} floor!`;
+            }
+        };
+
+        floor.appendChild(roomNumber);
+        floor.appendChild(window);
+        hotel.appendChild(floor);
+    }
+</script>
+</body>
+</html>

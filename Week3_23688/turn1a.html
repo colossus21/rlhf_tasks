@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wild Tic-Tac-Toe (9x9)</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-gap: 10px;
+            background-color: #000;
+            padding: 10px;
+        }
+        .sub-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-gap: 2px;
+            background-color: #000;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .win-line {
+            position: absolute;
+            background-color: #ff0000;
+        }
+    </style>
+</head>
+<body>
+<div class="game-board" id="gameBoard"></div>
+
+<script>
+    const gameBoard = document.getElementById('gameBoard');
+    let currentPlayer = 'O';
+
+    // Create the 9x9 grid
+    for (let i = 0; i < 9; i++) {
+        const subGrid = document.createElement('div');
+        subGrid.classList.add('sub-grid');
+        for (let j = 0; j < 9; j++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.dataset.row = Math.floor(i / 3) * 3 + Math.floor(j / 3);
+            cell.dataset.col = (i % 3) * 3 + (j % 3);
+            cell.addEventListener('click', handleCellClick);
+            subGrid.appendChild(cell);
+        }
+        gameBoard.appendChild(subGrid);
+    }
+
+    function handleCellClick(event) {
+        const cell = event.target;
+        if (cell.textContent === '') {
+            cell.textContent = currentPlayer;
+            checkWin(parseInt(cell.dataset.row), parseInt(cell.dataset.col));
+            currentPlayer = currentPlayer === 'O' ? 'X' : 'O';
+        }
+    }
+
+    function checkWin(row, col) {
+        const subGridRow = Math.floor(row / 3);
+        const subGridCol = Math.floor(col / 3);
+        const subGrid = gameBoard.children[subGridRow * 3 + subGridCol];
+        const cells = subGrid.children;
+
+        // Check horizontal
+        for (let i = 0; i < 3; i++) {
+            if (cells[i * 3].textContent === currentPlayer &&
+                cells[i * 3 + 1].textContent === currentPlayer &&
+                cells[i * 3 + 2].textContent === currentPlayer) {
+                drawWinLine(subGrid, 'horizontal', i);
+                return;
+            }
+        }
+
+        // Check vertical
+        for (let i = 0; i < 3; i++) {
+            if (cells[i].textContent === currentPlayer &&
+                cells[i + 3].textContent === currentPlayer &&
+                cells[i + 6].textContent === currentPlayer) {
+                drawWinLine(subGrid, 'vertical', i);
+                return;
+            }
+        }
+
+        // Check diagonal
+        if (cells[0].textContent === currentPlayer &&
+            cells[4].textContent === currentPlayer &&
+            cells[8].textContent === currentPlayer) {
+            drawWinLine(subGrid, 'diagonal', 0);
+            return;
+        }
+
+        if (cells[2].textContent === currentPlayer &&
+            cells[4].textContent === currentPlayer &&
+            cells[6].textContent === currentPlayer) {
+            drawWinLine(subGrid, 'diagonal', 1);
+            return;
+        }
+    }
+
+    function drawWinLine(subGrid, direction, index) {
+        const line = document.createElement('div');
+        line.classList.add('win-line');
+        const rect = subGrid.getBoundingClientRect();
+
+        switch (direction) {
+            case 'horizontal':
+                line.style.width = '150px';
+                line.style.height = '2px';
+                line.style.top = `${rect.top + 25 + index * 50}px`;
+                line.style.left = `${rect.left}px`;
+                break;
+            case 'vertical':
+                line.style.width = '2px';
+                line.style.height = '150px';
+                line.style.top = `${rect.top}px`;
+                line.style.left = `${rect.left + 25 + index * 50}px`;
+                break;
+            case 'diagonal':
+                line.style.width = '2px';
+                line.style.height = '212px';
+                line.style.top = `${rect.top}px`;
+                line.style.left = `${rect.left + 75}px`;
+                line.style.transformOrigin = 'top left';
+                line.style.transform = index === 0 ? 'rotate(45deg)' : 'rotate(-45deg)';
+                break;
+        }
+
+        document.body.appendChild(line);
+    }
+</script>
+</body>
+</html>

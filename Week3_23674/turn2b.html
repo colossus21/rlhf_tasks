@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elemental Clash</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #game-container {
+            text-align: center;
+            position: relative;
+        }
+        .choice {
+            display: inline-block;
+            margin: 10px;
+            cursor: pointer;
+        }
+        .choice img {
+            width: 100px;
+            height: 100px;
+        }
+        #countdown, #result {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+        #battle-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 400px;
+            margin: 0 auto;
+        }
+        #player-choice, #ai-choice {
+            width: 150px;
+            height: 150px;
+            transition: all 0.5s ease-in-out;
+        }
+        #player-choice {
+            transform: translateX(-200px);
+        }
+        #ai-choice {
+            transform: translateX(200px);
+        }
+        .revealed {
+            transform: translateX(0) !important;
+        }
+        .winner {
+            transform: translate(-50%, -50%) scale(1.2) !important;
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+        }
+        #how-to-play {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        #restart {
+            display: none;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div id="game-container">
+    <button id="how-to-play">How to Play</button>
+    <h1 id="game-title">Choose your move:</h1>
+    <div id="choices">
+        <div class="choice" onclick="makeChoice('earthquake')">
+            <img src="earthquake.gif" alt="Earthquake">
+            <p>Earthquake</p>
+        </div>
+        <div class="choice" onclick="makeChoice('tsunami')">
+            <img src="tsunami.gif" alt="Tsunami">
+            <p>Tsunami</p>
+        </div>
+        <div class="choice" onclick="makeChoice('firestorm')">
+            <img src="firestorm.gif" alt="Firestorm">
+            <p>Firestorm</p>
+        </div>
+    </div>
+    <div id="countdown"></div>
+    <div id="battle-container">
+        <img id="player-choice" src="" alt="Player's choice">
+        <img id="ai-choice" src="" alt="AI's choice">
+    </div>
+    <div id="result"></div>
+    <button id="restart" onclick="restartGame()">Restart</button>
+</div>
+
+<div id="how-to-play-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>How to Play Elemental Clash</h2>
+        <p>1. Choose your element: Earthquake, Tsunami, or Firestorm.</p>
+        <p>2. Wait for the countdown to finish.</p>
+        <p>3. See the AI's choice and find out who wins!</p>
+        <p>Earthquake beats Firestorm, Tsunami beats Earthquake, Firestorm beats Tsunami.</p>
+    </div>
+</div>
+
+<audio id="earthquake-sound" src="earthquake.wav"></audio>
+<audio id="tsunami-sound" src="tsunami.wav"></audio>
+<audio id="firestorm-sound" src="firestorm.wav"></audio>
+<audio id="tick-sound" src="tick.wav"></audio>
+
+<script>
+    const choices = ['earthquake', 'tsunami', 'firestorm'];
+    let playerChoice, aiChoice;
+
+    function makeChoice(choice) {
+        playerChoice = choice;
+        document.getElementById(`${choice}-sound`).play();
+        document.getElementById('choices').style.display = 'none';
+        document.getElementById('game-title').textContent = 'Elemental Showdown';
+        startCountdown();
+    }
+
+    function startCountdown() {
+        let count = 3;
+        const countdownElement = document.getElementById('countdown');
+        const tickSound = document.getElementById('tick-sound');
+
+        const countdownInterval = setInterval(() => {
+            countdownElement.textContent = count;
+            tickSound.play();
+            count--;
+
+            if (count < 0) {
+                clearInterval(countdownInterval);
+                countdownElement.textContent = '';
+                revealChoices();
+            }
+        }, 1000);
+    }
+
+    function revealChoices() {
+        aiChoice = choices[Math.floor(Math.random() * choices.length)];
+
+        const playerChoiceElement = document.getElementById('player-choice');
+        const aiChoiceElement = document.getElementById('ai-choice');
+
+        playerChoiceElement.src = `${playerChoice}.gif`;
+        aiChoiceElement.src = `${aiChoice}.gif`;
+
+        setTimeout(() => {
+            playerChoiceElement.classList.add('revealed');
+            aiChoiceElement.classList.add('revealed');
+        }, 100);
+
+        setTimeout(determineWinner, 1000);
+    }
+
+    function determineWinner() {
+        const resultElement = document.getElementById('result');
+        const playerChoiceElement = document.getElementById('player-choice');
+        const aiChoiceElement = document.getElementById('ai-choice');
+
+        if (playerChoice === aiChoice) {
+            resultElement.textContent = "It's a tie!";
+        } else if (
+            (playerChoice === 'earthquake' && aiChoice === 'firestorm') ||
+            (playerChoice === 'tsunami' && aiChoice === 'earthquake') ||
+            (playerChoice === 'firestorm' && aiChoice === 'tsunami')
+        ) {
+            resultElement.textContent = "You win!";
+            playerChoiceElement.classList.add('winner');
+            setTimeout(() => aiChoiceElement.style.display = 'none', 3000);
+        } else {
+            resultElement.textContent = "AI wins!";
+            aiChoiceElement.classList.add('winner');
+            setTimeout(() => playerChoiceElement.style.display = 'none', 3000);
+        }
+
+        document.getElementById('restart').style.display = 'inline-block';
+    }
+
+    function restartGame() {
+        document.getElementById('game-title').textContent = 'Choose your move:';
+        document.getElementById('choices').style.display = 'block';
+        document.getElementById('player-choice').className = '';
+        document.getElementById('ai-choice').className = '';
+        document.getElementById('player-choice').style.display = 'inline-block';
+        document.getElementById('ai-choice').style.display = 'inline-block';
+        document.getElementById('result').textContent = '';
+        document.getElementById('restart').style.display = 'none';
+    }
+
+    // How to Play modal
+    const modal = document.getElementById('how-to-play-modal');
+    const btn = document.getElementById('how-to-play');
+    const span = document.getElementsByClassName('close')[0];
+
+    btn.onclick = function() {
+        modal.style.display = 'block';
+    }
+
+    span.onclick = function() {
+        modal.style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
+</script>
+</body>
+</html>

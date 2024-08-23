@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wild Tic-Tac-Toe (9x9)</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        #game {
+            display: grid;
+            grid-template-columns: repeat(9, 50px);
+            grid-template-rows: repeat(9, 50px);
+            gap: 1px;
+            background-color: #000;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+            position: relative;
+        }
+        .thick-border-right {
+            border-right: 3px solid #000;
+        }
+        .thick-border-bottom {
+            border-bottom: 3px solid #000;
+        }
+        .winner-line {
+            position: absolute;
+            background-color: #ff0000;
+        }
+    </style>
+</head>
+<body>
+<div id="game"></div>
+
+<script>
+    const game = document.getElementById('game');
+    let currentPlayer = 'O';
+
+    // Create the 9x9 grid with thick borders around 3x3 subgrids
+    for (let row = 0; row < 9; row++) {
+        for (let col = 0; col < 9; col++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.dataset.row = row;
+            cell.dataset.col = col;
+
+            if ((col + 1) % 3 === 0 && col !== 8) cell.classList.add('thick-border-right');
+            if ((row + 1) % 3 === 0 && row !== 8) cell.classList.add('thick-border-bottom');
+
+            cell.addEventListener('click', handleClick);
+            game.appendChild(cell);
+        }
+    }
+
+    function handleClick(e) {
+        const cell = e.target;
+        if (cell.textContent === '') {
+            cell.textContent = currentPlayer;
+            checkWinner(cell);
+            currentPlayer = currentPlayer === 'O' ? 'X' : 'O';
+        }
+    }
+
+    function checkWinner(cell) {
+        const row = parseInt(cell.dataset.row);
+        const col = parseInt(cell.dataset.col);
+        const subgridRow = Math.floor(row / 3) * 3;
+        const subgridCol = Math.floor(col / 3) * 3;
+
+        // Check horizontal
+        if (checkLine(subgridRow, subgridCol, 0, 1)) return;
+
+        // Check vertical
+        if (checkLine(subgridRow, subgridCol, 1, 0)) return;
+
+        // Check diagonal
+        if (checkLine(subgridRow, subgridCol, 1, 1)) return;
+
+        // Check anti-diagonal
+        if (checkLine(subgridRow, subgridCol, 1, -1)) return;
+    }
+
+    function checkLine(startRow, startCol, rowStep, colStep) {
+        const cells = [];
+        for (let i = 0; i < 3; i++) {
+            const cell = document.querySelector(
+                `.cell[data-row="${startRow + i * rowStep}"][data-col="${startCol + i * colStep}"]`
+            );
+            cells.push(cell);
+        }
+
+        if (cells.every(cell => cell.textContent === currentPlayer)) {
+            drawWinnerLine(cells[0], cells[2]);
+            return true;
+        }
+        return false;
+    }
+
+    function drawWinnerLine(start, end) {
+        const line = document.createElement('div');
+        line.classList.add('winner-line');
+
+        const rect1 = start.getBoundingClientRect();
+        const rect2 = end.getBoundingClientRect();
+
+        const angle = Math.atan2(rect2.top - rect1.top, rect2.left - rect1.left);
+        const length = Math.sqrt(
+            Math.pow(rect2.left - rect1.left, 2) + Math.pow(rect2.top - rect1.top, 2)
+        );
+
+        line.style.width = `${length}px`;
+        line.style.height = '4px';
+        line.style.position = 'absolute';
+        line.style.top = `${rect1.top + rect1.height / 2 - 2}px`;
+        line.style.left = `${rect1.left + rect1.width / 2}px`;
+        line.style.transform = `rotate(${angle}rad)`;
+        line.style.transformOrigin = '0 50%';
+
+        document.body.appendChild(line);
+    }
+</script>
+</body>
+</html>

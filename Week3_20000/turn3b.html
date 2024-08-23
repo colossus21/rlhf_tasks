@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radioactive Decay Simulation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/decimal.js/10.3.1/decimal.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+<script>
+    let particles = [];
+    const N0 = 1000; // Initial number of particles
+    const lambda = 0.0001; // Decay constant
+    let time = 0;
+    let remainingParticles = N0;
+
+    function setup() {
+        createCanvas(800, 600);
+        for (let i = 0; i < N0; i++) {
+            particles.push(new Particle(random(width), random(height)));
+        }
+    }
+
+    function draw() {
+        background(240);
+
+        // Update time
+        time += 1/60; // Assuming 60 fps
+
+        // Calculate remaining particles
+        remainingParticles = Math.round(radioactiveDecay(N0, lambda, time));
+
+        // Update and display particles
+        for (let i = particles.length - 1; i >= 0; i--) {
+            particles[i].update();
+            particles[i].display();
+            if (particles[i].isDead() && particles.length > remainingParticles) {
+                particles.splice(i, 1);
+            }
+        }
+
+        // Display clock
+        displayClock();
+
+        // Display particle count
+        displayParticleCount();
+    }
+
+    function radioactiveDecay(N0, lambda, t) {
+        const dN0 = new Decimal(N0);
+        const dLambda = new Decimal(lambda);
+        const dt = new Decimal(t);
+        return dN0.mul(dLambda.mul(dt).negated().exp()).toNumber();
+    }
+
+    class Particle {
+        constructor(x, y) {
+            this.pos = createVector(x, y);
+            this.vel = p5.Vector.random2D().mult(2);
+            this.size = 8;
+            this.lifespan = 255;
+        }
+
+        update() {
+            this.pos.add(this.vel);
+            this.lifespan -= 0.2;
+
+            // Bounce off edges
+            if (this.pos.x < 0 || this.pos.x > width) this.vel.x *= -1;
+            if (this.pos.y < 0 || this.pos.y > height) this.vel.y *= -1;
+        }
+
+        display() {
+            noStroke();
+            fill(255, 0, 0, this.lifespan);
+            ellipse(this.pos.x, this.pos.y, this.size);
+        }
+
+        isDead() {
+            return this.lifespan < 0;
+        }
+    }
+
+    function displayClock() {
+        let seconds = Math.floor(time % 60);
+        let minutes = Math.floor((time / 60) % 60);
+        let hours = Math.floor(time / 3600);
+
+        let timeString = nf(hours, 2) + ':' + nf(minutes, 2) + ':' + nf(seconds, 2);
+
+        fill(0);
+        textAlign(RIGHT, BOTTOM);
+        textSize(24);
+        text(timeString, width - 20, height - 20);
+    }
+
+    function displayParticleCount() {
+        fill(0);
+        textAlign(LEFT, BOTTOM);
+        textSize(24);
+        text("Particles: " + remainingParticles, 20, height - 20);
+    }
+</script>
+</body>
+</html>

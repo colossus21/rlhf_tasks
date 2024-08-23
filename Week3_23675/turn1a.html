@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cross the Road Game</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #333;
+        }
+        #gameCanvas {
+            background: #000;
+            border: 2px solid #fff;
+        }
+    </style>
+</head>
+<body>
+<canvas id="gameCanvas" width="400" height="600"></canvas>
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Player properties
+    let player = {
+        x: canvas.width / 2 - 15,
+        y: canvas.height - 30,
+        width: 30,
+        height: 30,
+        dy: 5
+    };
+
+    // Car properties
+    let cars = [];
+    let carSpeed = 2;
+    let numberOfRoads = 1;
+    let roadHeight = canvas.height / (numberOfRoads + 1);
+
+    function createCar() {
+        const carWidth = Math.random() * 100 + 50; // Random width for cars
+        cars.push({
+            x: Math.random() * (canvas.width - carWidth),
+            y: -100, // Start off screen
+            width: carWidth,
+            height: 20,
+            speed: Math.random() * 2 + carSpeed // Random speed
+        });
+    }
+
+    // Game loop
+    function draw() {
+        // Clear canvas
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw player
+        ctx.fillStyle = 'white';
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+
+        // Draw and move cars
+        ctx.fillStyle = 'red';
+        cars.forEach((car, index) => {
+            ctx.fillRect(car.x, car.y, car.width, car.height);
+            car.y += car.speed;
+
+            // Remove car if it goes off screen and create new one
+            if (car.y > canvas.height) {
+                cars.splice(index, 1);
+                createCar();
+            }
+
+            // Collision detection
+            if (
+                player.x < car.x + car.width &&
+                player.x + player.width > car.x &&
+                player.y < car.y + car.height &&
+                player.y + player.height > car.y
+            ) {
+                alert('Game Over!');
+                document.location.reload(); // Reset game
+            }
+        });
+
+        // Increase road and difficulty
+        if (player.y <= roadHeight * numberOfRoads - roadHeight) {
+            numberOfRoads++;
+            roadHeight = canvas.height / (numberOfRoads + 1);
+            carSpeed += 0.5; // Increase difficulty
+            player.y = canvas.height - 30; // Reset player position
+        }
+
+        // Player movement
+        if (player.y > 0) player.y -= player.dy;
+    }
+
+    // Controls
+    document.addEventListener('keydown', function(e) {
+        switch(e.keyCode) {
+            case 37: // left arrow
+                if (player.x > 0) player.x -= 10;
+                break;
+            case 39: // right arrow
+                if (player.x < canvas.width - player.width) player.x += 10;
+                break;
+        }
+    });
+
+    // Game initialization
+    function init() {
+        for (let i = 0; i < 3; i++) createCar();
+        setInterval(draw, 1000/60); // Run draw function approximately 60 times per second
+    }
+
+    init();
+</script>
+</body>
+</html>

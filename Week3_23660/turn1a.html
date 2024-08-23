@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hotel Murder Mystery</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        background-color: #f0f0f0;
+    }
+    .hotel {
+        display: flex;
+        flex-direction: column-reverse;
+        width: 80%;
+        max-width: 600px;
+        border: 2px solid #333;
+        background: #fff;
+    }
+    .floor {
+        display: flex;
+        justify-content: space-around;
+        border-bottom: 1px solid #ccc;
+    }
+    .room {
+        width: 10px;
+        height: 50px;
+        background-color: #d3d3d3; /* Light off color */
+        margin: 5px;
+        cursor: pointer;
+    }
+    .room.on {
+        background-color: yellow; /* Light on color */
+    }
+    .number {
+        text-align: center;
+        padding: 5px;
+    }
+    #characters {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px;
+    }
+    #mrX, #detective {
+        font-weight: bold;
+    }
+</style>
+</head>
+<body>
+
+<div id="game">
+    <div class="hotel" id="hotel"></div>
+    <div id="characters">
+        <span id="mrX">Mr. X</span>
+        <span id="detective">Detective</span>
+    </div>
+</div>
+
+<script>
+    const hotel = document.getElementById('hotel');
+    const murdererRoom = Math.floor(Math.random() * 50) + 1;
+    let currentGuess = 0;
+
+    // Generate hotel floors
+    for(let i = 1; i <= 50; i++) {
+        let floor = document.createElement('div');
+        floor.className = 'floor';
+        
+        let numberDiv = document.createElement('div');
+        numberDiv.className = 'number';
+        numberDiv.textContent = i;
+        floor.appendChild(numberDiv);
+
+        for(let j = 0; j < 5; j++) {
+            let room = document.createElement('div');
+            room.className = 'room';
+            room.onclick = function() { 
+                this.classList.toggle('on');
+            };
+            floor.appendChild(room);
+        }
+        hotel.appendChild(floor);
+    }
+
+    // Detective guessing mechanism
+    document.addEventListener('click', function(e) {
+        if(e.target.className.includes('room')) {
+            const roomNumber = parseInt(e.target.parentElement.firstChild.textContent);
+            if (roomNumber === murdererRoom) {
+                alert('You found the murderer!');
+            } else {
+                alert(roomNumber > murdererRoom ? 'Lower' : 'Higher');
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

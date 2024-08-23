@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radioactive Decay Simulation</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+            color: #fff;
+            font-family: monospace;
+        }
+        #info {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            text-align: right;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/decimal.js/decimal.min.js"></script>
+</head>
+<body>
+
+<script>
+    let particles = [];
+    const N0 = 1000; // Initial number of particles
+    const lambda = new Decimal('0.0001'); // Decay constant using Decimal.js
+    let time = 0;
+    const secondsPerFrame = 1 / 60; // Assuming 60 frames per second
+
+    function setup() {
+        createCanvas(windowWidth, windowHeight);
+        for (let i = 0; i < N0; i++) {
+            particles.push({
+                x: random(width),
+                y: random(height)
+            });
+        }
+    }
+
+    function draw() {
+        // Semi-transparent background for motion blur effect
+        background(0, 50);
+
+        // Update time
+        time += secondsPerFrame;
+
+        // Calculate the remaining number of particles using the radioactiveDecay function
+        let remainingParticles = Math.floor(radioactiveDecay(N0, lambda, time));
+
+        // Remove excess particles randomly
+        while (particles.length > remainingParticles) {
+            particles.splice(floor(random(particles.length)), 1);
+        }
+
+        // Update and display particles
+        for (let p of particles) {
+            // Move particle
+            p.x += random(-2, 2);
+            p.y += random(-2, 2);
+
+            // Keep particle within the screen
+            p.x = (p.x + width) % width;
+            p.y = (p.y + height) % height;
+
+            // Draw particle
+            fill(255, 255, 0); // Yellow for remaining particles
+            noStroke();
+            ellipse(p.x, p.y, 5, 5);
+        }
+
+        // Display the clock and particle count using p5.js
+        displayInfo();
+    }
+
+    // Radioactive decay function using Decimal.js for precise calculations
+    function radioactiveDecay(N0, lambda, t) {
+        const dN0 = new Decimal(N0);
+        const dLambda = new Decimal(lambda);
+        const dt = new Decimal(t);
+        return dN0.mul(dLambda.mul(dt).neg().exp());
+    }
+
+    // Format time as HH:MM:SS
+    function formatTime(timeInSeconds) {
+        let hours = Math.floor(timeInSeconds / 3600);
+        let minutes = Math.floor((timeInSeconds % 3600) / 60);
+        let seconds = Math.floor(timeInSeconds % 60);
+
+        return `${nf(hours, 2)}:${nf(minutes, 2)}:${nf(seconds, 2)}`;
+    }
+
+    // Display clock and particle count at the bottom right of the screen
+    function displayInfo() {
+        let formattedTime = formatTime(time);
+
+        fill(255);
+        textSize(24);
+        textAlign(RIGHT, BOTTOM);
+        text(`Time: ${formattedTime}`, width - 20, height - 20);
+        text(`Particles left: ${particles.length}`, width - 20, height - 50);
+    }
+
+    // Reset canvas size on window resize
+    function windowResized() {
+        resizeCanvas(windowWidth, windowHeight);
+    }
+
+</script>
+</body>
+</html>

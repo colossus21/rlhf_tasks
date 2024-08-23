@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Row a Boat</title>
+    <style>
+        canvas { border: 1px solid black; }
+        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f0f0; }
+    </style>
+</head>
+<body>
+<canvas id="gameCanvas" width="400" height="600"></canvas>
+<script>
+    // Game setup
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Player (Boat) properties
+    let boat = {
+        x: canvas.width / 2 - 25,
+        y: canvas.height - 70,
+        width: 50,
+        height: 50,
+        dx: 0,
+        speed: 2,
+        resistance: 0.95 // To simulate water resistance when moving left/right
+    };
+
+    // Obstacle properties
+    let obstacles = [];
+    let spawnInterval = 1500; // Time in ms between obstacle spawns
+    let timeSinceLastSpawn = 0;
+
+    // Game variables
+    let score = 0;
+    let gameLoop;
+    let gameOver = false;
+
+    function drawBoat() {
+        ctx.fillStyle = 'brown';
+        ctx.fillRect(boat.x, boat.y, boat.width, boat.height);
+    }
+
+    function createObstacle() {
+        const width = Math.random() * (100 - 30) + 30;
+        obstacles.push({
+            x: Math.random() * (canvas.width - width),
+            y: -20,
+            width: width,
+            height: 20,
+            speed: 1 + score / 1000 // Speed increases with score
+        });
+    }
+
+    function drawObstacles() {
+        ctx.fillStyle = 'red';
+        obstacles.forEach(ob => {
+            ctx.fillRect(ob.x, ob.y, ob.width, ob.height);
+        });
+    }
+
+    function moveBoat() {
+        boat.x += boat.dx * boat.speed;
+        boat.dx *= boat.resistance; // Resistance to horizontal movement
+
+        // Keep boat within canvas
+        if (boat.x < 0) boat.x = 0;
+        if (boat.x + boat.width > canvas.width) boat.x = canvas.width - boat.width;
+    }
+
+    function moveObstacles() {
+        for(let i = obstacles.length - 1; i >= 0; i--) {
+            obstacles[i].y += obstacles[i].speed;
+            if(obstacles[i].y > canvas.height) {
+                obstacles.splice(i, 1);
+            }
+        }
+    }
+
+    function checkCollisions() {
+        obstacles.forEach(ob => {
+            if(boat.x < ob.x + ob.width &&
+                boat.x + boat.width > ob.x &&
+                boat.y < ob.y + ob.height &&
+                boat.y + boat.height > ob.y) {
+                gameOver = true;
+            }
+        });
+    }
+
+    function updateScore() {
+        if (!gameOver) score += 1;
+    }
+
+    function game() {
+        if (gameOver) {
+            clearInterval(gameLoop);
+            ctx.fillStyle = 'black';
+            ctx.font = '40px Arial';
+            ctx.fillText('Game Over', canvas.width / 2 - 100, canvas.height / 2);
+            ctx.font = '20px Arial';
+            ctx.fillText('Score: ' + score, canvas.width / 2 - 50, canvas.height / 2 + 40);
+            return;
+        }
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        timeSinceLastSpawn += 16; // Assuming roughly 60FPS
+        if(timeSinceLastSpawn > spawnInterval) {
+            createObstacle();
+            timeSinceLastSpawn = 0;
+        }
+
+        drawBoat();
+        drawObstacles();
+        moveBoat();
+        moveObstacles();
+        checkCollisions();
+        updateScore();
+
+        ctx.fillStyle = 'black';
+        ctx.fillText('Score: ' + score, 10, 20);
+    }
+
+    // Event listeners for boat movement
+    document.addEventListener('keydown', function(e) {
+        if(e.key === 'ArrowLeft') boat.dx = -1;
+        if(e.key === 'ArrowRight') boat.dx = 1;
+    });
+
+    document.addEventListener('keyup', function(e) {
+        if(['ArrowLeft', 'ArrowRight'].includes(e.key)) boat.dx = 0;
+    });
+
+    // Start game
+    gameLoop = setInterval(game, 16);
+
+</script>
+</body>
+</html>

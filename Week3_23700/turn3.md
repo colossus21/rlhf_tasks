@@ -1,0 +1,335 @@
+I'll implement these improvements to enhance the game further. Here's the updated version with your requested changes:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Row a Boat</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        #gameContainer {
+            position: relative;
+        }
+        canvas {
+            border: 2px solid #333;
+        }
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px;
+            display: none;
+        }
+        #restartButton {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #highScore {
+            margin-top: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div id="gameContainer">
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    <div id="gameOver">
+        <h2>Game Over</h2>
+        <p>Your score: <span id="finalScore"></span></p>
+        <button id="restartButton">Restart Game</button>
+    </div>
+</div>
+<div id="highScore">High Score: 0</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const gameOverScreen = document.getElementById('gameOver');
+    const finalScoreSpan = document.getElementById('finalScore');
+    const restartButton = document.getElementById('restartButton');
+    const highScoreElement = document.getElementById('highScore');
+
+    let boat;
+    let obstacles;
+    let score;
+    let highScore;
+    let gameOver;
+    let boatImage;
+    let bgMusic;
+    let deathSound;
+    let difficultyMultiplier;
+
+    function initGame() {
+        boat = {
+            x: canvas.width / 2,
+            y: canvas.height - 50,
+            width: 40,
+            height: 60,
+            speed: 5
+        };
+
+        obstacles = [];
+        score = 0;
+        gameOver = false;
+        difficultyMultiplier = 1;
+
+        gameOverScreen.style.display = 'none';
+
+        highScore = localStorage.getItem('highScore') || 0;
+        highScoreElement.textContent = `High Score: ${highScore}`;
+
+        bgMusic.currentTime = 0;
+        bgMusic.play();
+    }
+
+    function loadAssets() {
+        return Promise.all([
+            loadBoatImage(),
+            loadAudio('bg.wav').then(audio => bgMusic = audio),
+            loadAudio('death.wav').then(audio => deathSound = audio)
+        ]);
+    }
+
+    function loadBoatImage() {
+        return new Promise((resolve) => {
+            boatImage = new Image();
+            boatImage.src = 'boat.png';
+            boatImage.onload = resolve;
+        });
+    }
+
+    function loadAudio(src) {
+        return new Promise((resolve) => {
+            const audio = new Audio(src);
+            audio.addEventListener('canplaythrough', () => resolve(audio), false);
+        });
+    }
+
+    function drawWater() {
+        ctx.fillStyle = '#ADD8E6';  // Light blue for water
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.strokeStyle = '#87CEEB';
+        for (let i = 0; i < canvas.height; i += 20) {
+            ctx.beginPath();
+            ctx.moveTo(0, i);
+            for (let j = 0; j < canvas.width; j += 20) {
+                ctx.lineTo(j + 10, i + Math.sin(i + j * 0.1) * 5);
+            }
+            ctx.stroke();
+        }
+    }
+
+    function drawBoat() {
+        ctx.save();
+        ctx.translate(boat.x + boat.width / 2, boat.y + boat.height / 2);
+        ctx.rotate(0);  // No rotation, boat points upwards
+        ctx.drawImage(boatImage, -boat.width / 2, -boat.height / 2, boat.width, boat.height);
+        ctx.restore();
+    }
+
+    function drawObstacles() {
+        obstacles.forEach(obstacle => {
+            ctx.fillStyle = obstacle.color;
+            if (obstacle.type === 'rock') {
+                ctx.beginPath();
+                ctx.arc(obstacle.x + obstacle.width / 2, obstacle.y + obstacle.height / 2, obstacle.width / 2, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (obstacle.type === 'plank') {
+                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            } else if (obstacle.type === 'iceberg') {
+                ctx.fillStyle = 'blue';  // Make iceberg blue
+                ctx.beginPath();
+                ctx.moveTo(obstacle.x, obstacle.y + obstacle.height);
+                ctx.lineTo(obstacle.x + obstacle.width / 2, obstacle.y);
+                ctx.lineTo(obstacle.x + obstacle.width, obstacle.y + obstacle.height);
+                ctx.closePath();
+                ctx.fill();
+            }
+        });
+    }
+
+    function moveBoat(dx, dy) {
+        boat.x += dx * boat.speed;
+        boat.y += dy * boat.speed * 0.5;
+
+        boat.x = Math.max(0, Math.min(canvas.width - boat.width, boat.x));
+        boat.y = Math.max(0, Math.min(canvas.height - boat.height, boat.y));
+    }
+
+    function createObstacle() {
+        const types = ['rock', 'plank', 'iceberg'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        let width, height, color;
+
+        switch (type) {
+            case 'rock':
+                width = height = 20 + Math.random() * 10;  // Smaller rocks
+                color = 'gray';
+                break;
+            case 'plank':
+                width = 60 + Math.random() * 20;  // Medium-sized wood planks
+                height = 20;
+                color = 'brown';
+                break;
+            case 'iceberg':
+                width = height = 50 + Math.random() * 30;  // Largest icebergs
+                color = 'lightblue';
+                break;
+        }
+
+        const obstacle = {
+            x: Math.random() * (canvas.width - width),
+            y: -height,
+            width: width,
+            height: height,
+            speed: (1 + Math.random() * 1.5) * difficultyMultiplier, // Adjusted speed
+            type: type,
+            color: color
+        };
+        obstacles.push(obstacle);
+    }
+
+    function updateObstacles() {
+        obstacles.forEach(obstacle => {
+            obstacle.y += obstacle.speed;
+        });
+
+        obstacles = obstacles.filter(obstacle => obstacle.y < canvas.height);
+    }
+
+    function checkCollision() {
+        return obstacles.some(obstacle =>
+                boat.x < obstacle.x + obstacle.width &&
+                boat.x + boat.width > obstacle.x &&
+                boat.y < obstacle.y + obstacle.height &&
+                boat.y + boat.height > obstacle.y
+        );
+    }
+
+    function drawScore() {
+        ctx.fillStyle = 'black';
+        ctx.font = '20px Arial';
+        ctx.fillText(`Score: ${score}`, 10, 30);
+    }
+
+    function gameLoop() {
+        if (gameOver) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        drawWater();
+        drawBoat();
+        drawObstacles();
+        updateObstacles();
+        drawScore();
+
+        if (checkCollision()) {
+            gameOver = true;
+            finalScoreSpan.textContent = score;
+            gameOverScreen.style.display = 'block';
+            bgMusic.pause();
+            deathSound.play();
+
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('highScore', highScore);
+                highScoreElement.textContent = `High Score: ${highScore}`;
+            }
+            return;
+        }
+
+        if (Math.random() < 0.02) {
+            createObstacle();
+        }
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (gameOver) return;
+
+        switch (e.key) {
+            case 'ArrowLeft':
+                moveBoat(-1, 0);
+                break;
+            case 'ArrowRight':
+                moveBoat(1, 0);
+                break;
+            case 'ArrowUp':
+                moveBoat(0, -1);
+                break;
+            case 'ArrowDown':
+                moveBoat(0, 1);
+                break;
+        }
+    });
+
+    restartButton.addEventListener('click', () => {
+        initGame();
+        gameLoop();
+    });
+
+    async function startGame() {
+        await loadAssets();
+        initGame();
+        gameLoop();
+
+        setInterval(() => {
+            if (!gameOver) {
+                score++;
+                difficultyMultiplier = 1 + score / 100; // Increase difficulty over time
+            }
+        }, 1000);
+    }
+
+    startGame();
+</script>
+</body>
+</html>
+```
+
+Here are the changes I've made to address your requests:
+
+1. High Score System:
+    - Added a high score display below the game canvas.
+    - The high score is stored in local storage and updated when beaten.
+
+2. Increasing Difficulty:
+    - Introduced a `difficultyMultiplier` that increases as the score goes up.
+    - Obstacle speed is now multiplied by this factor, making the game progressively harder.
+
+3. Audio:
+    - Added background music ('bg.wav') that plays during the game.
+    - Added a death sound ('death.wav') that plays when the boat crashes.
+
+To use this updated version:
+
+1. Save the HTML file.
+2. Place 'boat.png', 'bg.wav', and 'death.wav' in the same directory as the HTML file.
+3. Open the HTML file in a web browser to play the game.
+
+Make sure you have the following files in your game directory:
+- boat.png (image of the boat)
+- bg.wav (background music)
+- death.wav (sound played on collision)
+
+The game now features a persistent high score, gradually increasing difficulty, and audio feedback. The background music will play continuously during gameplay, and the death sound will play when the boat collides with an obstacle. The difficulty increases slowly over time, providing a more challenging experience as the player's score grows.

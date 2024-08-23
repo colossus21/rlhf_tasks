@@ -1,0 +1,258 @@
+I've corrected the issue and implemented the additional features you requested. Here's the updated full HTML code:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Cricket Card Game</title>
+   <style>
+      body {
+         font-family: Arial, sans-serif;
+         display: flex;
+         flex-direction: column;
+         align-items: center;
+         padding: 20px;
+      }
+      #game-info {
+         display: flex;
+         justify-content: space-between;
+         width: 100%;
+         margin-bottom: 20px;
+      }
+      #cards {
+         display: grid;
+         grid-template-columns: repeat(4, 1fr);
+         gap: 10px;
+         margin-bottom: 20px;
+      }
+      .card {
+         width: 100px;
+         height: 150px;
+         background-color: blue;
+         border: 1px solid #ccc;
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         font-size: 24px;
+         cursor: pointer;
+         color: white;
+      }
+      .card.revealed {
+         background-color: white;
+         color: black;
+      }
+      .card.run {
+         background-color: lightblue;
+      }
+      .card.out {
+         background-color: lightcoral;
+      }
+      .card.wide {
+         background-color: lightgray;
+      }
+      #message {
+         margin-top: 20px;
+         font-weight: bold;
+      }
+   </style>
+</head>
+<body>
+<div id="game-info">
+   <div id="player-info">Player 1: 0 runs</div>
+   <div id="over-info">Over: 0.0 (1 over match)</div>
+</div>
+<div id="cards"></div>
+<button id="start-game">Start Game</button>
+<div id="message"></div>
+
+<script>
+   const cardValues = ['1', '2', '3', '4', '6', 'Wide', 'Catch Out', 'Bold Out'];
+   let currentPlayer = 1;
+   let currentBalls = 0;
+   let player1Score = 0;
+   let player2Score = 0;
+   let gameStarted = false;
+   let isWideActive = false;
+   let targetScore = 0;
+   let firstBatsman = -1;
+
+   const playerInfo = document.getElementById('player-info');
+   const overInfo = document.getElementById('over-info');
+   const cardsContainer = document.getElementById('cards');
+   const startButton = document.getElementById('start-game');
+   const messageElement = document.getElementById('message');
+
+   function shuffleCards() {
+      let shuffled = [...cardValues].sort(() => Math.random() - 0.5);
+      if (isWideActive) {
+         shuffled = shuffled.map(card => (card === 'Catch Out' || card === 'Bold Out') ? '0' : card);
+      }
+      return shuffled;
+   }
+
+   function createCards() {
+      if (isWideActive) {
+         let cards =document.getElementsByClassName("card")
+         for (let i = 0; i < cards.length; i++) {
+            if (cards[i].dataset.value === 'Catch Out' || cards[i].dataset.value === 'Bold Out') {
+               cards[i].dataset.value = '0'
+            }
+         }
+      } else {
+         cardsContainer.innerHTML = '';
+         const shuffledCards = shuffleCards();
+         for (let i = 0; i < 8; i++) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.value = shuffledCards[i];
+            card.textContent = '?';
+            card.addEventListener('click', () => selectCard(card));
+            cardsContainer.appendChild(card);
+         }
+      }
+   }
+
+   function selectCard(card) {
+      if (!gameStarted) return;
+      if (card.classList.contains('revealed') && card.dataset.value !== 'Wide') return;
+
+      const value = card.dataset.value;
+      card.textContent = value;
+      card.classList.add('revealed');
+
+      if (value === 'Wide') {
+         card.classList.add('wide');
+         isWideActive = true;
+
+      } else {
+         isWideActive = false;
+         if (['Catch Out', 'Bold Out'].includes(value)) {
+            card.classList.add('out');
+         } else if (value !== '0') {
+            card.classList.add('run');
+         }
+      }
+
+      setTimeout(() => {
+         handleCardValue(value);
+         updateDisplay();
+         createCards();
+         // if (!isWideActive) {
+         //
+         // }
+      }, 1000);
+   }
+
+   function handleCardValue(value) {
+      if (value === 'Catch Out' || value === 'Bold Out') {
+         endInnings();
+      } else if (value === 'Wide') {
+         addRuns(1);
+      } else {
+         addRuns(parseInt(value));
+         currentBalls++;
+      }
+
+      if (currentBalls === 6) {
+         endInnings();
+      }
+   }
+
+   function addRuns(runs) {
+      if (currentPlayer === 1) {
+         player1Score += runs;
+      } else {
+         player2Score += runs;
+      }
+   }
+
+   function endInnings() {
+      if (currentPlayer === 1) {
+         if (firstBatsman !== 2) {
+            currentPlayer = 2;
+            currentBalls = 0;
+            messageElement.textContent = "Player 2's turn to bat.";
+         } else {
+            endGame()
+         }
+      } else if (currentPlayer === 2) {
+         if (firstBatsman !== 1) {
+            currentPlayer = 1;
+            currentBalls = 0;
+            messageElement.textContent = "Player 1's turn to bat.";
+         } else {
+            endGame();
+         }
+      }
+      if (gameStarted) {
+         updateDisplay();
+         createCards();
+      }
+   }
+
+   function updateDisplay() {
+      if (currentPlayer === 1) {
+         playerInfo.textContent = `Player 1: ${player1Score} runs`;
+      } else {
+         playerInfo.textContent = `Player 2: ${player2Score} runs`;
+      }
+      if (currentPlayer !== firstBatsman) {
+         targetScore = firstBatsman === 1 ? player1Score + 1: player2Score + 1
+         playerInfo.textContent += ` (Target: ${targetScore} runs)`
+      }
+      overInfo.textContent = `Over: ${Math.floor(currentBalls / 6)}.${currentBalls % 6} (1 over match)`;
+   }
+
+   function endGame() {
+      gameStarted = false;
+      let winner;
+      if (player1Score > player2Score) {
+         winner = "Player 1";
+      } else if (player2Score > player1Score) {
+         winner = "Player 2";
+      } else {
+         winner = "It's a tie";
+      }
+      messageElement.textContent = `Game Over! ${winner} wins! Final Scores - Player 1: ${player1Score}, Player 2: ${player2Score}`;
+      startButton.textContent = "Play Again";
+      startButton.style.display = "block";
+   }
+
+   function startGame() {
+      gameStarted = true;
+      player1Score = 0;
+      player2Score = 0;
+      currentBalls = 0;
+      currentPlayer = Math.random() < 0.5 ? 1 : 2;
+      firstBatsman = currentPlayer;
+      targetScore = 0;
+      isWideActive = false;
+      messageElement.textContent = `Toss result: Player ${currentPlayer} will bat first.`;
+      updateDisplay();
+      createCards();
+      startButton.style.display = "none";
+   }
+
+   startButton.addEventListener('click', startGame);
+   createCards();
+</script>
+</body>
+</html>
+```
+
+Here are the changes and additions I've made:
+
+1. Fixed the issue where Player 1 wouldn't get a turn if Player 2 started. Now, the game correctly switches to Player 2 after Player 1's innings, regardless of who starts.
+2. Made the top side of the cards blue by setting the background color to blue in the `.card` class.
+3. Added different background colors for revealed cards:
+    - Run cards: light blue
+    - Out cards: light red (coral)
+    - Wide card: light gray
+4. The Wide card now stays revealed until another card is selected.
+5. When the Wide card is selected, out cards are replaced with 0 run cards for that turn only.
+6. Added the target run display for the second player, which is (previous player's score + 1).
+7. Updated the game logic to handle these new features, including the `isWideActive` flag to manage Wide card behavior.
+
+This implementation should now meet all your requirements and provide a more visually appealing and rule-compliant cricket card game.

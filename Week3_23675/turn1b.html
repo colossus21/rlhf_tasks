@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cross the Road Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #222;
+            font-family: Arial, sans-serif;
+        }
+        #gameCanvas {
+            border: 2px solid white;
+        }
+        #gameInfo {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<div id="gameInfo">
+    Level: <span id="level">1</span><br>
+    Score: <span id="score">0</span>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const levelSpan = document.getElementById('level');
+    const scoreSpan = document.getElementById('score');
+
+    canvas.width = 400;
+    canvas.height = 600;
+
+    const player = {
+        x: canvas.width / 2 - 10,
+        y: canvas.height - 30,
+        width: 20,
+        height: 20,
+        color: 'white'
+    };
+
+    let roads = [];
+    let cars = [];
+    let level = 1;
+    let score = 0;
+
+    function createRoad(y) {
+        return {
+            y: y,
+            width: canvas.width,
+            height: 60,
+            color: '#444'
+        };
+    }
+
+    function createCar(roadIndex) {
+        const road = roads[roadIndex];
+        return {
+            x: Math.random() < 0.5 ? -50 : canvas.width,
+            y: road.y + 10,
+            width: 50,
+            height: 40,
+            speed: Math.random() * 2 + 1,
+            color: `hsl(${Math.random() * 360}, 100%, 50%)`
+        };
+    }
+
+    function initLevel() {
+        roads = [];
+        cars = [];
+        for (let i = 0; i < level; i++) {
+            roads.push(createRoad(i * 100 + 100));
+            cars.push(createCar(i));
+        }
+        player.y = canvas.height - 30;
+    }
+
+    function drawPlayer() {
+        ctx.fillStyle = player.color;
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+    }
+
+    function drawRoads() {
+        roads.forEach(road => {
+            ctx.fillStyle = road.color;
+            ctx.fillRect(0, road.y, road.width, road.height);
+        });
+    }
+
+    function drawCars() {
+        cars.forEach(car => {
+            ctx.fillStyle = car.color;
+            ctx.fillRect(car.x, car.y, car.width, car.height);
+        });
+    }
+
+    function updateCars() {
+        cars.forEach(car => {
+            if (car.x < canvas.width) {
+                car.x += car.speed;
+            } else {
+                car.x = -50;
+            }
+        });
+    }
+
+    function checkCollision() {
+        return cars.some(car =>
+            player.x < car.x + car.width &&
+            player.x + player.width > car.x &&
+            player.y < car.y + car.height &&
+            player.y + player.height > car.y
+        );
+    }
+
+    function gameLoop() {
+        ctx.fillStyle = '#222';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        drawRoads();
+        drawCars();
+        drawPlayer();
+        updateCars();
+
+        if (checkCollision()) {
+            alert(`Game Over! Your score: ${score}`);
+            level = 1;
+            score = 0;
+            initLevel();
+        }
+
+        if (player.y <= 0) {
+            level++;
+            score += 100;
+            initLevel();
+        }
+
+        levelSpan.textContent = level;
+        scoreSpan.textContent = score;
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    document.addEventListener('keydown', (e) => {
+        switch (e.key) {
+            case 'ArrowUp':
+                if (player.y > 0) player.y -= 10;
+                break;
+            case 'ArrowDown':
+                if (player.y < canvas.height - player.height) player.y += 10;
+                break;
+            case 'ArrowLeft':
+                if (player.x > 0) player.x -= 10;
+                break;
+            case 'ArrowRight':
+                if (player.x < canvas.width - player.width) player.x += 10;
+                break;
+        }
+    });
+
+    initLevel();
+    gameLoop();
+</script>
+</body>
+</html>
