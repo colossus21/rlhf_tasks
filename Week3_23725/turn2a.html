@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Tracker Widget</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(to bottom, #1e3a8a, #3b82f6);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center">
+<div class="container mx-auto p-8 bg-white rounded-lg shadow-lg max-w-2xl">
+    <h1 id="taskCount" class="text-3xl font-bold text-center mb-8">0 tasks completed!</h1>
+    <div class="flex justify-center mb-8">
+        <button id="completeTask" class="bg-blue-500 hover:bg-blue-700 text-white font-bold text-xl w-40 h-40 rounded-full transition-all duration-300 transform hover:scale-105">
+            Complete Task
+        </button>
+    </div>
+
+    <div id="taskList" class="mt-8">
+        <h2 class="text-2xl font-bold mb-4">Completed Tasks:</h2>
+        <table class="w-full bg-white shadow-md rounded mb-4">
+            <tbody id="taskTable"></tbody>
+        </table>
+    </div>
+
+    <div class="flex justify-center mt-8">
+        <button id="resetTasks" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors duration-300">
+            Reset All Tasks
+        </button>
+    </div>
+</div>
+
+<div id="taskModal" class="modal">
+    <div class="modal-content rounded-lg">
+        <h2 class="text-xl font-bold mb-4">Enter the name of your task:</h2>
+        <input type="text" id="taskName" class="w-full p-2 mb-4 border rounded" placeholder="Task name">
+        <button id="saveTask" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors duration-300">
+            Save Task
+        </button>
+    </div>
+</div>
+
+<div id="resetConfirmModal" class="modal">
+    <div class="modal-content rounded-lg">
+        <h2 class="text-xl font-bold mb-4">Confirm Reset</h2>
+        <p class="mb-4">Resetting tasks would delete all records. Do you want to continue?</p>
+        <div class="flex justify-end">
+            <button id="cancelReset" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded mr-2 transition-colors duration-300">
+                Cancel
+            </button>
+            <button id="confirmReset" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors duration-300">
+                Confirm Reset
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const completeTaskBtn = document.getElementById('completeTask');
+    const taskModal = document.getElementById('taskModal');
+    const resetConfirmModal = document.getElementById('resetConfirmModal');
+    const taskNameInput = document.getElementById('taskName');
+    const saveTaskBtn = document.getElementById('saveTask');
+    const taskTable = document.getElementById('taskTable');
+    const resetTasksBtn = document.getElementById('resetTasks');
+    const cancelResetBtn = document.getElementById('cancelReset');
+    const confirmResetBtn = document.getElementById('confirmReset');
+    const taskCountElement = document.getElementById('taskCount');
+
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+    function updateTaskCount() {
+        taskCountElement.textContent = `${tasks.length} tasks completed!`;
+    }
+
+    function displayTasks() {
+        taskTable.innerHTML = '';
+        tasks.forEach((task, index) => {
+            const row = taskTable.insertRow();
+            row.innerHTML = `
+                    <td class="border px-4 py-2">
+                        ${index + 1} # ${task.name} is completed at [${task.timestamp}]
+                    </td>
+                `;
+        });
+    }
+
+    function saveTasks() {
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+        updateTaskCount();
+        displayTasks();
+    }
+
+    completeTaskBtn.addEventListener('click', () => {
+        taskModal.style.display = 'block';
+    });
+
+    saveTaskBtn.addEventListener('click', () => {
+        const taskName = taskNameInput.value.trim();
+        if (taskName) {
+            const now = new Date();
+            const timestamp = now.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            tasks.push({ name: taskName, timestamp });
+            saveTasks();
+            taskNameInput.value = '';
+            taskModal.style.display = 'none';
+        }
+    });
+
+    resetTasksBtn.addEventListener('click', () => {
+        resetConfirmModal.style.display = 'block';
+    });
+
+    cancelResetBtn.addEventListener('click', () => {
+        resetConfirmModal.style.display = 'none';
+    });
+
+    confirmResetBtn.addEventListener('click', () => {
+        tasks = [];
+        saveTasks();
+        resetConfirmModal.style.display = 'none';
+    });
+
+    window.onclick = (event) => {
+        if (event.target == taskModal) {
+            taskModal.style.display = 'none';
+        }
+        if (event.target == resetConfirmModal) {
+            resetConfirmModal.style.display = 'none';
+        }
+    };
+
+    // Initial display
+    updateTaskCount();
+    displayTasks();
+</script>
+</body>
+</html>
