@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flavor Fusion Game</title>
+    <style>
+        #grid, #summary {
+            display: grid;
+            gap: 10px;
+        }
+        #grid {
+            grid-template-columns: repeat(8, 1fr);
+        }
+        #summary {
+            grid-template-columns: repeat(6, 1fr);
+            margin-bottom: 20px;
+        }
+        .cell, .summary-cell {
+            border: 1px solid #ccc;
+            text-align: center;
+            padding: 20px;
+        }
+        .cell {
+            cursor: grab;
+        }
+        .cell.dragging {
+            opacity: 0.5;
+        }
+        .summary-cell {
+            font-weight: bold;
+        }
+        /* Taste-based colors */
+        .Salty { background-color: #FFC5C5; }
+        .Spicy { background-color: #FFA07A; }
+        .Sweet { background-color: #DDA0DD; }
+        .Bitter { background-color: #D2B48C; }
+        .Umami { background-color: #D3D3D3; }
+        .Sour { background-color: #FFFF99; }
+        .None { background-color: #FFFFFF; color: #AAAAAA; }
+    </style>
+</head>
+<body>
+<div id="summary"></div>
+<div id="grid"></div>
+<script>
+    const gridElement = document.getElementById('grid');
+    const summaryElement = document.getElementById('summary');
+    const flavors = ['Salty', 'Sour', 'Sweet', 'Spicy', 'Bitter', 'Umami'];
+    const maxLevel = 5;
+    let grid = [];
+    let tasteCount = {};
+
+    // Initialize grid and taste count
+    for (let i = 0; i < 6; i++) {
+        grid[i] = [];
+        for (let j = 0; j < 8; j++) {
+            const randomFlavor = flavors[Math.floor(Math.random() * flavors.length)];
+            grid[i][j] = {flavor: randomFlavor, level: 1};
+            if (!tasteCount[randomFlavor]) tasteCount[randomFlavor] = 0;
+            tasteCount[randomFlavor]++;
+        }
+    }
+
+    // Render grid and summary
+    function renderAll() {
+        renderGrid();
+        renderSummary();
+    }
+
+    function renderGrid() {
+        gridElement.innerHTML = '';
+        grid.forEach((row, i) => {
+            row.forEach((cell, j) => {
+                const cellElement = document.createElement('div');
+                cellElement.className = `cell ${cell.flavor} ${cell.level > 0 ? '' : 'None'}`;
+                cellElement.textContent = cell.level > 0 ? `${cell.flavor} ${cell.level}` : "None";
+                cellElement.style.fontWeight = 'bold';
+                gridElement.appendChild(cellElement);
+                addDragEvents(cellElement, i, j);
+            });
+        });
+    }
+
+    function renderSummary() {
+        summaryElement.innerHTML = '';
+        flavors.forEach((flavor) => {
+            const summaryCell = document.createElement('div');
+            summaryCell.className = `summary-cell ${flavor}`;
+            summaryCell.textContent = `${flavor}: ${tasteCount[flavor] || 0}`;
+            summaryElement.appendChild(summaryCell);
+        });
+    }
+
+    function addDragEvents(element, i, j) {
+        element.draggable = true;
+        element.addEventListener('dragstart', () => {
+            element.classList.add('dragging');
+        });
+        element.addEventListener('dragend', () => {
+            element.classList.remove('dragging');
+            grid[i][j].flavor = "None"; // Set cell to "None" when dragged away
+            grid[i][j].level = 0;
+            renderAll();
+        });
+        element.addEventListener('dragover', (e) => e.preventDefault());
+        element.addEventListener('drop', handleDrop);
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        const from = JSON.parse(e.dataTransfer.getData('text'));
+        const toI = Array.prototype.indexOf.call(e.target.parentNode.children, e.target);
+        const toJ = Array.prototype.indexOf.call(e.target.parentNode.parentNode.children, e.target.parentNode);
+        if (grid[from.i][from.j].flavor === grid[toI][toJ].flavor && grid[from.i][from.j].level === grid[toI][toJ].level) {
+            grid[toI][toJ].level++;
+            if (grid[toI][toJ].level > maxLevel) grid[toI][toJ].level = 1;
+            tasteCount[grid[from.i][from.j].flavor]--;
+            tasteCount[grid[toI][toJ].flavor]++;
+            renderAll();
+        }
+    }
+
+    renderAll();
+</script>
+</body>
+</html>

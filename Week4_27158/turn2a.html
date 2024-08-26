@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breakout Evasion</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.18.0/matter.min.js"></script>
+</head>
+<body>
+<script>
+    // Initialize Matter.js engine and elements
+    let Engine = Matter.Engine,
+        World = Matter.World,
+        Bodies = Matter.Bodies,
+        Body = Matter.Body,
+        Events = Matter.Events;
+
+    let engine, balls = [], bricks = [], paddle, boundaries = [];
+    let gameRunning = true, gameWon = false;
+    const initialVelocity = { x: 5, y: 5 };
+    let threshold = 0.2;
+
+    let soundTick, soundGameOver, soundWin;
+
+    function preload() {
+        soundTick = loadSound('tick.wav');
+        soundGameOver = loadSound('gameOver.wav');
+        soundWin = loadSound('win.wav');
+    }
+
+
+    function handleCollisions(event) {
+        event.pairs.forEach(pair => {
+            // Existing collision logic...
+            if (pair.bodyA.isStatic && pair.bodyB.label === 'ball' || pair.bodyB.isStatic && pair.bodyA.label === 'ball') {
+                if (pair.bodyA.label === 'brick' || pair.bodyB.label === 'brick') {
+                    soundTick.play();
+                }
+            }
+        });
+    }
+
+    function setup() {
+        createCanvas(600, 400);
+        engine = Engine.create();
+        engine.world.gravity.y = 0; // Disable gravity in the y-axis
+
+        setupBoundaries();
+        setupPaddle();
+        setupBricks();
+        setupInitialBall();
+
+        Events.on(engine, 'collisionStart', handleCollisions);
+    }
+
+    function draw() {
+        background(220);
+        if (gameRunning && !gameWon) {
+            Engine.update(engine);
+            maintainBallVelocity();
+            displayAll();
+            spawnNewBallIfNeeded();
+            checkWinCondition();
+        } else if (gameWon) {
+            displayWin();
+        } else {
+            displayGameOver();
+        }
+    }
+
+    // Ensure ball maintains a consistent speed
+    function maintainBallVelocity() {
+        balls.forEach(ball => {
+            let speed = Math.sqrt(ball.velocity.x ** 2 + ball.velocity.y ** 2);
+            let desiredSpeed = Math.sqrt(initialVelocity.x ** 2 + initialVelocity.y ** 2);
+            if (speed < desiredSpeed) {
+                let angle = Math.atan2(ball.velocity.y, ball.velocity.x);
+                Body.setVelocity(ball, { x: Math.cos(angle) * desiredSpeed, y: Math.sin(angle) * desiredSpeed });
+            }
+        });
+    }
+
+    // Create boundaries for the game area
+    function setupBoundaries() {
+        boundaries.push(Bodies.rectangle(300, 0, 600, 10, { isStatic: true }));
+        boundaries.push(Bodies.rectangle(300, 400, 600, 10, { isStatic: true }));
+        boundaries.push(Bodies.rectangle(0, 200, 10, 400, { isStatic: true }));
+        boundaries.push(Bodies.rectangle(600, 200, 10, 400, { isStatic: true }));
+        World.add(engine.world, boundaries);
+    }
+
+    // Set up the player's paddle
+    function setupPaddle() {
+        paddle = Bodies.rectangle(300, 380, 100, 10, { isStatic: true });
+        World.add(engine.world, paddle);
+    }
+
+    // Set up bricks for the player to avoid
+    function setupBricks() {
+        for (let i = 0; i < 5; i++) {
+            for (let j = 0; j < 10; j++) {
+                let brick = Bodies.rectangle(30 + j * 55, 30 + i * 25, 50, 20, { isStatic: true });
+                bricks.push(brick);
+            }
+        }
+        World.add(engine.world, bricks);
+    }
+
+    // Set up the initial ball
+    function setupInitialBall() {
+        let ball = Bodies.circle(300, 200, 10, { restitution: 1.05 });
+        Body.setVelocity(ball, { x: 5, y: 5 });
+        balls.push(ball);
+        World.add(engine.world, ball);
+    }
+
+    // Display all game objects
+    function displayAll() {
+        fill(0);
+        stroke(0);
+        balls.forEach(ball => {
+            ellipse(ball.position.x, ball.position.y, 20);
+        });
+        bricks.forEach(brick => {
+            rect(brick.position.x - 25, brick.position.y - 10, 50, 20);
+        });
+        rect(paddle.position.x - 50, paddle.position.y - 5, 100, 10);
+    }
+
+    // Display game over message
+    function displayGameOver() {
+        soundGameOver.play();
+        textSize(32);
+        textAlign(CENTER);
+        fill(255, 0, 0);
+        text("Game Over", width / 2, height / 2);
+    }
+
+    function checkWinCondition() {
+        if (bricks.length === 0) {
+            gameRunning = false;
+            gameWon = true;
+            soundWin.play();
+        }
+    }
+
+    // Display win message
+    function displayWin() {
+        textSize(32);
+        textAlign(CENTER);
+        fill(0, 255, 0);
+        text("You Win!", width / 2, height / 2);
+    }
+
+    // Handle collisions between objects
+    function handleCollisions(event) {
+        event.pairs.forEach(pair => {
+            let a = pair.bodyA, b = pair.bodyB;
+            balls.forEach(ball => {
+                if ((a === ball && b === paddle) || (b === ball && a === paddle)) {
+                    gameRunning = false;
+                }
+                bricks.forEach((brick, index) => {
+                    if ((a === ball && b === brick) || (b === ball && a === brick)) {
+                        World.remove(engine.world, brick);
+                        bricks.splice(index, 1);
+                    }
+                });
+            });
+        });
+    }
+
+    // Spawn new balls if conditions are met
+    function spawnNewBallIfNeeded() {
+        let destroyedBricks = (50 - bricks.length) / 50;
+        if (destroyedBricks >= threshold) {
+            let newBall = Bodies.circle(random(50, 550), 50, 10, { restitution: 1.05 });
+            Body.setVelocity(newBall, { x: random(-4, 4), y: random(-4, 4) });
+            balls.push(newBall);
+            World.add(engine.world, newBall);
+            threshold += 0.2;
+        }
+    }
+
+    // Check if the game has been won
+    function checkWinCondition() {
+        if (bricks.length === 0) {
+            gameRunning = false;
+            gameWon = true;
+        }
+    }
+
+    // Restrict paddle movement within game boundaries
+    function mouseMoved() {
+        let newPositionX = Math.max(50, Math.min(mouseX, 550));
+        Body.setPosition(paddle, { x: newPositionX, y: paddle.position.y });
+    }
+
+    let powerUps = [];
+
+    function setupPowerUps() {
+        // Define power-up types
+        const POWERUP_INVINCIBLE = 1;
+        const POWERUP_DEFLECT = 2;
+
+        // Function to spawn a power-up
+        function spawnPowerUp(brick) {
+            if (random(1) < 0.1) { // 10% chance
+                let powerUpType = random([POWERUP_INVINCIBLE, POWERUP_DEFLECT]);
+                let powerUp = Bodies.circle(brick.position.x, brick.position.y, 10, {
+                    isStatic: false,
+                    label: 'powerUp',
+                    powerType: powerUpType,
+                    restitution: 0.5
+                });
+                Body.setVelocity(powerUp, { x: 0, y: 3 });
+                powerUps.push(powerUp);
+                World.add(engine.world, powerUp);
+            }
+        }
+
+        // In your handleCollisions or where you handle brick collision
+        bricks.forEach((brick, index) => {
+            if ((a === ball && b === brick) || (b === ball && a === brick)) {
+                World.remove(engine.world, brick);
+                bricks.splice(index, 1);
+                spawnPowerUp(brick); // Chance to spawn power-up
+            }
+        });
+
+        // Add to draw loop to display power-ups
+        function displayAll() {
+            // Existing display code...
+            powerUps.forEach(powerUp => {
+                fill(powerUp.powerType === POWERUP_INVINCIBLE ? 'grey' : 'yellow');
+                ellipse(powerUp.position.x, powerUp.position.y, 20);
+            });
+        }
+
+        // Handle power-up collisions with paddle or ground
+        Events.on(engine, 'collisionStart', event => {
+            event.pairs.forEach(pair => {
+                if (pair.bodyA.label === 'powerUp' || pair.bodyB.label === 'powerUp') {
+                    let powerUpBody = pair.bodyA.label === 'powerUp' ? pair.bodyA : pair.bodyB;
+                    let otherBody = pair.bodyA === powerUpBody ? pair.bodyB : pair.bodyA;
+
+                    if (otherBody === paddle) {
+                        activatePowerUp(powerUpBody.powerType);
+                        World.remove(engine.world, powerUpBody);
+                    } else if (otherBody.isStatic && otherBody.position.y === 400) { // Ground
+                        World.remove(engine.world, powerUpBody);
+                    }
+                }
+            });
+        });
+
+        // Power-up effects
+        function activatePowerUp(type) {
+            if (type === POWERUP_INVINCIBLE) {
+                paddle.isStatic = false; // Allow paddle to move through objects
+                setTimeout(() => paddle.isStatic = true, 3000);
+            } else if (type === POWERUP_DEFLECT) {
+                // Set a flag to allow deflection logic in the next frame
+                setTimeout(() => paddle.canDeflect = false, 3000);
+                paddle.canDeflect = true;
+            }
+        }
+
+        // Modify ball-paddle collision logic to handle deflection
+        function handleCollisions(event) {
+            // Existing collision logic...
+            balls.forEach(ball => {
+                if ((a === ball && b === paddle) || (b === ball && a === paddle)) {
+                    if (paddle.canDeflect) {
+                        // Deflect logic, for example, reverse ball's x velocity
+                        Body.setVelocity(ball, { x: -ball.velocity.x, y: ball.velocity.y });
+                    } else {
+                        gameRunning = false; // Normal game over condition
+                    }
+                }
+            });
+        }
+    }
+</script>
+</body>
+</html>

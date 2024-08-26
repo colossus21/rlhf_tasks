@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; }
+    </style>
+</head>
+<body>
+<script>
+    let paddle, balls = [], bricks = [], lives = 3;
+
+    function setup() {
+        createCanvas(400, 400);
+        paddle = new Paddle();
+        newBall();
+        setupBricks();
+    }
+
+    function draw() {
+        background(51);
+
+        // Update and display paddle
+        paddle.update();
+        paddle.show();
+
+        // Handle balls
+        for (let ball of balls) {
+            ball.update();
+            ball.show();
+            ball.checkCollision(paddle);
+            checkBricksCollision(ball);
+        }
+
+        // Check for win condition or spawn new ball
+        if (bricks.length === 0) {
+            textSize(32);
+            fill(0, 255, 0);
+            text("You Win!", width/2 - 50, height/2);
+            noLoop();
+        }
+
+        // Spawn new ball every 20% destruction
+        if (bricks.length % (50 * 0.8) === 0 && bricks.length < 50) {
+            newBall();
+        }
+
+        // Display bricks
+        for (let brick of bricks) {
+            brick.show();
+        }
+    }
+
+    function newBall() {
+        balls.push(new Ball());
+    }
+
+    function setupBricks() {
+        for (let i = 0; i < 5; i++) {
+            for (let j = 0; j < 10; j++) {
+                bricks.push(new Brick(j * 40 + 20, i * 20 + 20));
+            }
+        }
+    }
+
+    function checkBricksCollision(ball) {
+        for (let i = bricks.length - 1; i >= 0; i--) {
+            if (bricks[i].hits(ball)) {
+                bricks.splice(i, 1);
+                break;
+            }
+        }
+    }
+
+    class Paddle {
+        constructor() {
+            this.x = width / 2;
+            this.w = 60;
+            this.h = 10;
+        }
+
+        update() {
+            this.x = constrain(mouseX, this.w/2, width - this.w/2);
+        }
+
+        show() {
+            rect(this.x - this.w/2, height - this.h, this.w, this.h);
+        }
+    }
+
+    class Ball {
+        constructor() {
+            this.x = width / 2;
+            this.y = height / 2;
+            this.xspeed = random(-2, 2);
+            this.yspeed = 2;
+            this.r = 10;
+        }
+
+        update() {
+            this.x += this.xspeed;
+            this.y += this.yspeed;
+
+            if (this.x > width - this.r || this.x < this.r) this.xspeed *= -1;
+            if (this.y < this.r) this.yspeed *= -1;
+            if (this.y > height) {
+                balls.splice(balls.indexOf(this), 1);
+                lives--;
+                if (lives <= 0) noLoop();
+            }
+        }
+
+        show() {
+            ellipse(this.x, this.y, this.r * 2);
+        }
+
+        checkCollision(paddle) {
+            if (this.y + this.r > paddle.y && this.x > paddle.x - paddle.w/2 && this.x < paddle.x + paddle.w/2) {
+                this.yspeed *= -1;
+            }
+        }
+    }
+
+    class Brick {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.w = 35;
+            this.h = 15;
+        }
+
+        show() {
+            rect(this.x, this.y, this.w, this.h);
+        }
+
+        hits(ball) {
+            if (ball.x > this.x && ball.x < this.x + this.w && ball.y > this.y && ball.y < this.y + this.h) {
+                ball.yspeed *= -1;
+                return true;
+            }
+            return false;
+        }
+    }
+
+</script>
+</body>
+</html>

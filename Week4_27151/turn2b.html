@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flavor Fusion Game</title>
+    <style>
+        #grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .cell {
+            border: 1px solid #ccc;
+            text-align: center;
+            padding: 20px;
+            cursor: grab;
+            font-weight: bold;
+        }
+        .cell.dragging {
+            opacity: 0.5;
+        }
+        .color-salty { background-color: #FFC0CB; } /* Light Pink */
+        .color-spicy { background-color: #FFB3B3; } /* Light Red */
+        .color-sweet { background-color: #E6E6FA; } /* Light Purple */
+        .color-bitter { background-color: #D2B48C; } /* Light Brown */
+        .color-umami { background-color: #D3D3D3; } /* Light Grey */
+        .color-sour { background-color: #FFFFE0; } /* Light Yellow */
+        .color-none { background-color: #FFF; }
+        #tasteCounter {
+            margin-top: 20px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        #tasteCounter th, #tasteCounter td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<div id="tasteCounter"></div>
+<div id="grid"></div>
+<script>
+    const gridElement = document.getElementById('grid');
+    const flavors = ['Salty', 'Sour', 'Sweet', 'Spicy', 'Bitter', 'Umami'];
+    const maxLevel = 5;
+    let grid = [];
+    let tasteCount = {};
+
+    // Initialize grid and taste counter
+    for (let flavor of flavors) {
+        tasteCount[flavor] = new Array(maxLevel).fill(0);
+    }
+
+    // Initialize grid with random flavors at level 1
+    for (let i = 0; i < 6; i++) {
+        grid[i] = [];
+        for (let j = 0; j < 8; j++) {
+            let randomFlavor = flavors[Math.floor(Math.random() * flavors.length)];
+            grid[i][j] = {flavor: randomFlavor, level: 1};
+            tasteCount[randomFlavor][0]++;
+        }
+    }
+
+    // Function to update taste counter
+    function updateTasteCounter() {
+        const table = document.getElementById('tasteCounter');
+        table.innerHTML = `<tr><th>Taste</th><th>Level 1</th><th>Level 2</th><th>Level 3</th><th>Level 4</th><th>Level 5</th></tr>`;
+        for (let flavor in tasteCount) {
+            let row = `<tr><td>${flavor}</td>`;
+            tasteCount[flavor].forEach((count, index) => {
+                row += `<td>${count}</td>`;
+            });
+            table.innerHTML += row + '</tr>';
+        }
+    }
+
+    // Render grid with color and update functionality
+    function renderGrid() {
+        gridElement.innerHTML = '';
+        grid.forEach((row, i) => {
+            row.forEach((cell, j) => {
+                const cellElement = document.createElement('div');
+                cellElement.className = `cell color-${cell.flavor.toLowerCase()}`;
+                cellElement.textContent = cell.flavor + ' ' + cell.level;
+                if (cell.flavor === "None") {
+                    cellElement.className = 'cell color-none';
+                }
+                cellElement.draggable = true;
+                gridElement.appendChild(cellElement);
+                // ... (drag and drop event listeners as before)
+                cellElement.addEventListener('drop', (e) => {
+                    // ... (existing drop logic)
+                    if (grid[from.i][from.j].flavor === grid[i][j].flavor && grid[from.i][from.j].level === grid[i][j].level) {
+                        grid[i][j].level++;
+                        if (grid[i][j].level > maxLevel) grid[i][j].level = 1;
+                        // Reset the source cell
+                        grid[from.i][from.j] = {flavor: "None", level: 0};
+                        tasteCount[cell.flavor][cell.level - 1]--;
+                        tasteCount[grid[i][j].flavor][grid[i][j].level - 1]++;
+                        if (grid[i][j].level === 1) {
+                            tasteCount[grid[i][j].flavor][maxLevel - 1]--; // Reset if level 1 after max
+                        }
+                        updateTasteCounter();
+                        renderGrid();
+                    }
+                });
+            });
+        });
+        updateTasteCounter();
+    }
+
+    renderGrid();
+</script>
+</body>
+</html>

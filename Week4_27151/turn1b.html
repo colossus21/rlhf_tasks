@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flavor Fusion Game</title>
+    <style>
+        #grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 10px;
+        }
+        .cell {
+            border: 1px solid #ccc;
+            text-align: center;
+            padding: 20px;
+            cursor: grab;
+        }
+        .cell.dragging {
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+<div id="grid"></div>
+<script>
+    const gridElement = document.getElementById('grid');
+    const flavors = ['Salty', 'Sour', 'Sweet', 'Spicy', 'Bitter', 'Umami'];
+    const maxLevel = 5; // Assuming there are 5 levels for each flavor
+    let grid = [];
+
+    // Initialize grid with random flavors at level 1
+    for (let i = 0; i < 6; i++) {
+        grid[i] = [];
+        for (let j = 0; j < 8; j++) {
+            grid[i][j] = {flavor: flavors[Math.floor(Math.random() * flavors.length)], level: 1};
+        }
+    }
+
+    // Render grid
+    function renderGrid() {
+        gridElement.innerHTML = '';
+        grid.forEach((row, i) => {
+            row.forEach((cell, j) => {
+                const cellElement = document.createElement('div');
+                cellElement.className = 'cell';
+                cellElement.textContent = cell.flavor + ' ' + cell.level;
+                cellElement.draggable = true;
+                gridElement.appendChild(cellElement);
+                cellElement.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text', JSON.stringify({i, j}));
+                    cellElement.classList.add('dragging');
+                });
+                cellElement.addEventListener('dragend', () => cellElement.classList.remove('dragging'));
+                cellElement.addEventListener('dragover', (e) => e.preventDefault());
+                cellElement.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const from = JSON.parse(e.dataTransfer.getData('text'));
+                    if (grid[from.i][from.j].flavor === grid[i][j].flavor && grid[from.i][from.j].level === grid[i][j].level) {
+                        grid[i][j].level++;
+                        if (grid[i][j].level > maxLevel) grid[i][j].level = 1; // Reset to 1 if max level exceeded
+                        renderGrid(); // Update grid after change
+                    }
+                });
+            });
+        });
+    }
+
+    renderGrid();
+</script>
+</body>
+</html>

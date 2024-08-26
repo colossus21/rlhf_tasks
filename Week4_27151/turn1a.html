@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Flavor Upgrade Game</title>
+    <style>
+        #gameGrid {
+            display: grid;
+            grid-template-columns: repeat(6, 50px);
+            grid-template-rows: repeat(8, 50px);
+            gap: 1px;
+            background-color: #000;
+        }
+        .cell {
+            background-color: #fff;
+            border: 1px solid #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .cell[draggable="true"] {
+            cursor: move;
+        }
+    </style>
+</head>
+<body>
+
+<div id="gameGrid"></div>
+
+<script>
+    const flavors = ['None', 'Salty', 'Sour', 'Sweet', 'Spicy', 'Bitter', 'Umami'];
+    const gridSize = {x: 6, y: 8};
+    let gameGrid = [];
+
+    function initializeGrid() {
+        const gridElement = document.getElementById('gameGrid');
+        for(let y = 0; y < gridSize.y; y++) {
+            gameGrid[y] = [];
+            for(let x = 0; x < gridSize.x; x++) {
+                let cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.id = `cell-${x}-${y}`;
+                cell.draggable = true;
+                cell.addEventListener('dragstart', dragStart);
+                cell.addEventListener('dragover', dragOver);
+                cell.addEventListener('drop', drop);
+                gridElement.appendChild(cell);
+                gameGrid[y][x] = {flavor: 'None', level: 0};
+            }
+        }
+        randomizeGrid();
+    }
+
+    function randomizeGrid() {
+        for(let y = 0; y < gridSize.y; y++) {
+            for(let x = 0; x < gridSize.x; x++) {
+                if (Math.random() > 0.5) { // 50% chance to have a flavor
+                    gameGrid[y][x] = {flavor: flavors[Math.floor(Math.random() * (flavors.length - 1)) + 1], level: 1};
+                }
+                updateCellDisplay(x, y);
+            }
+        }
+    }
+
+    function updateCellDisplay(x, y) {
+        const cell = document.getElementById(`cell-${x}-${y}`);
+        cell.textContent = `${gameGrid[y][x].flavor} ${gameGrid[y][x].level || ''}`;
+    }
+
+    function dragStart(e) {
+        e.dataTransfer.setData('text/plain', e.target.id);
+    }
+
+    function dragOver(e) {
+        e.preventDefault();
+    }
+
+    function drop(e) {
+        e.preventDefault();
+        const sourceId = e.dataTransfer.getData('text');
+        const [srcX, srcY] = sourceId.split('-').slice(1).map(Number);
+        const [destX, destY] = e.target.id.split('-').slice(1).map(Number);
+
+        if (gameGrid[srcY][srcX].flavor === gameGrid[destY][destX].flavor &&
+            gameGrid[srcY][srcX].level === gameGrid[destY][destX].level &&
+            gameGrid[srcY][srcX].level < 2) { // Assuming 2 is max level for simplicity
+            gameGrid[destY][destX].level++;
+            gameGrid[srcY][srcX] = {flavor: 'None', level: 0};
+        } else if (gameGrid[destY][destX].flavor === 'None') {
+            gameGrid[destY][destX] = gameGrid[srcY][srcX];
+            gameGrid[srcY][srcX] = {flavor: 'None', level: 0};
+        }
+        updateCellDisplay(srcX, srcY);
+        updateCellDisplay(destX, destY);
+    }
+
+    initializeGrid();
+</script>
+
+</body>
+</html>

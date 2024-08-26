@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breakout Evasion</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.18.0/matter.min.js"></script>
+</head>
+<body>
+<script>
+    let Engine = Matter.Engine,
+        Render = Matter.Render,
+        World = Matter.World,
+        Bodies = Matter.Bodies;
+
+    let engine;
+    let balls = [];
+    let bricks = [];
+    let paddle;
+    let boundaries = [];
+
+    function setup() {
+        createCanvas(600, 400);
+        engine = Engine.create();
+        setupBoundaries();
+        setupPaddle();
+        setupBricks();
+        setupInitialBall();
+    }
+
+    function draw() {
+        background(220);
+        Engine.update(engine);
+        displayAll();
+        checkCollisions();
+        spawnNewBallIfNeeded();
+    }
+
+    function setupBoundaries() {
+        boundaries.push(Bodies.rectangle(300, 0, 600, 10, { isStatic: true }));
+        boundaries.push(Bodies.rectangle(300, 400, 600, 10, { isStatic: true }));
+        boundaries.push(Bodies.rectangle(0, 200, 10, 400, { isStatic: true }));
+        boundaries.push(Bodies.rectangle(600, 200, 10, 400, { isStatic: true }));
+        World.add(engine.world, boundaries);
+    }
+
+    function setupPaddle() {
+        paddle = Bodies.rectangle(300, 380, 100, 10, { friction: 0 });
+        World.add(engine.world, paddle);
+    }
+
+    function setupBricks() {
+        for (let i = 0; i < 5; i++) {
+            for (let j = 0; j < 10; j++) {
+                let brick = Bodies.rectangle(30 + j * 55, 30 + i * 25, 50, 20, { isStatic: true });
+                bricks.push(brick);
+            }
+        }
+        World.add(engine.world, bricks);
+    }
+
+    function setupInitialBall() {
+        let ball = Bodies.circle(300, 200, 10);
+        Matter.Body.setVelocity(ball, { x: 4, y: 4 });
+        balls.push(ball);
+        World.add(engine.world, balls);
+    }
+
+    function displayAll() {
+        fill(0);
+        stroke(0);
+        balls.forEach(ball => {
+            ellipse(ball.position.x, ball.position.y, 20, 20);
+        });
+
+        bricks.forEach(brick => {
+            rect(brick.position.x, brick.position.y, 50, 20);
+        });
+
+        rect(paddle.position.x, paddle.position.y, 100, 10);
+    }
+
+    function checkCollisions() {
+        balls.forEach(ball => {
+            if (Matter.Collision.collides(ball, paddle)) {
+                // Reflect ball
+                Matter.Body.setVelocity(ball, { x: ball.velocity.x, y: -ball.velocity.y });
+            }
+        });
+
+        for (let i = bricks.length - 1; i >= 0; i--) {
+            if (balls.some(ball => Matter.Collision.collides(ball, bricks[i]))) {
+                World.remove(engine.world, bricks[i]);
+                bricks.splice(i, 1);
+            }
+        }
+    }
+
+    function spawnNewBallIfNeeded() {
+        let threshold = 0.2;
+        let destroyedBricks = (50 - bricks.length) / 50;
+        if (destroyedBricks > threshold) {
+            threshold += 0.2;
+            let newBall = Bodies.circle(random(50, 550), 50, 10);
+            Matter.Body.setVelocity(newBall, { x: 4, y: 4 });
+            balls.push(newBall);
+            World.add(engine.world, newBall);
+        }
+    }
+
+    function mouseMoved() {
+        Matter.Body.setPosition(paddle, { x: mouseX, y: paddle.position.y });
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breakout Evasion</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.18.0/matter.min.js"></script>
+</head>
+<body>
+<script>
+    // Initialize Matter.js engine and elements
+    let Engine = Matter.Engine,
+        World = Matter.World,
+        Bodies = Matter.Bodies,
+        Body = Matter.Body,
+        Events = Matter.Events;
+
+    let engine, balls = [], bricks = [], paddle, boundaries = [];
+    let gameRunning = true, gameWon = false;
+    const initialVelocity = { x: 5, y: 5 };
+    let threshold = 0.2;
+
+    let tickSound, gameOverSound, winSound;
+
+    function preload() {
+        tickSound = loadSound('tick.wav');
+        gameOverSound = loadSound('gameOver.wav');
+        winSound = loadSound('win.wav');
+    }
+
+    function setup() {
+        createCanvas(600, 400);
+        engine = Engine.create();
+        engine.world.gravity.y = 0; // Disable gravity in the y-axis
+
+        setupBoundaries();
+        setupPaddle();
+        setupBricks();
+        setupInitialBall();
+        preload(); // Call preload here or ensure it's called before sounds are played
+
+        Events.on(engine, 'collisionStart', handleCollisions);
+    }
+
+    function draw() {
+        background(220);
+        if (gameRunning && !gameWon) {
+            Engine.update(engine);
+            maintainBallVelocity();
+            displayAll();
+            spawnNewBallIfNeeded();
+            checkWinCondition();
+        } else if (gameWon) {
+            displayWin();
+        } else {
+            displayGameOver();
+        }
+    }
+
+    // Ensure ball maintains a consistent speed
+    function maintainBallVelocity() {
+        balls.forEach(ball => {
+            let speed = Math.sqrt(ball.velocity.x ** 2 + ball.velocity.y ** 2);
+            let desiredSpeed = Math.sqrt(initialVelocity.x ** 2 + initialVelocity.y ** 2);
+            if (speed < desiredSpeed) {
+                let angle = Math.atan2(ball.velocity.y, ball.velocity.x);
+                Body.setVelocity(ball, { x: Math.cos(angle) * desiredSpeed, y: Math.sin(angle) * desiredSpeed });
+            }
+        });
+    }
+
+    // Create boundaries for the game area
+    function setupBoundaries() {
+        boundaries.push(Bodies.rectangle(300, 0, 600, 10, { isStatic: true }));
+        boundaries.push(Bodies.rectangle(300, 400, 600, 10, { isStatic: true }));
+        boundaries.push(Bodies.rectangle(0, 200, 10, 400, { isStatic: true }));
+        boundaries.push(Bodies.rectangle(600, 200, 10, 400, { isStatic: true }));
+        World.add(engine.world, boundaries);
+    }
+
+    // Set up the player's paddle
+    function setupPaddle() {
+        paddle = Bodies.rectangle(300, 380, 100, 10, { isStatic: true });
+        World.add(engine.world, paddle);
+    }
+
+    // Set up bricks for the player to avoid
+    function setupBricks() {
+        for (let i = 0; i < 5; i++) {
+            for (let j = 0; j < 10; j++) {
+                let brick = Bodies.rectangle(30 + j * 55, 30 + i * 25, 50, 20, { isStatic: true });
+                bricks.push(brick);
+            }
+        }
+        World.add(engine.world, bricks);
+    }
+
+    // Set up the initial ball
+    function setupInitialBall() {
+        let ball = Bodies.circle(300, 200, 10, { restitution: 1.05 });
+        Body.setVelocity(ball, { x: 5, y: 5 });
+        balls.push(ball);
+        World.add(engine.world, ball);
+    }
+
+    // Display all game objects
+    function displayAll() {
+        fill(0);
+        stroke(0);
+        balls.forEach(ball => {
+            ellipse(ball.position.x, ball.position.y, 20);
+        });
+        bricks.forEach(brick => {
+            rect(brick.position.x - 25, brick.position.y - 10, 50, 20);
+        });
+        rect(paddle.position.x - 50, paddle.position.y - 5, 100, 10);
+    }
+
+    // Display game over message
+    function displayGameOver() {
+        textSize(32);
+        textAlign(CENTER);
+        fill(255, 0, 0);
+        text("Game Over", width / 2, height / 2);
+        if (!gameOverSound.isPlaying()) gameOverSound.play();
+        if (!winSound.isPlaying()) winSound.play();
+    }
+
+    // Display win message
+    function displayWin() {
+        textSize(32);
+        textAlign(CENTER);
+        fill(0, 255, 0);
+        text("You Win!", width / 2, height / 2);
+    }
+
+    // Handle collisions between objects
+    function handleCollisions(event) {
+        event.pairs.forEach(pair => {
+            let a = pair.bodyA, b = pair.bodyB;
+            balls.forEach(ball => {
+                // Check if collision involves a ball and a brick
+                if ((pair.bodyA === ball && bricks.includes(pair.bodyB)) ||
+                    (pair.bodyB === ball && bricks.includes(pair.bodyA))) {
+                    if (!tickSound.isPlaying()) tickSound.play();
+                }
+                if ((a === ball && b === paddle) || (b === ball && a === paddle)) {
+                    gameRunning = false;
+                }
+                bricks.forEach((brick, index) => {
+                    if ((a === ball && b === brick) || (b === ball && a === brick)) {
+                        World.remove(engine.world, brick);
+                        bricks.splice(index, 1);
+                    }
+                });
+            });
+        });
+    }
+
+    // Spawn new balls if conditions are met
+    function spawnNewBallIfNeeded() {
+        let destroyedBricks = (50 - bricks.length) / 50;
+        if (destroyedBricks >= threshold) {
+            let newBall = Bodies.circle(random(50, 550), 50, 10, { restitution: 1.05 });
+            Body.setVelocity(newBall, { x: random(-4, 4), y: random(-4, 4) });
+            balls.push(newBall);
+            World.add(engine.world, newBall);
+            threshold += 0.2;
+        }
+    }
+
+    // Check if the game has been won
+    function checkWinCondition() {
+        if (bricks.length === 0) {
+            gameRunning = false;
+            gameWon = true;
+        }
+    }
+
+    // Restrict paddle movement within game boundaries
+    function mouseMoved() {
+        let newPositionX = Math.max(50, Math.min(mouseX, 550));
+        Body.setPosition(paddle, { x: newPositionX, y: paddle.position.y });
+    }
+    let powerUps = [];
+    const POWERUP_TYPES = {
+        INVINCIBLE: 'invincible',
+        DEFLECT: 'deflect'
+    };
+
+    function spawnPowerUp(x, y) {
+        if (Math.random() < 0.1) { // 10% chance
+            let type = Math.random() > 0.5 ? POWERUP_TYPES.INVINCIBLE : POWERUP_TYPES.DEFLECT;
+            let powerUp = Bodies.circle(x, y, 15, {
+                isStatic: false,
+                label: type,
+                render: { fillStyle: type === POWERUP_TYPES.INVINCIBLE ? 'grey' : 'yellow' }
+            });
+            Body.setVelocity(powerUp, {x: 0, y: 2}); // Make it fall
+            powerUps.push(powerUp);
+            World.add(engine.world, powerUp);
+        }
+    }
+
+    // Modify handleCollisions to spawn power-ups when bricks are hit
+    function handleCollisions(event) {
+        // ... existing collision logic ...
+        bricks.forEach((brick, index) => {
+            if ((a === ball && b === brick) || (b === ball && a === brick)) {
+                World.remove(engine.world, brick);
+                bricks.splice(index, 1);
+                spawnPowerUp(brick.position.x, brick.position.y); // Spawn power-up at brick's location
+            }
+        });
+    }
+
+    // Function to apply power-up effects
+    function applyPowerUp(powerUp) {
+        if (powerUp.label === POWERUP_TYPES.INVINCIBLE) {
+            paddle.render.fillStyle = 'grey';
+            // Logic to make paddle invincible (ignore ball collision)
+            setTimeout(() => {
+                paddle.render.fillStyle = 'black'; // Reset color after 3 seconds
+            }, 3000);
+        } else if (powerUp.label === POWERUP_TYPES.DEFLECT) {
+            paddle.render.fillStyle = 'yellow';
+            // Logic to deflect ball on contact
+            setTimeout(() => {
+                paddle.render.fillStyle = 'black'; // Reset color after 3 seconds
+            }, 3000);
+        }
+        // Remove the power-up after use
+        World.remove(engine.world, powerUp);
+        powerUps = powerUps.filter(p => p !== powerUp);
+    }
+
+    // Check for paddle catching power-ups
+    Events.on(engine, 'collisionStart', function(event) {
+        event.pairs.forEach(pair => {
+            if ((pair.bodyA === paddle && powerUps.includes(pair.bodyB)) ||
+                (pair.bodyB === paddle && powerUps.includes(pair.bodyA))) {
+                applyPowerUp(pair.bodyA === paddle ? pair.bodyB : pair.bodyA);
+            }
+        });
+    });
+</script>
+</body>
+</html>
