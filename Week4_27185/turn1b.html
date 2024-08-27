@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events Tracker</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .events-container {
+            width: 80%;
+            max-width: 400px;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        .event-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+        }
+        .event-name {
+            flex-grow: 1;
+        }
+        .countdown {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .show-all {
+            text-align: center;
+            cursor: pointer;
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+<div class="events-container">
+    <div id="events-list">
+        <!-- Events will be listed here -->
+    </div>
+    <div class="show-all" onclick="showAllEvents()">Show All</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+<script>
+    const events = [
+        {type: 'birthday', name: 'John Doe', date: '2025-04-15'},
+        {type: 'anniversary', name: 'Jane & John', date: '2025-04-10'},
+        {type: 'birthday', name: 'Alice', date: '2025-04-20'},
+        {type: 'anniversary', name: 'Bob & Eve', date: '2025-05-01'},
+        {type: 'birthday', name: 'Charlie', date: '2025-04-12'}
+    ];
+
+    function setup() {
+        noCanvas();
+        displayEvents(events.slice(0, 3));
+    }
+
+    function displayEvents(eventList) {
+        const eventsListElement = document.getElementById('events-list');
+        eventsListElement.innerHTML = ''; // Clear the list
+
+        eventList.forEach((event, index) => {
+            const daysToGo = calculateDaysToGo(event.date);
+            const eventHtml = `
+                    <div class="event-item">
+                        <img src="${event.type === 'birthday' ? 'birthday.png' : 'anniversary.png'}" class="icon" alt="${event.type}">
+                        <div class="event-name">${event.name}</div>
+                        <div class="countdown">${formatCountdown(daysToGo)}</div>
+                    </div>
+                `;
+            eventsListElement.innerHTML += eventHtml;
+        });
+    }
+
+    function calculateDaysToGo(eventDate) {
+        const today = new Date();
+        const eventDateObj = new Date(eventDate);
+        const timeDiff = eventDateObj.getTime() - today.getTime();
+        return Math.ceil(timeDiff / (1000 * 3600 * 24));
+    }
+
+    function formatCountdown(days) {
+        if (days === 0) return 'Today';
+        if (days === 1) return 'Tomorrow';
+        return `${days} days to go`;
+    }
+
+    function showAllEvents() {
+        displayEvents(events);
+    }
+</script>
+</body>
+</html>

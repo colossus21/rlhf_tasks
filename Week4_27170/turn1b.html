@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maze Horror Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+</head>
+<body>
+<script>
+    let maze;
+    let player;
+    let ghost;
+    let items = [];
+    let mazeWidth = 800;
+    let mazeHeight = 600;
+    let cellSize = 20;
+    let viewRadius = 100;
+
+    function setup() {
+        createCanvas(mazeWidth, mazeHeight);
+        maze = generateMaze(mazeWidth / cellSize, mazeHeight / cellSize);
+        player = { x: 1, y: 1, radius: 10 };
+        ghost = { x: mazeWidth / cellSize - 2, y: mazeHeight / cellSize - 2, speed: 1.5 };
+        for (let i = 0; i < 4; i++) {
+            items.push({ x: random(2, mazeWidth / cellSize - 2), y: random(2, mazeHeight / cellSize - 2), collected: false });
+        }
+    }
+
+    function draw() {
+        background(0);
+        drawMaze();
+        drawItems();
+        updateGhost();
+        drawPlayer();
+        checkCollisions();
+        checkWin();
+    }
+
+    // Simplified maze generation using recursive backtracking
+    function generateMaze(w, h) {
+        let maze = Array(w).fill(null).map(() => Array(h).fill(1));
+        function carve(x, y) {
+            let directions = [[0, 1], [1, 0], [0, -1], [-1, 0]].sort(() => 0.5 - Math.random());
+            for (let dir of directions) {
+                let nx = x + dir[0] * 2, ny = y + dir[1] * 2;
+                if (nx > 0 && ny > 0 && nx < w - 1 && ny < h - 1 && maze[nx][ny] === 1) {
+                    maze[x + dir[0]][y + dir[1]] = 0;
+                    maze[nx][ny] = 0;
+                    carve(nx, ny);
+                }
+            }
+        }
+        carve(1, 1);
+        return maze;
+    }
+
+    function drawMaze() {
+        for (let x = 0; x < maze.length; x++) {
+            for (let y = 0; y < maze[x].length; y++) {
+                if (maze[x][y] === 1) {
+                    fill(128);
+                    noStroke();
+                    rect(x * cellSize, y * cellSize, cellSize, cellSize);
+                }
+            }
+        }
+    }
+
+    function drawPlayer() {
+        fill(255);
+        ellipse(player.x * cellSize, player.y * cellSize, player.radius * 2, player.radius * 2);
+        // Lighting effect
+        noStroke();
+        for (let r = viewRadius; r > 0; r -= 10) {
+            fill(0, 255 - (r / viewRadius) * 255);
+            ellipse(player.x * cellSize, player.y * cellSize, r * 2, r * 2);
+        }
+    }
+
+    function updateGhost() {
+        let dx = player.x - ghost.x;
+        let dy = player.y - ghost.y;
+        let distance = sqrt(dx * dx + dy * dy);
+        if (distance < viewRadius) {
+            dx /= distance;
+            dy /= distance;
+            ghost.x += dx * ghost.speed;
+            ghost.y += dy * ghost.speed;
+        }
+        fill(255, 255, 255);
+        triangle(ghost.x * cellSize, ghost.y * cellSize - 10, ghost.x * cellSize - 10, ghost.y * cellSize + 10, ghost.x * cellSize + 10, ghost.y * cellSize + 10);
+    }
+
+    function drawItems() {
+        fill('red');
+        for (let item of items) {
+            if (!item.collected) {
+                ellipse(item.x * cellSize, item.y * cellSize, 10, 10);
+            }
+        }
+    }
+
+    function checkCollisions() {
+        if (dist(player.x, player.y, ghost.x, ghost.y) < player.radius) {
+            alert('Game Over! The ghost caught you.');
+            noLoop();
+        }
+        for (let i = items.length - 1; i >= 0; i--) {
+            if (!items[i].collected && dist(player.x, player.y, items[i].x, items[i].y) < player.radius) {
+                items[i].collected = true;
+            }
+        }
+    }
+
+    function checkWin() {
+        if (items.every(item => item.collected)) {
+            alert('You won! You collected all items.');
+            noLoop();
+        }
+    }
+
+    function keyPressed() {
+        let newX = player.x;
+        let newY = player.y;
+        if (key === 'ArrowUp' && player.y > 1) newY -= 1;
+        if (key === 'ArrowDown' && player.y < mazeHeight / cellSize - 2) newY += 1;
+        if (key === 'ArrowLeft' && player.x > 1) newX -= 1;
+        if (key === 'ArrowRight' && player.x < mazeWidth / cellSize - 2) newX += 1;
+        if (maze[newX][newY] === 0) {
+            player.x = newX;
+            player.y = newY;
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Birthdays & Anniversaries</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 300px;
+            margin: 20px;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .event {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+        .event-name {
+            flex-grow: 1;
+        }
+        .countdown {
+            color: #666;
+        }
+        #showAll {
+            display: block;
+            margin: 10px auto;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="eventContainer">
+    <div id="topEvents"></div>
+    <button id="showAll" onclick="showAllEvents()">Show All</button>
+</div>
+
+<script>
+    const events = [
+        {type: "birthday", name: "Alice", date: "2023-11-15"},
+        {type: "anniversary", name: "Bob & Eve", date: "2023-11-10"},
+        {type: "birthday", name: "Charlie", date: "2023-11-13"},
+        // Add more events as needed for testing
+    ];
+
+    function daysUntil(date) {
+        const today = new Date();
+        const eventDate = new Date(date);
+        const timeDiff = eventDate.getTime() - today.getTime();
+        const dayDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+        if (dayDiff === 0) return "Today";
+        if (dayDiff === 1) return "Tomorrow";
+        return `${dayDiff} days to go`;
+    }
+
+    function displayEvents(limit = 3) {
+        const sortedEvents = events.sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, limit);
+        const eventDiv = document.getElementById('topEvents');
+        eventDiv.innerHTML = ''; // Clear previous events
+
+        sortedEvents.forEach(event => {
+            let iconSrc = event.type === 'birthday' ? 'birthday.png' : 'anniversary.png';
+            eventDiv.innerHTML += `
+                <div class="event">
+                    <img src="${iconSrc}" class="icon">
+                    <span class="event-name">${event.name}</span>
+                    <span class="countdown">${daysUntil(event.date)}</span>
+                </div>
+            `;
+        });
+    }
+
+    function showAllEvents() {
+        displayEvents(events.length);
+        document.getElementById('showAll').style.display = 'none';
+    }
+
+    // Initial display
+    displayEvents();
+</script>
+
+</body>
+</html>
