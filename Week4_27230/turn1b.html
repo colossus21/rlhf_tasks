@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stickman Avatar Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Add some basic styling for our page */
+        body { font-family: 'Arial', sans-serif; }
+        .avatar-container { width: 200px; margin: 20px auto; }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+<div class="container mx-auto p-4 pt-6 md:p-6 lg:p-12">
+    <h1 class="text-3xl text-center mb-4">Stickman Avatar Generator</h1>
+    <div class="flex justify-center">
+        <div class="avatar-container">
+            <!-- SVG for the stickman will be generated here -->
+            <svg id="avatar-svg" viewBox="0 0 100 150" xmlns="http://www.w3.org/2000/svg">
+                <!-- The parts will be added here -->
+            </svg>
+        </div>
+    </div>
+    <div class="flex flex-wrap justify-center mb-4">
+        <!-- Controls for avatar customization -->
+        <select id="face" class="m-2 p-2 rounded">
+            <option value="face1">Face 1</option>
+            <option value="face2">Face 2</option>
+            <option value="face3">Face 3</option>
+        </select>
+        <select id="eyes" class="m-2 p-2 rounded">
+            <option value="eyes1">Eyes 1</option>
+            <option value="eyes2">Eyes 2</option>
+            <option value="eyes3">Eyes 3</option>
+        </select>
+        <select id="mouth" class="m-2 p-2 rounded">
+            <option value="mouth1">Mouth 1</option>
+            <option value="mouth2">Mouth 2</option>
+            <option value="mouth3">Mouth 3</option>
+        </select>
+        <select id="hat" class="m-2 p-2 rounded">
+            <option value="hat1">Hat 1</option>
+            <option value="hat2">Hat 2</option>
+            <option value="hat3">Hat 3</option>
+        </select>
+        <input type="color" id="color-face" value="#F5F5DC" class="m-2 p-1 rounded">
+        <input type="color" id="color-eyes" value="#000000" class="m-2 p-1 rounded">
+        <input type="color" id="color-mouth" value="#FF0000" class="m-2 p-1 rounded">
+        <input type="color" id="color-hat" value="#008000" class="m-2 p-1 rounded">
+    </div>
+</div>
+
+<script>
+    const avatarSvg = document.getElementById('avatar-svg');
+    const parts = { face: '', eyes: '', mouth: '', hat: '' };
+
+    function updateAvatar() {
+        avatarSvg.innerHTML = '';
+        Object.keys(parts).forEach(part => {
+            const element = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            element.innerHTML = getPartSvg(parts[part], part);
+            element.setAttribute('fill', document.getElementById(`color-${part}`).value);
+            avatarSvg.appendChild(element);
+        });
+    }
+
+    function getPartSvg(partName, partType) {
+        // Here we define simple SVG parts for the avatar
+        const partSvgs = {
+            'face1': '<circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="#F5F5DC"/>',
+            'face2': '<rect x="10" y="10" width="80" height="80" rx="15" fill="#F5F5DC" stroke="black" stroke-width="3"/>',
+            'face3': '<ellipse cx="50" cy="50" rx="40" ry="30" stroke="black" stroke-width="3" fill="#F5F5DC"/>',
+            'eyes1': '<circle cx="35" cy="45" r="5"/><circle cx="65" cy="45" r="5"/>',
+            'eyes2': '<rect x="30" y="40" width="10" height="5" rx="2"/><rect x="60" y="40" width="10" height="5" rx="2"/>',
+            'eyes3': '<line x1="35" y1="45" x2="40" y2="50" stroke-width="3"/><line x1="65" y1="45" x2="60" y2="50" stroke-width="3"/>',
+            'mouth1': '<line x1="30" y1="70" x2="70" y2="70" stroke-width="3"/>',
+            'mouth2': '<path d="M 30 80 Q 50 90 70 80" stroke-width="3"/>',
+            'mouth3': '<circle cx="50" cy="85" r="10" fill="#FF0000"/>',
+            'hat1': '<rect x="30" y="5" width="40" height="15" rx="2"/><rect x="20" y="20" width="60" height="5"/>',
+            'hat2': '<path d="M 20 30 L 50 5 L 80 30 Z"/>',
+            'hat3': '<circle cx="50" cy="25" r="20"/><rect x="40" y="35" width="20" height="5"/>',
+        };
+        return partSvgs[partName];
+    }
+
+    document.querySelectorAll('select, input[type="color"]').forEach(item => {
+        item.addEventListener('change', updateAvatar);
+    });
+
+    updateAvatar(); // Initialize the avatar
+</script>
+
+</body>
+</html>

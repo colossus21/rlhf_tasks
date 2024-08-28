@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stickman Avatar Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.0.0-rc.5/dist/html2canvas.min.js"></script>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+
+<div class="bg-white p-8 rounded-lg shadow-lg max-w-lg w-full">
+    <h1 class="text-2xl font-bold mb-6 text-center">Stickman Avatar Generator</h1>
+    <div class="flex justify-center mb-6 relative">
+        <!-- Backgrounds -->
+        <svg id="background" width="200" height="200" xmlns="http://www.w3.org/2000/svg" style="position: absolute; z-index: 0;">
+            <!-- Forest -->
+            <rect id="forest" x="0" y="0" width="200" height="200" fill="#2E865F" style="display: none;"></rect>
+            <!-- Sea -->
+            <rect id="sea" x="0" y="0" width="200" height="200" fill="#3498db" style="display: none;"></rect>
+            <!-- Sky -->
+            <rect id="sky" x="0" y="0" width="200" height="200" fill="#87CEEB" style="display: none;"></rect>
+            <!-- Space -->
+            <rect id="space" x="0" y="0" width="200" height="200" fill="#2c3e50" style="display: none;"></rect>
+            <!-- Off white for none -->
+            <rect id="none" x="0" y="0" width="200" height="200" fill="#f5f5f5" style="display: none;"></rect>
+        </svg>
+        <!-- Avatar -->
+        <svg id="avatar" width="200" height="200" xmlns="http://www.w3.org/2000/svg" style="position: relative; z-index: 1;">
+            <!-- Face -->
+            <circle id="face" cx="100" cy="100" r="50" />
+            <rect id="face-square" x="50" y="50" width="100" height="100" rx="0" ry="0" fill="none" style="display:none;" />
+            <!-- Eyes -->
+            <circle id="left-eye" cx="80" cy="85" r="8" />
+            <circle id="right-eye" cx="120" cy="85" r="8" />
+            <!-- Mouth -->
+            <path id="mouth" d="M 80 125 Q 100 140 120 125" stroke-width="5" fill="none" />
+            <!-- Hats -->
+            <g id="hat1">
+                <rect id="hat1-top" x="60" y="45" width="80" height="20" />
+                <rect id="hat1-brim" x="50" y="65" width="100" height="10" />
+            </g>
+            <g id="hat2" style="display:none;">
+                <rect x="70" y="40" width="60" height="30" />
+                <polygon points="70,40 100,20 130,40" />
+            </g>
+            <g id="hat3" style="display:none;">
+                <rect x="50" y="40" width="100" height="15" />
+                <rect x="40" y="55" width="120" height="10" />
+            </g>
+        </svg>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+        <!-- Background Selection -->
+        <div>
+            <label class="block text-sm font-medium mb-1">Background</label>
+            <select id="backgroundSelect" class="w-full p-2 border border-gray-300 rounded">
+                <option value="none">None</option>
+                <option value="forest">Forest</option>
+                <option value="sea">Sea</option>
+                <option value="sky">Sky</option>
+                <option value="space">Space</option>
+            </select>
+        </div>
+
+        <!-- Face Selection -->
+        <div>
+            <label class="block text-sm font-medium mb-1">Face Style</label>
+            <select id="faceStyle" class="w-full p-2 border border-gray-300 rounded">
+                <option value="round">Round</option>
+                <option value="square">Square</option>
+                <option value="rounded-square">Rounded Square</option>
+            </select>
+        </div>
+
+        <!-- Eye Selection -->
+        <div>
+            <label class="block text-sm font-medium mb-1">Eye Style</label>
+            <select id="eyeStyle" class="w-full p-2 border border-gray-300 rounded">
+                <option value="8">Normal</option>
+                <option value="10">Big</option>
+                <option value="6">Small</option>
+            </select>
+        </div>
+
+        <!-- Mouth Style -->
+        <div>
+            <label class="block text-sm font-medium mb-1">Mouth Style</label>
+            <select id="mouthStyle" class="w-full p-2 border border-gray-300 rounded">
+                <option value="M 80 125 Q 100 140 120 125">Smile</option>
+                <option value="M 80 135 Q 100 120 120 135">Sad</option>
+                <option value="M 80 130 Q 100 130 120 130">Neutral</option>
+            </select>
+        </div>
+
+        <!-- Hat Style -->
+        <div>
+            <label class="block text-sm font-medium mb-1">Hat Style</label>
+            <select id="hatStyle" class="w-full p-2 border border-gray-300 rounded">
+                <option value="hat1">Classic</option>
+                <option value="hat2">Pointy</option>
+                <option value="hat3">Flat Rectangular</option>
+            </select>
+        </div>
+
+        <!-- Colors -->
+        <div>
+            <label class="block text-sm font-medium mb-1">Face Color</label>
+            <input type="color" id="faceColor" class="w-full p-2 border border-gray-300 rounded" value="#f3c5a8">
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium mb-1">Eye Color</label>
+            <input type="color" id="eyeColor" class="w-full p-2 border border-gray-300 rounded" value="#000000">
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium mb-1">Mouth Color</label>
+            <input type="color" id="mouthColor" class="w-full p-2 border border-gray-300 rounded" value="#000000">
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium mb-1">Hat Color</label>
+            <input type="color" id="hatColor" class="w-full p-2 border border-gray-300 rounded" value="#000000">
+        </div>
+    </div>
+
+    <!-- Randomize and Export Buttons -->
+    <div class="mt-6 flex justify-between">
+        <button id="randomizeAvatar" class="bg-green-500 text-white p-2 rounded">Randomize Avatar</button>
+        <button id="exportPNG" class="bg-blue-500 text-white p-2 rounded">Export PNG</button>
+    </div>
+
+    <script>
+        function updateAvatar() {
+            const faceStyle = document.getElementById('faceStyle').value;
+            const eyeStyle = document.getElementById('eyeStyle').value;
+            const mouthStyle = document.getElementById('mouthStyle').value;
+            const hatStyle = document.getElementById('hatStyle').value;
+
+            const faceColor = document.getElementById('faceColor').value;
+            const eyeColor = document.getElementById('eyeColor').value;
+            const mouthColor = document.getElementById('mouthColor').value;
+            const hatColor = document.getElementById('hatColor').value;
+
+            // Update Face Style
+            const face = document.getElementById('face');
+            const faceSquare = document.getElementById('face-square');
+            if (faceStyle === 'round') {
+                face.style.display = 'block';
+                faceSquare.style.display = 'none';
+                face.setAttribute('r', '50');
+            } else if (faceStyle === 'square') {
+                face.style.display = 'none';
+                faceSquare.style.display = 'block';
+                faceSquare.setAttribute('rx', '0');
+                faceSquare.setAttribute('ry', '0');
+            } else if (faceStyle === 'rounded-square') {
+                face.style.display = 'none';
+                faceSquare.style.display = 'block';
+                faceSquare.setAttribute('rx', '15');
+                faceSquare.setAttribute('ry', '15');
+            }
+            face.setAttribute('fill', faceColor);
+            faceSquare.setAttribute('fill', faceColor);
+
+            // Update Eyes
+            document.getElementById('left-eye').setAttribute('r', eyeStyle);
+            document.getElementById('left-eye').setAttribute('fill', eyeColor);
+            document.getElementById('right-eye').setAttribute('r', eyeStyle);
+            document.getElementById('right-eye').setAttribute('fill', eyeColor);
+
+            // Update Mouth
+            document.getElementById('mouth').setAttribute('d', mouthStyle);
+            document.getElementById('mouth').setAttribute('stroke', mouthColor);
+
+            // Update Hats
+            document.querySelectorAll('g[id^="hat"]').forEach(g => g.style.display = 'none');
+            document.getElementById(hatStyle).style.display = 'block';
+            document.querySelectorAll(`#${hatStyle} *`).forEach(part => part.setAttribute('fill', hatColor));
+        }
+
+        function updateBackground() {
+            const backgroundStyle = document.getElementById('backgroundSelect').value;
+            document.querySelectorAll('#background rect').forEach(rect => rect.style.display = 'none');
+            document.getElementById(backgroundStyle).style.display = 'block';
+        }
+
+        function getRandomValue(options) {
+            return options[Math.floor(Math.random() * options.length)];
+        }
+
+        function randomizeAvatar() {
+            const faceStyles = ['round', 'square', 'rounded-square'];
+            const eyeSizes = ['8', '10', '6'];
+            const mouthStyles = [
+                'M 80 125 Q 100 140 120 125',
+                'M 80 135 Q 100 120 120 135',
+                'M 80 130 Q 100 130 120 130'
+            ];
+            const hatStyles = ['hat1', 'hat2', 'hat3'];
+            const backgrounds = ['none', 'forest', 'sea', 'sky', 'space'];
+
+            document.getElementById('faceStyle').value = getRandomValue(faceStyles);
+            document.getElementById('eyeStyle').value = getRandomValue(eyeSizes);
+            document.getElementById('mouthStyle').value = getRandomValue(mouthStyles);
+            document.getElementById('hatStyle').value = getRandomValue(hatStyles);
+            document.getElementById('backgroundSelect').value = getRandomValue(backgrounds);
+
+            // Randomize Colors
+            document.getElementById('faceColor').value = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+            document.getElementById('eyeColor').value = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+            document.getElementById('mouthColor').value = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+            document.getElementById('hatColor').value = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+
+            updateAvatar();
+            updateBackground();
+        }
+
+        document.querySelectorAll('select, input[type="color"]').forEach(element => {
+            element.addEventListener('input', updateAvatar);
+            element.addEventListener('change', updateAvatar);
+        });
+
+        document.getElementById('backgroundSelect').addEventListener('change', updateBackground);
+        document.getElementById('randomizeAvatar').addEventListener('click', randomizeAvatar);
+
+        document.getElementById('exportPNG').addEventListener('click', function() {
+            html2canvas(document.querySelector('.relative'), {
+                useCORS: true
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'avatar.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        });
+
+        // Initialize avatar and background
+        updateAvatar();
+        updateBackground();
+    </script>
+</div>
+
+</body>
+</html>

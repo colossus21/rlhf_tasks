@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stickman Avatar Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.0.0-rc.5/dist/html2canvas.min.js"></script>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+
+<div class="bg-white p-8 rounded-lg shadow-lg max-w-lg w-full">
+    <h1 class="text-2xl font-bold mb-6 text-center">Stickman Avatar Generator</h1>
+    <div class="flex justify-center mb-6 relative">
+        <!-- Backgrounds -->
+        <svg id="background" width="200" height="200" xmlns="http://www.w3.org/2000/svg" style="position: absolute; z-index: 0;">
+            <!-- Forest -->
+            <rect id="forest" x="0" y="0" width="200" height="200" fill="#2E865F" style="display: none;"></rect>
+            <!-- Sea -->
+            <rect id="sea" x="0" y="0" width="200" height="200" fill="#3498db" style="display: none;"></rect>
+            <!-- Sky -->
+            <rect id="sky" x="0" y="0" width="200" height="200" fill="#87CEEB" style="display: none;"></rect>
+            <!-- Space -->
+            <rect id="space" x="0" y="0" width="200" height="200" fill="#2c3e50" style="display: none;"></rect>
+            <!-- Off white for none -->
+            <rect id="none" x="0" y="0" width="200" height="200" fill="#f5f5f5" style="display: none;"></rect>
+        </svg>
+        <!-- Avatar -->
+        <svg id="avatar" width="200" height="200" xmlns="http://www.w3.org/2000/svg" style="position: relative; z-index: 1;">
+            <!-- Avatar parts are the same as before -->
+        </svg>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+        <!-- Existing selection options -->
+        <div>
+            <label class="block text-sm font-medium mb-1">Background</label>
+            <select id="backgroundSelect" class="w-full p-2 border border-gray-300 rounded">
+                <option value="none">None</option>
+                <option value="forest">Forest</option>
+                <option value="sea">Sea</option>
+                <option value="sky">Sky</option>
+                <option value="space">Space</option>
+            </select>
+        </div>
+        <!-- Other selection options -->
+    </div>
+
+    <div class="mt-6 flex justify-between">
+        <button id="randomizeAvatar" class="bg-green-500 text-white p-2 rounded">Randomize Avatar</button>
+        <button id="exportPNG" class="bg-blue-500 text-white p-2 rounded">Export PNG</button>
+    </div>
+
+    <script>
+        // Existing updateAvatar and randomizeAvatar functions
+        function updateBackground() {
+            const backgroundStyle = document.getElementById('backgroundSelect').value;
+            document.querySelectorAll('#background rect').forEach(rect => rect.style.display = 'none');
+            document.getElementById(backgroundStyle).style.display = 'block';
+        }
+
+        document.getElementById('backgroundSelect').addEventListener('change', updateBackground);
+        updateBackground(); // Initialize background
+
+        document.getElementById('exportPNG').addEventListener('click', function() {
+            html2canvas(document.querySelector('.relative'), {
+                useCORS: true
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'avatar.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        });
+
+        // Rest of the existing script
+    </script>
+</div>
+
+</body>
+</html>

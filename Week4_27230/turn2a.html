@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stickman Avatar Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+
+<div class="bg-white p-8 rounded-lg shadow-lg max-w-lg w-full">
+    <h1 class="text-2xl font-bold mb-6 text-center">Stickman Avatar Generator</h1>
+    <div class="flex justify-center mb-6 relative">
+        <svg id="background" width="250" height="250" style="position: absolute; z-index: 0;">
+            <!-- Backgrounds -->
+            <rect id="bg-forest" x="0" y="0" width="250" height="250" fill="green" style="display:none;"/>
+            <rect id="bg-sea" x="0" y="0" width="250" height="250" fill="blue" style="display:none;"/>
+            <rect id="bg-sky" x="0" y="0" width="250" height="250" fill="lightblue" style="display:none;"/>
+            <rect id="bg-space" x="0" y="0" width="250" height="250" fill="black" style="display:none;"/>
+            <rect id="bg-none" x="0" y="0" width="250" height="250" fill="whitesmoke"/>
+        </svg>
+        <svg id="avatar" width="200" height="200" style="position: relative; z-index: 1; margin: 25px;">
+            <!-- Avatar SVG content here -->
+            <circle id="face" cx="100" cy="100" r="50" fill="#f3c5a8" />
+            <!-- ... other avatar parts ... -->
+        </svg>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+        <!-- Existing controls for face, eyes, mouth, hat -->
+        <div>
+            <label class="block text-sm font-medium mb-1">Background</label>
+            <select id="bgSelect" class="w-full p-2 border border-gray-300 rounded">
+                <option value="none">None (Off white)</option>
+                <option value="forest">Forest</option>
+                <option value="sea">Sea</option>
+                <option value="sky">Sky</option>
+                <option value="space">Space</option>
+            </select>
+        </div>
+        <!-- Color pickers for background -->
+        <div>
+            <label class="block text-sm font-medium mb-1">Background Color</label>
+            <input type="color" id="bgColor" class="w-full p-2 border border-gray-300 rounded" value="#f5f5f5">
+        </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="mt-6 flex justify-between">
+        <button id="randomizeAvatar" class="w-1/2 bg-green-500 text-white p-2 rounded mr-2">Randomize Avatar</button>
+        <button id="exportPNG" class="w-1/2 bg-blue-500 text-white p-2 rounded">Export PNG</button>
+    </div>
+</div>
+
+<script>
+    // Function to update avatar and background
+    function updateScene() {
+        updateAvatar(); // Assume this function exists from your previous code
+        const bgType = document.getElementById('bgSelect').value;
+        const bgColor = document.getElementById('bgColor').value;
+
+        // Hide all backgrounds
+        ['forest', 'sea', 'sky', 'space', 'none'].forEach(bg => {
+            document.getElementById(`bg-${bg}`).style.display = 'none';
+        });
+
+        // Show selected background or set custom color
+        if(bgType !== 'none') {
+            document.getElementById(`bg-${bgType}`).style.display = 'block';
+        } else {
+            document.getElementById('bg-none').setAttribute('fill', bgColor);
+        }
+    }
+
+    // Existing randomize function with background added
+    function randomizeAvatar() {
+        // ... your existing randomize code ...
+        document.getElementById('bgSelect').value = ['forest', 'sea', 'sky', 'space', 'none'][Math.floor(Math.random() * 5)];
+        document.getElementById('bgColor').value = `#${Math.floor(Math.random()*16777215).toString(16)}`;
+        updateScene();
+    }
+
+    // Export PNG function
+    document.getElementById('exportPNG').addEventListener('click', function() {
+        html2canvas(document.querySelector("#avatar").parentNode).then(canvas => {
+            const link = document.createElement('a');
+            link.download = 'avatar.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+    });
+
+    // Event listeners for updates
+    document.querySelectorAll('select, input[type="color"]').forEach(elem => {
+        elem.addEventListener('change', updateScene);
+    });
+
+    // Initialize scene
+    updateScene();
+</script>
+
+</body>
+</html>

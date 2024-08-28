@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stickman Avatar Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Additional styles can be added here if Tailwind doesn't cover everything */
+    </style>
+</head>
+<body class="bg-gray-100 p-8">
+
+<div class="container mx-auto flex flex-col items-center">
+    <h1 class="text-4xl mb-4">Stickman Avatar Generator</h1>
+
+    <!-- Avatar Display -->
+    <div id="avatarDisplay" class="mb-8 bg-white p-4 rounded shadow">
+        <svg width="200" height="300" viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg">
+            <!-- Face -->
+            <circle id="face" cx="100" cy="100" r="50" stroke="black" stroke-width="3" fill="yellow"/>
+            <!-- Eyes -->
+            <g id="eyes">
+                <circle cx="80" cy="80" r="10" fill="black"/>
+                <circle cx="120" cy="80" r="10" fill="black"/>
+            </g>
+            <!-- Mouth -->
+            <path id="mouth" d="M70 130 Q100 150 130 130" stroke="black" stroke-width="3" fill="transparent"/>
+            <!-- Hat -->
+            <rect id="hat" x="60" y="20" width="80" height="30" fill="brown"/>
+        </svg>
+    </div>
+
+    <!-- Controls -->
+    <div class="grid grid-cols-2 gap-4 w-full max-w-lg">
+        <!-- Face Color -->
+        <select id="faceColor" class="p-2 border rounded">
+            <option value="yellow">Yellow</option>
+            <option value="pink">Pink</option>
+            <option value="lightblue">Light Blue</option>
+        </select>
+        <!-- Eye Color -->
+        <select id="eyeColor" class="p-2 border rounded">
+            <option value="black">Black</option>
+            <option value="blue">Blue</option>
+            <option value="green">Green</option>
+        </select>
+        <!-- Mouth Style -->
+        <select id="mouthStyle" class="p-2 border rounded">
+            <option value="smile">Smile</option>
+            <option value="frown">Frown</option>
+            <option value="straight">Straight</option>
+        </select>
+        <!-- Hat Color -->
+        <select id="hatColor" class="p-2 border rounded">
+            <option value="brown">Brown</option>
+            <option value="red">Red</option>
+            <option value="blue">Blue</option>
+        </select>
+    </div>
+
+    <button id="randomize" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700">Randomize</button>
+</div>
+
+<script>
+    function updateAvatar() {
+        const face = document.getElementById('face');
+        const eyes = document.querySelectorAll('#eyes circle');
+        const mouth = document.getElementById('mouth');
+        const hat = document.getElementById('hat');
+
+        face.setAttribute('fill', document.getElementById('faceColor').value);
+
+        eyes.forEach(eye => {
+            eye.setAttribute('fill', document.getElementById('eyeColor').value);
+        });
+
+        // Simple mouth style change, could be expanded with more SVG paths
+        switch(document.getElementById('mouthStyle').value) {
+            case 'smile':
+                mouth.setAttribute('d', 'M70 130 Q100 150 130 130');
+                break;
+            case 'frown':
+                mouth.setAttribute('d', 'M70 150 Q100 130 130 150');
+                break;
+            case 'straight':
+                mouth.setAttribute('d', 'M70 140 L130 140');
+                break;
+        }
+
+        hat.setAttribute('fill', document.getElementById('hatColor').value);
+    }
+
+    // Event listeners for changes
+    document.querySelectorAll('select').forEach(select => {
+        select.addEventListener('change', updateAvatar);
+    });
+
+    // Randomize function
+    document.getElementById('randomize').addEventListener('click', function() {
+        const selects = document.querySelectorAll('select');
+        selects.forEach(select => {
+            select.selectedIndex = Math.floor(Math.random() * select.options.length);
+        });
+        updateAvatar();
+    });
+
+    // Initial update
+    updateAvatar();
+</script>
+
+</body>
+</html>
