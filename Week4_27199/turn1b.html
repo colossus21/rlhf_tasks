@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projectile Motion Simulator</title>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.4.0/lib/p5.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            @apply flex justify-center items-center h-screen;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            @apply flex flex-col items-center;
+        }
+        .slider {
+            @apply w-full mb-4;
+        }
+        #canvasContainer {
+            @apply border-2 border-gray-500 rounded;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="flex justify-between mb-4 w-full">
+        <div>
+            <label for="velocity" class="block mb-2">Velocity:</label>
+            <input type="range" min="1" max="100" value="50" class="slider" id="velocity">
+        </div>
+        <div>
+            <label for="angle" class="block mb-2">Angle:</label>
+            <input type="range" min="0" max="90" value="45" class="slider vertical-slider" id="angle">
+        </div>
+    </div>
+    <div id="canvasContainer">
+        <div id="sketch-holder"></div>
+    </div>
+    <button onclick="startSimulation()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4">
+        Start
+    </button>
+</div>
+
+<script>
+    let angleSlider, velocitySlider;
+    let ball;
+    let gravity = 0.2;
+    let isRunning = false;
+
+    function setup() {
+        let canvas = createCanvas(600, 400);
+        canvas.parent('sketch-holder');
+        angleSlider = document.getElementById('angle');
+        velocitySlider = document.getElementById('velocity');
+        ball = {
+            x: 50,
+            y: height - 50,
+            vx: 0,
+            vy: 0
+        };
+    }
+
+    function draw() {
+        background(220);
+        if (isRunning) {
+            updateProjectile();
+            displayProjectile();
+        }
+    }
+
+    function updateProjectile() {
+        let angle = radians(angleSlider.value);
+        let velocity = velocitySlider.value;
+        if (ball.y < height - 50) {
+            ball.vy += gravity;
+        } else {
+            ball.vy = 0;
+            ball.vx = 0;
+            isRunning = false;
+        }
+        ball.vx = velocity * cos(angle);
+        ball.vy += velocity * sin(angle);
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+    }
+
+    function displayProjectile() {
+        ellipse(ball.x, ball.y, 10, 10);
+        fill(0);
+    }
+
+    function startSimulation() {
+        if (!isRunning) {
+            isRunning = true;
+        }
+    }
+</script>
+</body>
+</html>

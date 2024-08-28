@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Projectile Motion Simulator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { text-align: center; }
+        .controls { margin: 20px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div id="p5Canvas"></div>
+    <div class="controls">
+        <input type="range" min="0" max="90" value="45" class="slider" id="angleSlider" style="width: 200px;">
+        <label for="angleSlider">Angle: <span id="angleValue">45</span>°</label>
+        <input type="range" min="1" max="100" value="50" class="slider" id="velocitySlider" style="width: 200px;">
+        <label for="velocitySlider">Velocity: <span id="velocityValue">50</span> m/s</label>
+        <button id="startButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Start</button>
+    </div>
+</div>
+
+<script>
+    let projectile;
+    let angleSlider, velocitySlider, startButton;
+    let angle, velocity, gravity = 0.5;
+
+    function setup() {
+        let canvas = createCanvas(800, 400);
+        canvas.parent('p5Canvas');
+        projectile = new Projectile(width / 8, height - 10);
+        angleSlider = select('#angleSlider');
+        velocitySlider = select('#velocitySlider');
+        startButton = select('#startButton');
+        startButton.mousePressed(startSimulation);
+
+        angleSlider.input(updateAngleDisplay);
+        velocitySlider.input(updateVelocityDisplay);
+    }
+
+    function draw() {
+        background(220);
+        if (projectile.isActive) {
+            projectile.update();
+            projectile.show();
+            if (projectile.y >= height - 10) {
+                projectile.stop();
+            }
+        }
+    }
+
+    function startSimulation() {
+        angle = radians(angleSlider.value());
+        velocity = velocitySlider.value();
+        projectile.start(velocity, angle);
+    }
+
+    function updateAngleDisplay() {
+        select('#angleValue').html(this.value());
+    }
+
+    function updateVelocityDisplay() {
+        select('#velocityValue').html(this.value());
+    }
+
+    class Projectile {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.vx = 0;
+            this.vy = 0;
+            this.isActive = false;
+        }
+
+        start(velocity, angle) {
+            this.vx = velocity * cos(angle);
+            this.vy = -velocity * sin(angle); // Negative because y increases downward in p5.js
+            this.isActive = true;
+        }
+
+        update() {
+            if (this.isActive) {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += gravity;
+            }
+        }
+
+        stop() {
+            this.isActive = false;
+        }
+
+        show() {
+            fill(255, 0, 0);
+            noStroke();
+            ellipse(this.x, this.y, 10, 10);
+        }
+    }
+
+    function windowResized() {
+        resizeCanvas(800, 400);
+    }
+</script>
+</body>
+</html>
