@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coffee Mix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .player-side {
+            @apply h-48 flex justify-around items-center;
+        }
+        .card {
+            @apply w-12 h-12 border-2 border-black flex justify-center items-center font-bold;
+        }
+        .espresso { @apply bg-black text-white; }
+        .sugar { @apply bg-orange-900 text-white; }
+        .milk { @apply bg-orange-100; }
+        .dice {
+            @apply w-16 h-16 bg-white border-2 border-black text-lg flex justify-center items-center mx-auto my-5;
+        }
+    </style>
+</head>
+<body class="bg-orange-50">
+
+<div class="container mx-auto p-4">
+    <h1 class="text-3xl text-center">Coffee Mix</h1>
+
+    <div class="recipes mb-4 text-center">
+        <div>Double shot espresso: 2 Espresso - 3 points</div>
+        <div>Triple shot espresso: 3 Espresso - 5 points</div>
+        <div>Milk Latte: 1 Sugar, 1 Milk, 1 Espresso - 5 points</div>
+        <div>Milk Shake: 2 Milk - 2 points</div>
+        <div>Candy: 1 Sugar - 1 point</div>
+        <div>Cappuccino: 1 Espresso, 1 Milk, 2 Sugar - 7 points</div>
+    </div>
+
+    <div class="flex justify-center">
+        <div class="player-side" id="player1">
+            <div class="card espresso">0</div>
+            <div class="card sugar">0</div>
+            <div class="card milk">0</div>
+            <h3>Points: <span id="p1Points">0</span></h3>
+        </div>
+
+        <div class="text-center">
+            <div class="dice" id="dice">?</div>
+            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" id="rollDice">Roll</button>
+            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" id="buyRecipe" disabled>Buy Recipe</button>
+            <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" id="endTurn">End Turn</button>
+        </div>
+
+        <div class="player-side" id="player2">
+            <div class="card espresso">0</div>
+            <div class="card sugar">0</div>
+            <div class="card milk">0</div>
+            <h3>Points: <span id="p2Points">0</span></h3>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentPlayer = 1;
+    let p1Ingredients = { espresso: 0, sugar: 0, milk: 0 };
+    let p2Ingredients = { espresso: 0, sugar: 0, milk: 0 };
+    let p1Points = 0, p2Points = 0;
+    const recipes = {
+        'doubleShot': { espresso: 2, points: 3 },
+        'tripleShot': { espresso: 3, points: 5 },
+        'milkLatte': { sugar: 1, milk: 1, espresso: 1, points: 5 },
+        'milkShake': { milk: 2, points: 2 },
+        'candy': { sugar: 1, points: 1 },
+        'cappuccino': { espresso: 1, milk: 1, sugar: 2, points: 7 }
+    };
+
+    function rollDice() {
+        const diceRoll = Math.floor(Math.random() * 6) + 1;
+        let reward;
+        switch (diceRoll) {
+            case 1: case 4: reward = { sugar: diceRoll === 1 ? 1 : 2 }; break;
+            case 2: case 5: reward = { milk: diceRoll === 2 ? 1 : 2 }; break;
+            case 3: case 6: reward = { espresso: diceRoll === 3 ? 1 : 3 }; break;
+        }
+        updateIngredients(currentPlayer, reward);
+        $('#dice').text(diceRoll);
+        $('#buyRecipe').prop('disabled', false);
+    }
+
+    function updateIngredients(player, ingredients) {
+        const playerIngredients = player === 1 ? p1Ingredients : p2Ingredients;
+        for (let ingredient in ingredients) {
+            playerIngredients[ingredient] += ingredients[ingredient];
+            $(`#player${player} .${ingredient}`).text(playerIngredients[ingredient]);
+        }
+    }
+
+    function buyRecipe() {
+        const playerIngredients = currentPlayer === 1 ? p1Ingredients : p2Ingredients;
+        const possibleRecipes = Object.keys(recipes).filter(recipe => {
+            for (let ingredient in recipes[recipe]) {
+                if (playerIngredients[ingredient] < recipes[recipe][ingredient]) {
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        if (possibleRecipes.length > 0) {
+            possibleRecipes.forEach(recipe => {
+                for (let ingredient in recipes[recipe]) {
+                    if (ingredient !== 'points') {
+                        playerIngredients[ingredient] -= recipes[recipe][ingredient];
+                        $(`#player${currentPlayer} .${ingredient}`).text(playerIngredients[ingredient]);
+                    }
+                }
+                if (currentPlayer === 1) {
+                    p1Points += recipes[recipe].points;
+                    $('#p1Points').text(p1Points);
+                } else {
+                    p2Points += recipes[recipe].points;
+                    $('#p2Points').text(p2Points);
+                }
+            });
+        } else {
+            alert('No recipes available to buy.');
+        }
+    }
+
+    function endTurn() {
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+        $('#buyRecipe').prop('disabled', true);
+    }
+
+    $('#rollDice').on('click', rollDice);
+    $('#buyRecipe').on('click', buyRecipe);
+    $('#endTurn').on('click', endTurn);
+</script>
+
+</body>
+</html>

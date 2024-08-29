@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Coffee Mix</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .card {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .recipe-card {
+            border: 2px solid #e5e7eb;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+
+<div class="container mx-auto">
+    <h1 class="text-4xl text-center mb-4">Coffee Mix</h1>
+
+    <!-- Recipes Display -->
+    <div class="grid grid-cols-3 gap-4 mb-4" id="recipes">
+        <!-- Recipes will be dynamically added here -->
+    </div>
+
+    <div class="flex justify-center">
+        <!-- Player 1 -->
+        <div class="mr-4">
+            <div class="flex space-x-2" id="player1">
+                <div class="card bg-black text-white">0</div>
+                <div class="card bg-brown-600 text-white">0</div>
+                <div class="card bg-gray-200">0</div>
+            </div>
+            <p class="mt-2 text-center">Points: <span id="p1Points">0</span></p>
+        </div>
+
+        <!-- Dice and Controls -->
+        <div class="self-center">
+            <div id="dice" class="w-16 h-16 border-2 border-black flex items-center justify-center text-2xl">1</div>
+            <button id="rollDice" class="mt-2 bg-blue-500 text-white py-2 px-4 rounded">Roll</button>
+            <button id="endTurn" class="mt-2 bg-green-500 text-white py-2 px-4 rounded">End Turn</button>
+        </div>
+
+        <!-- Player 2 -->
+        <div class="ml-4">
+            <div class="flex space-x-2" id="player2">
+                <div class="card bg-black text-white">0</div>
+                <div class="card bg-brown-600 text-white">0</div>
+                <div class="card bg-gray-200">0</div>
+            </div>
+            <p class="mt-2 text-center">Points: <span id="p2Points">0</span></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const recipes = [
+            {name: "Double Shot Espresso", points: 3, espresso: 2},
+            {name: "Triple Shot Espresso", points: 5, espresso: 3},
+            {name: "Milk Latte", points: 5, sugar: 1, milk: 1, espresso: 1},
+            {name: "Milk Shake", points: 2, milk: 2},
+            {name: "Candy", points: 1, sugar: 1},
+            {name: "Cappuccino", points: 7, sugar: 2, milk: 1, espresso: 1}
+        ];
+
+        const diceRewards = {1: 'sugar', 2: 'milk', 3: 'espresso', 4: 'sugar', 5: 'milk', 6: 'espresso'};
+
+        let currentPlayer = 1;
+        let player1 = {sugar: 0, milk: 0, espresso: 0, points: 0};
+        let player2 = {sugar: 0, milk: 0, espresso: 0, points: 0};
+
+        const updateRecipes = () => {
+            const recipesDiv = document.getElementById('recipes');
+            recipesDiv.innerHTML = '';
+            [player1, player2][currentPlayer - 1].canBuy = [];
+            recipes.forEach(recipe => {
+                const canBuy = Object.keys(recipe).every(key => {
+                    if(key !== 'name' && key !== 'points') return [player1, player2][currentPlayer - 1][key] >= recipe[key];
+                });
+                if (canBuy) {
+                    [player1, player2][currentPlayer - 1].canBuy.push(recipe);
+                }
+                let recipeDiv = document.createElement('div');
+                recipeDiv.className = 'recipe-card';
+                recipeDiv.innerHTML = `<b>${recipe.name}</b> (${recipe.points} points) - E:${recipe.espresso||0}, S:${recipe.sugar||0}, M:${recipe.milk||0}`;
+                if (canBuy) {
+                    recipeDiv.onclick = () => buyRecipe(recipe);
+                    recipeDiv.classList.add('cursor-pointer', 'hover:bg-gray-200');
+                }
+                recipesDiv.appendChild(recipeDiv);
+            });
+        };
+
+        const rollDice = () => {
+            const roll = Math.floor(Math.random() * 6) + 1;
+            document.getElementById('dice').textContent = roll;
+            const reward = diceRewards[roll] || diceRewards[6]; // 6 gives 3 espressos
+            [player1, player2][currentPlayer - 1][reward] += (roll === 6 ? 3 : (roll === 4 || roll === 5) ? 2 : 1);
+            updatePlayerDisplay();
+            updateRecipes();
+        };
+
+        const buyRecipe = (recipe) => {
+            if (confirm(`Buy ${recipe.name} for ${recipe.points} points?`)) {
+                Object.keys(recipe).forEach(key => {
+                    if(key !== 'name' && key !== 'points') [player1, player2][currentPlayer - 1][key] -= recipe[key];
+                });
+                [player1, player2][currentPlayer - 1].points += recipe.points;
+                updatePlayerDisplay();
+                updateRecipes();
+                checkWin();
+            }
+        };
+
+        const updatePlayerDisplay = () => {
+            ['sugar', 'milk', 'espresso'].forEach(type => {
+                document.getElementById(`player${currentPlayer}`).children[`${type.slice(0,1)}`].textContent = [player1, player2][currentPlayer - 1][type];
+            });
+            document.getElementById(`p${currentPlayer}Points`).textContent = [player1, player2][currentPlayer - 1].points;
+        };
+
+        const endTurn = () => {
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            updateRecipes();
+        };
+
+        const checkWin = () => {
+            if ([player1, player2][currentPlayer - 1].points >= 21) {
+                alert(`Player ${currentPlayer} wins!`);
+                // Optionally reset the game here
+            }
+        };
+
+        document.getElementById('rollDice').addEventListener('click', rollDice);
+        document.getElementById('endTurn').addEventListener('click', endTurn);
+        updateRecipes();
+    });
+</script>
+
+</body>
+</html>
