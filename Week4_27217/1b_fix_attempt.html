@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Phaser Top-Down Builder Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #333;
+        }
+        #gameCanvas {
+            border: 1px solid white;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+</head>
+<body>
+<div id="gameCanvas"></div>
+<script>
+    const config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        parent: 'gameCanvas', // Attach the game to the #gameCanvas div
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        },
+        physics: {
+            default: 'arcade',
+            arcade: {
+                debug: false
+            }
+        }
+    };
+
+    const game = new Phaser.Game(config);
+    let player;
+    let cursors;
+    let blocks;
+
+    function preload() {
+        // Minimal preload since we're using shapes
+    }
+
+    function create() {
+        blocks = this.physics.add.staticGroup();
+
+        // Create player as a simple square
+        player = this.add.rectangle(400, 300, 30, 30, 0x6666ff);
+        this.physics.add.existing(player);
+
+        // Enable physics for player
+        player.body.setCollideWorldBounds(true);
+
+        // Camera follows player
+        this.cameras.main.startFollow(player);
+
+        // Keyboard input
+        cursors = this.input.keyboard.createCursorKeys();
+        this.input.keyboard.addKeys('W,A,S,D,I,J,K,L');
+    }
+
+    function update() {
+        // Player movement
+        player.body.setVelocity(0);
+        if (cursors.left.isDown || cursors.A.isDown) {
+            player.body.setVelocityX(-160);
+        } else if (cursors.right.isDown || cursors.D.isDown) {
+            player.body.setVelocityX(160);
+        }
+        if (cursors.up.isDown || cursors.W.isDown) {
+            player.body.setVelocityY(-160);
+        } else if (cursors.down.isDown || cursors.S.isDown) {
+            player.body.setVelocityY(160);
+        }
+
+        // Building blocks
+        let buildDirection = {x: 0, y: 0};
+        if (Phaser.Input.Keyboard.JustDown(cursors.J)) buildDirection.x = -1;
+        if (Phaser.Input.Keyboard.JustDown(cursors.L)) buildDirection.x = 1;
+        if (Phaser.Input.Keyboard.JustDown(cursors.I)) buildDirection.y = -1;
+        if (Phaser.Input.Keyboard.JustDown(cursors.K)) buildDirection.y = 1;
+
+        if (buildDirection.x || buildDirection.y) {
+            let blockX = player.x + (buildDirection.x * 40);
+            let blockY = player.y + (buildDirection.y * 40);
+            let block = this.add.rectangle(blockX, blockY, 30, 30, 0xFFFF00); // Yellow blocks
+            blocks.add(block);
+            this.physics.add.existing(block, true); // Add physics and make it static
+        }
+
+        // Collision between player and blocks
+        this.physics.add.collider(player, blocks);
+    }
+</script>
+</body>
+</html>

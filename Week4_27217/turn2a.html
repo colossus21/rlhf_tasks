@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phaser Top-Down Game</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #2d2d2d;
+        }
+        #gameContainer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+        }
+        #modeDisplay {
+            position: absolute;
+            top: 10px;
+            font-size: 20px;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            width: 100%;
+            pointer-events: none;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+</head>
+<body>
+<div id="gameContainer">
+    <div id="modeDisplay">Build Mode</div>
+</div>
+<script>
+    const gridSize = 32;
+    const config = {
+        type: Phaser.AUTO,
+        width: window.innerWidth,
+        height: window.innerHeight,
+        parent: 'gameContainer',
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        },
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 0 },
+                debug: false
+            }
+        }
+    };
+
+    const game = new Phaser.Game(config);
+
+    let player;
+    let cursors;
+    let modeKeys;
+    let blocks;
+    let currentMode = 'build';
+
+    function preload() {
+        // No assets to load
+    }
+
+    function create() {
+        player = this.add.rectangle(400, 300, gridSize, gridSize, 0xffffff);
+        this.physics.add.existing(player);
+        player.body.setCollideWorldBounds(true);
+
+        blocks = this.physics.add.group({
+            immovable: true,
+            allowGravity: false
+        });
+
+        this.physics.add.collider(player, blocks);
+
+        cursors = this.input.keyboard.createCursorKeys();
+        modeKeys = this.input.keyboard.addKeys({
+            'build': Phaser.Input.Keyboard.KeyCodes.U,
+            'destroy': Phaser.Input.Keyboard.KeyCodes.O
+        });
+
+        this.input.keyboard.on('keydown', function(event) {
+            if (event.keyCode === Phaser.Input.Keyboard.KeyCodes.U || event.keyCode === Phaser.Input.Keyboard.KeyCodes.O) {
+                switchMode(event.keyCode);
+            }
+        });
+    }
+
+    function update(time, delta) {
+        player.body.setVelocity(0);
+
+        if (cursors.left.isDown) {
+            player.body.setVelocityX(-160);
+        } else if (cursors.right.isDown) {
+            player.body.setVelocityX(160);
+        }
+
+        if (cursors.up.isDown) {
+            player.body.setVelocityY(-160);
+        } else if (cursors.down.isDown) {
+            player.body.setVelocityY(160);
+        }
+
+        if (currentMode === 'build') {
+            handleBuildMode();
+        } else if (currentMode === 'destroy') {
+            handleDestroyMode();
+        }
+    }
+
+    function switchMode(keyCode) {
+        if (keyCode === Phaser.Input.Keyboard.KeyCodes.U) {
+            currentMode = 'build';
+            document.getElementById('modeDisplay').innerText = 'Build Mode';
+        } else if (keyCode === Phaser.Input.Keyboard.KeyCodes.O) {
+            currentMode = 'destroy';
+            document.getElementById('modeDisplay').innerText = 'Destroy Mode';
+        }
+    }
+
+    function handleBuildMode() {
+        const keysPressed = [];
+        if (cursors.left.isDown) keysPressed.push('left');
+        if (cursors.right.isDown) keysPressed.push('right');
+        if (cursors.up.isDown) keysPressed.push('up');
+        if (cursors.down.isDown) keysPressed.push('down');
+
+        keysPressed.forEach(direction => {
+            let blockX = player.x + (direction === 'right' ? gridSize : (direction === 'left' ? -gridSize : 0));
+            let blockY = player.y + (direction === 'down' ? gridSize : (direction === 'up' ? -gridSize : 0));
+            blockX = Phaser.Math.Snap.To(blockX, gridSize);
+            blockY = Phaser.Math.Snap.To(blockY, gridSize);
+
+            if (!isBlockAt(blockX, blockY)) {
+                createBlock(this, blockX, blockY);
+            }
+        });
+    }
+
+    function handleDestroyMode() {
+        const block = getBlockAt(player.x, player.y);
+        if (block) {
+            block.destroy();
+        }
+    }
+
+    function createBlock(scene, x, y) {
+        const block = scene.add.rectangle(x, y, gridSize, gridSize, 0xffff00);
+        scene.physics.add.existing(block);
+        block.body.setImmovable(true);
+        blocks.add(block);
+    }
+
+    function isBlockAt(x, y) {
+        return blocks.children.entries.some(block => block.x === x && block.y === y);
+    }
+
+    function getBlockAt(x, y) {
+        return blocks.children.entries.find(block => block.x === x && block.y === y);
+    }
+</script>
+</body>
+</html>

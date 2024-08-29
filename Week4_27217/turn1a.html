@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Phaser Top-down Game</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.50.1/dist/phaser.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #gameContainer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+        }
+    </style>
+</head>
+<body>
+<div id="gameContainer"></div>
+<script>
+    const gameConfig = {
+        type: Phaser.CANVAS,
+        parent: 'gameContainer',
+        width: 800,
+        height: 600,
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        },
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 0 }
+            }
+        }
+    };
+
+    const game = new Phaser.Game(gameConfig);
+    let player;
+    let blocks;
+    let cursors;
+
+    function preload() {
+        // Phaser doesn't require preloading for shapes, but this function is available if needed.
+    }
+
+    function create() {
+        cursors = this.input.keyboard.createCursorKeys();
+        const WASDKeys = this.input.keyboard.addKeys('W,S,A,D,I,J,K,L');
+
+        player = this.add.rectangle(400, 300, 30, 30, 0x6666ff);
+        this.physics.add.existing(player);
+
+        blocks = this.add.group();
+
+        this.physics.add.collider(player, blocks, hitBlock, null, this);
+    }
+
+    function update(time, delta) {
+        let velocity = 150;
+        player.body.velocity.x = 0;
+        player.body.velocity.y = 0;
+
+        if (cursors.W.isDown || cursors.up.isDown) player.body.velocity.y = -velocity;
+        if (cursors.S.isDown || cursors.down.isDown) player.body.velocity.y = velocity;
+        if (cursors.A.isDown || cursors.left.isDown) player.body.velocity.x = -velocity;
+        if (cursors.D.isDown || cursors.right.isDown) player.body.velocity.x = velocity;
+
+        if (WASDKeys.I.isDown) createBlock(player.x, player.y - 30);
+        if (WASDKeys.K.isDown) createBlock(player.x, player.y + 30);
+        if (WASDKeys.J.isDown) createBlock(player.x - 30, player.y);
+        if (WASDKeys.L.isDown) createBlock(player.x + 30, player.y);
+        // Diagonal blocks can be added by combining these conditions
+    }
+
+    function createBlock(x, y) {
+        let block = blocks.create(x, y, 'block');
+        if (!block) {
+            block = this.add.rectangle(x, y, 30, 30, 0xffff00);
+            this.physics.add.existing(block);
+            blocks.add(block);
+        }
+    }
+
+    function hitBlock(player, block) {
+        // Here you could add some feedback when the player hits a block, if desired
+    }
+</script>
+</body>
+</html>

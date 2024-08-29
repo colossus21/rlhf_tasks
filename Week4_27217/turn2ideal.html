@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phaser Top-Down Game</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #2d2d2d;
+        }
+        #gameContainer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+</head>
+<body>
+<div id="gameContainer"></div>
+<script>
+    const config = {
+        type: Phaser.AUTO,
+        width: window.innerWidth,
+        height: window.innerHeight,
+        parent: 'gameContainer',
+        backgroundColor: '#2d2d2d',
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 0 },
+                debug: false
+            }
+        },
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        }
+    };
+
+    const game = new Phaser.Game(config);
+
+    let player;
+    let cursors;
+    let blockKeys;
+    let blocks;
+    let modeText;
+    let buildMode = true; // true for build mode, false for destroy mode
+
+    function preload() {
+        // Placeholder for asset loading
+    }
+
+    function create() {
+        player = this.add.rectangle(400, 300, 32, 32, 0xffffff);
+        this.physics.add.existing(player);
+        player.body.setCollideWorldBounds(true);
+
+        blocks = this.physics.add.group({
+            immovable: true,
+            allowGravity: false
+        });
+
+        this.physics.add.collider(player, blocks);
+        this.physics.add.collider(blocks, blocks);  // Add collision between blocks
+
+        cursors = this.input.keyboard.addKeys({
+            'up': Phaser.Input.Keyboard.KeyCodes.W,
+            'down': Phaser.Input.Keyboard.KeyCodes.S,
+            'left': Phaser.Input.Keyboard.KeyCodes.A,
+            'right': Phaser.Input.Keyboard.KeyCodes.D
+        });
+
+        blockKeys = this.input.keyboard.addKeys({
+            'up': Phaser.Input.Keyboard.KeyCodes.I,
+            'down': Phaser.Input.Keyboard.KeyCodes.K,
+            'left': Phaser.Input.Keyboard.KeyCodes.J,
+            'right': Phaser.Input.Keyboard.KeyCodes.L,
+            'buildMode': Phaser.Input.Keyboard.KeyCodes.U,
+            'destroyMode': Phaser.Input.Keyboard.KeyCodes.O
+        });
+
+        // Display mode text
+        modeText = this.add.text(config.width / 2, 20, 'Build Mode', { fontSize: '24px', fill: '#ffffff' });
+        modeText.setOrigin(0.5, 0.5);
+
+        // Event listener for mode switching
+        blockKeys.buildMode.on('down', () => switchMode(true));
+        blockKeys.destroyMode.on('down', () => switchMode(false));
+    }
+
+    function update() {
+        player.body.setVelocity(0);
+
+        if (cursors.left.isDown) {
+            player.body.setVelocityX(-160);
+        } else if (cursors.right.isDown) {
+            player.body.setVelocityX(160);
+        }
+
+        if (cursors.up.isDown) {
+            player.body.setVelocityY(-160);
+        } else if (cursors.down.isDown) {
+            player.body.setVelocityY(160);
+        }
+
+        handleBlockInteraction.call(this);
+    }
+
+    function handleBlockInteraction() {
+        const keysPressed = [];
+
+        if (blockKeys.left.isDown) keysPressed.push('left');
+        if (blockKeys.right.isDown) keysPressed.push('right');
+        if (blockKeys.up.isDown) keysPressed.push('up');
+        if (blockKeys.down.isDown) keysPressed.push('down');
+
+        if (keysPressed.length === 1) {
+            handleSingleDirection.call(this, keysPressed[0]);
+        } else if (keysPressed.length === 2) {
+            handleDiagonalDirection.call(this, keysPressed);
+        }
+    }
+
+    function handleSingleDirection(direction) {
+        let x = player.x;
+        let y = player.y;
+
+        if (direction === 'left') x -= 32;
+        if (direction === 'right') x += 32;
+        if (direction === 'up') y -= 32;
+        if (direction === 'down') y += 32;
+
+        x = Phaser.Math.Snap.To(x, 32);
+        y = Phaser.Math.Snap.To(y, 32);
+
+        if (buildMode) {
+            createBlock(this, x, y);
+        } else {
+            destroyBlock(this, x, y);
+        }
+    }
+
+    function handleDiagonalDirection(directions) {
+        let x = player.x;
+        let y = player.y;
+
+        directions.forEach(direction => {
+            if (direction === 'left') x -= 32;
+            if (direction === 'right') x += 32;
+            if (direction === 'up') y -= 32;
+            if (direction === 'down') y += 32;
+        });
+
+        x = Phaser.Math.Snap.To(x, 32);
+        y = Phaser.Math.Snap.To(y, 32);
+
+        if (buildMode) {
+            createBlock(this, x, y);
+        } else {
+            destroyBlock(this, x, y);
+        }
+    }
+
+    function createBlock(scene, x, y) {
+        // Check if block already exists at this location
+        const existingBlock = blocks.getChildren().find(block => block.x === x && block.y === y);
+        if (!existingBlock) {
+            const block = scene.add.rectangle(x, y, 32, 32, 0xffff00);
+            scene.physics.add.existing(block);
+            block.body.setImmovable(true);
+            blocks.add(block);
+        }
+    }
+
+    function destroyBlock(scene, x, y) {
+        const block = blocks.getChildren().find(block => block.x === x && block.y === y);
+        if (block) {
+            block.destroy();
+        }
+    }
+
+    function switchMode(isBuildMode) {
+        buildMode = isBuildMode;
+        modeText.setText(buildMode ? 'Build Mode' : 'Destroy Mode');
+    }
+
+    window.addEventListener('resize', () => {
+        game.scale.resize(window.innerWidth, window.innerHeight);
+    });
+</script>
+</body>
+</html>
