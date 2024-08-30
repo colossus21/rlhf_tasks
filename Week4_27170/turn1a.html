@@ -1,188 +1,159 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <meta charset="UTF-8">
+    <title>Platformer Game</title>
     <style>
-        body { margin: 0; overflow: hidden; }
-        canvas { display: block; }
+        body {
+            margin: 0;
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #game-container {
+            width: 800px;
+            height: 600px;
+            border: 1px solid white;
+        }
+        .mode-display {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
     </style>
 </head>
 <body>
+<div id="game-container"></div>
+<div class="mode-display"></div>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.50.1/dist/phaser.min.js"></script>
 <script>
-    let maze;
-    let player, ghost, items = [];
-    let cellSize = 40;
-    let viewRadius = 150;
-    let gameOver = false;
-
-    function setup() {
-        createCanvas(800, 600);
-        maze = new Maze(width / cellSize, height / cellSize);
-        player = new Player();
-        ghost = new Ghost();
-        for (let i = 0; i < 4; i++) {
-            items.push(new Item());
-        }
-    }
-
-    function draw() {
-        if (gameOver) return;
-
-        background(0);
-        maze.show();
-
-        // Draw items
-        items.forEach(item => item.show());
-
-        // Player and ghost logic
-        player.update();
-        ghost.update(player.x, player.y);
-
-        // Check for item collection
-        for (let i = items.length - 1; i >= 0; i--) {
-            if (dist(player.x, player.y, items[i].x, items[i].y) < cellSize / 2) {
-                items.splice(i, 1);
+    const gameConfig = {
+        type: Phaser.CANVAS,
+        parent: 'game-container',
+        width: 800,
+        height: 600,
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        },
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 500 },
+                debug: false
             }
         }
+    };
 
-        // Draw player with light effect
-        drawLightEffect(player.x, player.y, viewRadius);
-        player.show();
-        ghost.show();
+    const game = new Phaser.Game(gameConfig);
+    let modeDisplay;
+    let mode = 'build';
+    let blocks;
+    let player;
+    let chalice;
+    let cursors;
+    let spaceKey;
+    let restartButton;
+    let phase = 1;
 
-        // Game over conditions
-        if (dist(player.x, player.y, ghost.x, ghost.y) < cellSize / 2) {
-            gameOver = true;
-        }
-        if (items.length === 0) {
-            gameOver = true;
-            console.log("You Win!");
-        }
+    function preload() {
+        this.load.image('block', 'data:image/png;base64,iVBORw0KGg...'); // White block placeholder
+        this.load.image('chalice', 'data:image/png;base64,iVBORw0KGg...'); // Red circle placeholder
     }
 
-    function drawLightEffect(x, y, radius) {
-        let light = createGraphics(width, height);
-        light.background(0, 100); // Semi-transparent black
-        light.noStroke();
-        light.fill(255);
-        light.circle(x, y, radius * 2);
-        image(light, 0, 0);
+    function create() {
+        modeDisplay = this.add.text(10, 10, 'Mode: Build', { fontSize: '24px', fill: '#FFF' });
+        blocks = this.physics.add.group();
+        chalice = this.add.sprite(0, 0, 'chalice');
+        chalice.visible = false;
+        cursors = this.input.keyboard.createCursorKeys();
+        spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.SPACE);
+        this.input.on('pointerdown', placeBlockOrChalice, this);
+        this.input.keyboard.on('keydown_Q', () => switchMode('build'));
+        this.input.keyboard.on('keydown_E', () => switchMode('destroy'));
+        this.input.keyboard.on('keydown_R', () => placeChalice(this.input.activePointer));
     }
 
-    class Maze {
-        constructor(w, h) {
-            this.grid = Array(h).fill().map(() => Array(w).fill(true));
-            this.generate();
-        }
-
-        generate() {
-            // Simple maze generation logic (Recursive backtracker)
-            let stack = [{x: 1, y: 1}];
-            this.grid[1][1] = false;
-            while (stack.length > 0) {
-                let current = stack[stack.length - 1];
-                let neighbors = this.getUnvisitedNeighbors(current.x, current.y);
-                if (neighbors.length > 0) {
-                    let chosen = random(neighbors);
-                    this.removeWall(current, chosen);
-                    stack.push(chosen);
-                } else {
-                    stack.pop();
+    function update(time, delta) {
+        if (phase === 2) {
+            if (player.body.velocity.y > 0 && player.body.touching.down) {
+                player.body.velocity.y = -500;
+            }
+            if (player.body.velocity.x === 0) {
+                if (cursors.left.isDown) {
+                    player.body.velocity.x = -150;
+                } else if (cursors.right.isDown) {
+                    player.body.velocity.x = 150;
                 }
             }
-        }
-
-        getUnvisitedNeighbors(x, y) {
-            // Helper to get unvisited neighbors
-            let neighbors = [];
-            let potential = [[x+2, y], [x-2, y], [x, y+2], [x, y-2]];
-            for (let p of potential) {
-                if (p[0] > 0 && p[1] > 0 && p[0] < this.grid[0].length - 1 && p[1] < this.grid.length - 1 && this.grid[p[1]][p[0]]) {
-                    neighbors.push({x: p[0], y: p[1]});
-                }
-            }
-            return neighbors;
-        }
-
-        removeWall(a, b) {
-            let x = (a.x + b.x) / 2;
-            let y = (a.y + b.y) / 2;
-            this.grid[y][x] = false;
-            this.grid[b.y][b.x] = false;
-        }
-
-        show() {
-            for (let y = 0; y < this.grid.length; y++) {
-                for (let x = 0; x < this.grid[0].length; x++) {
-                    if (this.grid[y][x]) {
-                        fill(100);
-                        rect(x * cellSize, y * cellSize, cellSize, cellSize);
-                    }
-                }
+            if (Phaser.Geom.Intersects.RectangleToRectangle(player.getBounds(), chalice.getBounds())) {
+                winGame();
             }
         }
-    }
-
-    class Player {
-        constructor() {
-            this.x = cellSize * 1.5;
-            this.y = cellSize * 1.5;
-        }
-
-        update() {
-            if (keyIsDown(LEFT_ARROW)) this.x -= 5;
-            if (keyIsDown(RIGHT_ARROW)) this.x += 5;
-            if (keyIsDown(UP_ARROW)) this.y -= 5;
-            if (keyIsDown(DOWN_ARROW)) this.y += 5;
-
-            // Keep player within bounds
-            this.x = constrain(this.x, cellSize/2, width - cellSize/2);
-            this.y = constrain(this.y, cellSize/2, height - cellSize/2);
-        }
-
-        show() {
-            fill('blue');
-            ellipse(this.x, this.y, cellSize * 0.75, cellSize * 0.75);
+        if (spaceKey.isDown && phase === 1 && chalice.visible) {
+            startGame();
         }
     }
 
-    class Ghost {
-        constructor() {
-            this.x = width - cellSize * 1.5;
-            this.y = height - cellSize * 1.5;
-        }
-
-        update(px, py) {
-            // Simple chase logic; could be improved with A*
-            let angle = atan2(py - this.y, px - this.x);
-            this.x += cos(angle) * 2;
-            this.y += sin(angle) * 2;
-        }
-
-        show() {
-            fill('white');
-            triangle(this.x, this.y - cellSize/2, this.x - cellSize/4, this.y + cellSize/4, this.x + cellSize/4, this.y + cellSize/4);
-        }
-    }
-
-    class Item {
-        constructor() {
-            let valid = false;
-            while (!valid) {
-                this.x = random(1, maze.grid[0].length - 1) * cellSize;
-                this.y = random(1, maze.grid.length - 1) * cellSize;
-                if (!maze.grid[floor(this.y / cellSize)][floor(this.x / cellSize)]) {
-                    valid = true;
+    function placeBlockOrChalice(pointer) {
+        let gridSize = 50;
+        let x = Math.floor(pointer.x / gridSize) * gridSize;
+        let y = Math.floor(pointer.y / gridSize) * gridSize;
+        if (mode === 'build') {
+            let block = blocks.create(x, y, 'block');
+            block.body = this.physics.add.existing(block, true);
+            block.body.immovable = true;
+        } else if (mode === 'destroy') {
+            blocks.children.iterate(function(block) {
+                if (block.x === x && block.y === y) {
+                    block.destroy();
                 }
-            }
-        }
-
-        show() {
-            fill('red');
-            ellipse(this.x, this.y, cellSize * 0.5, cellSize * 0.5);
+            });
         }
     }
 
+    function placeChalice(pointer) {
+        if (!chalice.visible) {
+            chalice.x = Math.floor(pointer.x / 50) * 50;
+            chalice.y = Math.floor(pointer.y / 50) * 50;
+            chalice.visible = true;
+        } else {
+            chalice.x = Math.floor(pointer.x / 50) * 50;
+            chalice.y = Math.floor(pointer.y / 50) * 50;
+        }
+    }
+
+    function switchMode(newMode) {
+        mode = newMode;
+        modeDisplay.setText('Mode: ' + (newMode === 'build' ? 'Build' : 'Destroy'));
+    }
+
+    function startGame() {
+        phase = 2;
+        player = this.add.sprite(blocks.getChildren()[0].x, blocks.getChildren()[0].y, 'block');
+        this.physics.add.existing(player);
+        player.body.collideWorldBounds = true;
+        this.physics.add.collider(player, blocks, null, null, this);
+    }
+
+    function winGame() {
+        alert('You win!');
+        restartGame();
+    }
+
+    function loseGame() {
+        alert('You lose!');
+        restartGame();
+    }
+
+    function restartGame() {
+        this.scene.restart();
+    }
 </script>
 </body>
 </html>
