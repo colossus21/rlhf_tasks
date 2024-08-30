@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorting Algorithm Visualizer</title>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.4.0/lib/p5.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .current { fill: #FF0000; } /* Red for current elements */
+        .sorted { fill: #00FF00; }  /* Green for sorted elements */
+    </style>
+</head>
+<body class="bg-gray-100">
+
+<div class="container mx-auto p-4 max-w-6xl">
+    <h1 class="text-4xl font-bold mb-4 text-center">Sorting Algorithm Visualizer</h1>
+
+    <!-- Buttons for algorithms -->
+    <div class="flex justify-center space-x-2 mb-4">
+        <button id="selectionSort" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Selection Sort</button>
+        <!-- Add other buttons similarly -->
+    </div>
+
+    <!-- Speed Slider -->
+    <div class="mb-4 text-center">
+        <label for="speed" class="mr-2">Speed:</label>
+        <input id="speed" type="range" min="1" max="100" value="50" class="w-40">
+    </div>
+
+    <!-- Canvas for visualization -->
+    <div id="canvasHolder" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"></div>
+
+    <!-- Complexity Table -->
+    <table class="table-auto w-full text-center">
+        <thead>
+        <tr class="bg-gray-200">
+            <th class="px-4 py-2">Algorithm</th>
+            <th class="px-4 py-2">Time (Best)</th>
+            <th class="px-4 py-2">Time (Worst)</th>
+            <th class="px-4 py-2">Space</th>
+        </tr>
+        </thead>
+        <tbody id="complexityTable">
+        <!-- Table rows will be filled dynamically -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    let values = [];
+    let w;
+    let delay = 10; // Initial delay for sorting speed
+    let states = []; // State of each bar for visualization
+    let canvas;
+
+    function setup() {
+        canvas = createCanvas(1000, 400);
+        canvas.parent('canvasHolder');
+        w = width / 100; // 100 bars
+        resetArray();
+        setupButtons();
+        setupComplexityTable();
+    }
+
+    function draw() {
+        background(220);
+        for(let i = 0; i < values.length; i++) {
+            if(states[i] == 0) fill('current'); // Currently comparing
+            else if(states[i] == 1) fill('sorted'); // Sorted
+            else fill(255); // Default color
+            rect(i * w, height - values[i], w, values[i]);
+        }
+    }
+
+    function resetArray() {
+        values = new Array(100);
+        for (let i = 0; i < values.length; i++) {
+            values[i] = random(height);
+            states[i] = -1;
+        }
+    }
+
+    function setupButtons() {
+        document.getElementById('selectionSort').onclick = function() { startSort('selection'); };
+        // Setup other buttons similarly
+    }
+
+    function startSort(algo) {
+        resetArray();
+        switch(algo) {
+            case 'selection': selectionSort(); break;
+            // Add other sorting functions
+        }
+    }
+
+    async function selectionSort() {
+        for (let i = 0; i < values.length; i++) {
+            let min_idx = i;
+            for (let j = i + 1; j < values.length; j++) {
+                states[j] = 0; // Mark as current
+                if (values[j] < values[min_idx]) {
+                    min_idx = j;
+                }
+                await sleep(delay);
+                states[j] = -1; // Reset state
+            }
+            await swap(i, min_idx);
+            states[min_idx] = -1; // Reset old min index
+            states[i] = 1; // Mark as sorted
+        }
+    }
+
+    // Helper functions
+    async function swap(a, b) {
+        await sleep(delay);
+        let temp = values[a];
+        values[a] = values[b];
+        values[b] = temp;
+    }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function setupComplexityTable() {
+        const complexities = [
+            {algo: 'Selection Sort', best: 'Ω(n^2)', worst: 'O(n^2)', space: 'O(1)'},
+            // Add other algorithms similarly
+        ];
+        let tableHTML = '';
+        complexities.forEach(algo => {
+            tableHTML += `<tr>
+                <td>${algo.algo}</td>
+                <td>${algo.best}</td>
+                <td>${algo.worst}</td>
+                <td>${algo.space}</td>
+            </tr>`;
+        });
+        document.getElementById('complexityTable').innerHTML = tableHTML;
+    }
+
+    // Adjust delay based on slider
+    document.getElementById('speed').oninput = function() {
+        delay = 100 - this.value; // Inverse relationship for intuitive control
+    };
+</script>
+
+</body>
+</html>

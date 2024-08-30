@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sorting Algorithm Visualizer</title>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.4.0/lib/p5.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .button {
+            @apply bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded;
+        }
+        .slider {
+            @apply w-full h-2 bg-gray-200 rounded-lg appearance-none;
+        }
+        .slider::-webkit-slider-thumb {
+            @apply w-4 h-4 bg-blue-500 rounded-full cursor-pointer appearance-none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+<h1 class="text-3xl font-bold mb-4">Sorting Algorithm Visualizer</h1>
+<div class="flex mb-4">
+    <button onclick="selectSort('selection')" class="button">Selection Sort</button>
+    <button onclick="selectSort('bubble')" class="button ml-2">Bubble Sort</button>
+    <button onclick="selectSort('insertion')" class="button ml-2">Insertion Sort</button>
+    <button onclick="selectSort('merge')" class="button ml-2">Merge Sort</button>
+    <button onclick="selectSort('quick')" class="button ml-2">Quick Sort</button>
+    <button onclick="selectSort('heap')" class="button ml-2">Heap Sort</button>
+</div>
+<div id="sketch-holder" class="bg-white p-4 rounded shadow-md">
+    <!-- p5 canvas will be added here -->
+</div>
+<input type="range" min="1" max="100" value="50" class="slider mt-4" id="speed-slider" onchange="updateSpeed(this.value)">
+<script>
+    let values = [];
+    let i = 0, j = 0;
+    let delayTime = 20;
+    let sorting = false;
+    let algorithm;
+    let w;
+
+    function setup() {
+        const canvas = createCanvas(800, 400);
+        canvas.parent('sketch-holder');
+        w = width / 100;
+        for (let i = 0; i < 100; i++) {
+            values.push(random(1, 250));
+        }
+        frameRate(60);
+    }
+
+    function draw() {
+        background(255);
+        for (let k = 0; k < values.length; k++) {
+            stroke(0);
+            fill(100);
+            rect(k * w, height - values[k], w, values[k]);
+        }
+        if (sorting) {
+            noLoop();
+            algorithms[algorithm]();
+            loop();
+        }
+    }
+
+    function selectSort(type) {
+        resetArray();
+        algorithm = type;
+        sorting = true;
+    }
+
+    function updateSpeed(val) {
+        delayTime = map(val, 1, 100, 100, 1);
+    }
+
+    const algorithms = {
+        'selection': selectionSort,
+        'bubble': bubbleSort,
+        'insertion': insertionSort,
+        'merge': mergeSort,
+        'quick': quickSort,
+        'heap': heapSort
+    };
+
+    function resetArray() {
+        values = [];
+        for (let i = 0; i < 100; i++) {
+            values.push(random(1, 250));
+        }
+        sorting = false;
+    }
+
+    // Implementations of sorting algorithms
+    function selectionSort() {
+        if (i < values.length) {
+            let min_idx = i;
+            for (let j = i + 1; j < values.length; j++) {
+                if (values[j] < values[min_idx]) min_idx = j;
+            }
+            [values[i], values[min_idx]] = [values[min_idx], values[i]];
+            i++;
+        } else {
+            sorting = false;
+            i = 0;
+        }
+        delay(delayTime);
+    }
+
+    function bubbleSort() {
+        if (i < values.length) {
+            if (j < values.length - i - 1) {
+                if (values[j] > values[j + 1]) {
+                    [values[j], values[j + 1]] = [values[j + 1], values[j]];
+                }
+                j++;
+            } else {
+                j = 0;
+                i++;
+            }
+        } else {
+            sorting = false;
+            i = 0;
+        }
+        delay(delayTime);
+    }
+
+    function insertionSort() {
+        if (i < values.length) {
+            let key = values[i];
+            j = i - 1;
+            while (j >= 0 && values[j] > key) {
+                values[j + 1] = values[j];
+                j = j - 1;
+            }
+            values[j + 1] = key;
+            i++;
+        } else {
+            sorting = false;
+            i = 0;
+        }
+        delay(delayTime);
+    }
+
+    function mergeSort() {
+        if (!sorting) {
+            mergeSortStep(0, values.length - 1);
+            sorting = true;
+        }
+        delay(delayTime);
+    }
+
+    function mergeSortStep(start, end) {
+        if (start < end) {
+            let mid = floor((start + end) / 2);
+            mergeSortStep(start, mid);
+            mergeSortStep(mid + 1, end);
+            merge(start, mid, end);
+        }
+    }
+
+    function merge(start, mid, end) {
+        let left = values.slice(start, mid + 1);
+        let right = values.slice(mid + 1, end + 1);
+        let k = start, i = 0, j = 0;
+        while (i < left.length && j < right.length) {
+            if (left[i] <= right[j]) {
+                values[k++] = left[i++];
+            } else {
+                values[k++] = right[j++];
+            }
+        }
+        while (i < left.length) {
+            values[k++] = left[i++];
+        }
+        while (j < right.length) {
+            values[k++] = right[j++];
+        }
+    }
+
+    function quickSort() {
+        if (!sorting) {
+            quickSortStep(0, values.length - 1);
+            sorting = true;
+        }
+        delay(delayTime);
+    }
+
+    function quickSortStep(low, high) {
+        if (low < high) {
+            let pi = partition(low, high);
+            quickSortStep(low, pi - 1);
+            quickSortStep(pi + 1, high);
+        }
+    }
+
+    function partition(low, high) {
+        let pivot = values[high];
+        let i = low - 1;
+        for (let j = low; j < high; j++) {
+            if (values[j] < pivot) {
+                i++;
+                [values[i], values[j]] = [values[j], values[i]];
+            }
+        }
+        [values[i + 1], values[high]] = [values[high], values[i + 1]];
+        return i + 1;
+    }
+
+    function heapSort() {
+        if (!sorting) {
+            buildHeap();
+            heapify(values.length - 1);
+            sorting = true;
+        }
+        delay(delayTime);
+    }
+
+    function buildHeap() {
+        for (let i = floor(values.length / 2 - 1); i >= 0; i--) {
+            heapify(i);
+        }
+    }
+
+    function heapify(n) {
+        let largest = n;
+        let left = 2 * n + 1;
+        let right = 2 * n + 2;
+        if (left < n && values[left] > values[largest]) largest = left;
+        if (right < n && values[right] > values[largest]) largest = right;
+        if (largest !== n) {
+            [values[n], values[largest]] = [values[largest], values[n]];
+            if (largest < values.length) heapify(largest);
+        }
+    }
+</script>
+</body>
+</html>
