@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Soccer Game with Matter.js</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #gameCanvas {
+            border: 1px solid white;
+        }
+    </style>
+</head>
+<body>
+<canvas id="gameCanvas" width="800" height="400"></canvas>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.18.0/matter.min.js"></script>
+<script>
+    // Matter.js module aliases
+    let Engine = Matter.Engine,
+        Render = Matter.Render,
+        World = Matter.World,
+        Bodies = Matter.Bodies,
+        Body = Matter.Body,
+        Events = Matter.Events;
+
+    // Create engine
+    let engine = Engine.create();
+
+    // Create renderer
+    let render = Render.create({
+        canvas: document.getElementById('gameCanvas'),
+        engine: engine,
+        options: {
+            wireframes: false,
+            showSleeping: true,
+            background: 'transparent'
+        }
+    });
+
+    // Create players and ball
+    let player1 = Bodies.rectangle(50, 200, 30, 30, { isStatic: true, friction: 0, restitution: 0, render: { fillStyle: 'yellow' } });
+    let player2 = Bodies.rectangle(750, 200, 30, 30, { isStatic: true, friction: 0, restitution: 0, render: { fillStyle: 'lightcoral' } });
+    let ball = Bodies.circle(400, 200, 15, { friction: 0.05, restitution: 0.8, render: { fillStyle: 'white' } });
+
+    // Add boundaries (goal posts)
+    let ground = Bodies.rectangle(400, 405, 800, 10, { isStatic: true, render: { fillStyle: 'darkgreen' } });
+    let ceiling = Bodies.rectangle(400, -5, 800, 10, { isStatic: true, render: { fillStyle: 'darkgreen' } });
+    let leftWall = Bodies.rectangle(-5, 200, 10, 400, { isStatic: true, render: { fillStyle: 'darkgreen' } });
+    let rightWall = Bodies.rectangle(805, 200, 10, 400, { isStatic: true, render: { fillStyle: 'darkgreen' } });
+
+    // Add all bodies to the world
+    World.add(engine.world, [player1, player2, ball, ground, ceiling, leftWall, rightWall]);
+
+    // Control players
+    const keys = {};
+    document.addEventListener('keydown', function(e) {
+        keys[e.key] = true;
+    });
+
+    document.addEventListener('keyup', function(e) {
+        keys[e.key] = false;
+    });
+
+    Events.on(engine, 'beforeUpdate', function() {
+        if (keys['w']) Body.setVelocity(player1, { x: 0, y: -5 });
+        if (keys['s']) Body.setVelocity(player1, { x: 0, y: 5 });
+        if (keys['ArrowUp']) Body.setVelocity(player2, { x: 0, y: -5 });
+        if (keys['ArrowDown']) Body.setVelocity(player2, { x: 0, y: 5 });
+    });
+
+    // Score tracking
+    let scorePlayer1 = 0;
+    let scorePlayer2 = 0;
+    Events.on(engine, 'collisionStart', function(event) {
+        let pairs = event.pairs;
+        for (let i = 0; i < pairs.length; i++) {
+            let pair = pairs[i];
+            if (pair.bodyA === ball && pair.bodyB === leftWall) scorePlayer2++;
+            if (pair.bodyA === ball && pair.bodyB === rightWall) scorePlayer1++;
+            if (scorePlayer1 === 3 || scorePlayer2 === 3) {
+                alert(`Game Over! Player ${scorePlayer1 === 3 ? '1' : '2'} wins!`);
+                location.reload();
+            }
+        }
+    });
+
+    // Run the engine
+    Engine.run(engine);
+
+    // Run the renderer
+    Render.run(render);
+</script>
+</body>
+</html>

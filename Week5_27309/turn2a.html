@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top-Down Soccer Game</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: black;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.17.1/matter.min.js"></script>
+<script>
+    // Module aliases
+    const { Engine, Render, Runner, World, Bodies, Body, Events, Vector } = Matter;
+
+    // Create engine
+    const engine = Engine.create();
+    const world = engine.world;
+
+    // Disable gravity
+    engine.gravity.y = 0;
+
+    // Create renderer
+    const render = Render.create({
+        element: document.body,
+        engine: engine,
+        options: {
+            width: 800,
+            height: 600,
+            wireframes: false,
+            background: 'black'
+        }
+    });
+
+    Render.run(render);
+    const runner = Runner.create();
+    Runner.run(runner, engine);
+
+    // Create soccer field boundaries
+    const topWall = Bodies.rectangle(400, 0, 800, 20, { isStatic: true });
+    const bottomWall = Bodies.rectangle(400, 600, 800, 20, { isStatic: true });
+    const leftWall = Bodies.rectangle(0, 300, 20, 600, { isStatic: true });
+    const rightWall = Bodies.rectangle(800, 300, 20, 600, { isStatic: true });
+
+    World.add(world, [topWall, bottomWall, leftWall, rightWall]);
+
+    // Create goal posts
+    const goalWidth = 200;
+    const topGoal = Bodies.rectangle(400, 30, goalWidth, 10, { isStatic: true, render: { fillStyle: 'white' } });
+    const bottomGoal = Bodies.rectangle(400, 570, goalWidth, 10, { isStatic: true, render: { fillStyle: 'white' } });
+
+    World.add(world, [topGoal, bottomGoal]);
+
+    // Create players
+    const userPlayer = Bodies.rectangle(400, 100, 40, 40, { render: { fillStyle: 'yellow' } });
+    const cpuPlayer = Bodies.rectangle(400, 500, 40, 40, { render: { fillStyle: 'lightcoral' } });
+
+    World.add(world, [userPlayer, cpuPlayer]);
+
+    // Create the ball with increased bounciness (restitution)
+    const ball = Bodies.circle(400, 300, 20, {
+        render: { fillStyle: 'white' },
+        restitution: 1.2  // Increased restitution for more bounciness
+    });
+    World.add(world, ball);
+
+    // Keep track of the scores
+    let userScore = 0;
+    let cpuScore = 0;
+
+    // Move the user player with consistent, slower motion
+    const playerSpeed = 2.5;
+    document.addEventListener('keydown', (event) => {
+        const { x, y } = userPlayer.velocity;
+
+        // Player 1 (WASD keys)
+        if (event.key === 'w') {
+            Body.setVelocity(userPlayer, { x, y: -playerSpeed });
+        } else if (event.key === 's') {
+            Body.setVelocity(userPlayer, { x, y: playerSpeed });
+        } else if (event.key === 'a') {
+            Body.setVelocity(userPlayer, { x: -playerSpeed, y });
+        } else if (event.key === 'd') {
+            Body.setVelocity(userPlayer, { x: playerSpeed, y });
+        }
+
+        // Player 2 (Arrow keys)
+        if (event.key === 'ArrowUp') {
+            Body.setVelocity(cpuPlayer, { x, y: -playerSpeed });
+        } else if (event.key === 'ArrowDown') {
+            Body.setVelocity(cpuPlayer, { x, y: playerSpeed });
+        } else if (event.key === 'ArrowLeft') {
+            Body.setVelocity(cpuPlayer, { x: -playerSpeed, y });
+        } else if (event.key === 'ArrowRight') {
+            Body.setVelocity(cpuPlayer, { x: playerSpeed, y });
+        }
+    });
+
+    // Detect goal events
+    Events.on(engine, 'collisionStart', (event) => {
+        event.pairs.forEach(pair => {
+            if (pair.bodyA === ball || pair.bodyB === ball) {
+                if (pair.bodyA === bottomGoal || pair.bodyB === bottomGoal) {
+                    userScore++;
+                    resetPositions();
+                } else if (pair.bodyA === topGoal || pair.bodyB === topGoal) {
+                    cpuScore++;
+                    resetPositions();
+                }
+
+                if (userScore === 3) {
+                    alert('Player 1 wins!');
+                    resetGame();
+                } else if (cpuScore === 3) {
+                    alert('Player 2 wins!');
+                    resetGame();
+                }
+            }
+        });
+    });
+
+    // Reset positions after a goal
+    function resetPositions() {
+        Body.setPosition(userPlayer, { x: 400, y: 100 });
+        Body.setPosition(cpuPlayer, { x: 400, y: 500 });
+        Body.setPosition(ball, { x: 400, y: 300 });
+        Body.setVelocity(userPlayer, { x: 0, y: 0 });
+        Body.setVelocity(cpuPlayer, { x: 0, y: 0 });
+        Body.setVelocity(ball, { x: 0, y: 0 });
+    }
+
+    // Reset the entire game
+    function resetGame() {
+        userScore = 0;
+        cpuScore = 0;
+        resetPositions();
+    }
+</script>
+</body>
+</html>

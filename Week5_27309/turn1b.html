@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Matter.js Soccer Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+        #gameCanvas {
+            display: block;
+            margin: 0 auto;
+        }
+        .player {
+            position: absolute;
+        }
+        #player1 {
+            background-color: yellow;
+        }
+        #player2 {
+            background-color: #ff6347; /* Light red */
+        }
+        #ball {
+            background-color: white;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+<div id="gameCanvas"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.14.2/matter.min.js"></script>
+<script>
+    // Matter.js module aliases
+    var Engine = Matter.Engine,
+        Render = Matter.Render,
+        World = Matter.World,
+        Bodies = Matter.Bodies;
+
+    // Create an engine
+    var engine = Engine.create();
+    var world = engine.world;
+
+    // Create a renderer
+    var render = Render.create({
+        element: document.getElementById('gameCanvas'),
+        engine: engine,
+        options: {
+            width: 800,
+            height: 400,
+            wireframes: false,
+            background: 'transparent'
+        }
+    });
+
+    // Create players, ball, and goals
+    var player1 = Bodies.rectangle(100, 200, 30, 30, { isStatic: false, restitution: 1 });
+    var player2 = Bodies.rectangle(700, 200, 30, 30, { isStatic: false, restitution: 1 });
+    var ball = Bodies.circle(400, 200, 15, { restitution: 0.9 });
+    var goal1 = Bodies.rectangle(0, 200, 10, 100, { isStatic: true });
+    var goal2 = Bodies.rectangle(800, 200, 10, 100, { isStatic: true });
+
+    // Add all bodies to the world
+    World.add(world, [player1, player2, ball, goal1, goal2]);
+
+    // Game logic
+    var score = {player1: 0, player2: 0};
+
+    // Controls
+    var keys = {};
+    document.addEventListener('keydown', function(e) {
+        keys[e.code] = true;
+    });
+    document.addEventListener('keyup', function(e) {
+        keys[e.code] = false;
+    });
+
+    function movePlayer(player, up, down, left, right) {
+        var speed = 5;
+        if (keys[up]) Matter.Body.setVelocity(player, {x: player.velocity.x, y: -speed});
+        if (keys[down]) Matter.Body.setVelocity(player, {x: player.velocity.x, y: speed});
+        if (keys[left]) Matter.Body.setVelocity(player, {x: -speed, y: player.velocity.y});
+        if (keys[right]) Matter.Body.setVelocity(player, {x: speed, y: player.velocity.y});
+    }
+
+    // Run the engine
+    Engine.run(engine);
+    Render.run(render);
+
+    // Game loop
+    (function update() {
+        movePlayer(player1, 'KeyW', 'KeyS', 'KeyA', 'KeyD');
+        movePlayer(player2, 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight');
+
+        // Check for goals
+        if (ball.position.x < 0 && score.player2 < 3) {
+            score.player1++;
+            resetPositions();
+        } else if (ball.position.x > 800 && score.player1 < 3) {
+            score.player2++;
+            resetPositions();
+        }
+
+        if (score.player1 === 3 || score.player2 === 3) {
+            alert((score.player1 === 3 ? "Yellow" : "Red") + " wins!");
+            score.player1 = score.player2 = 0;
+            resetPositions();
+        }
+
+        requestAnimationFrame(update);
+    })();
+
+    function resetPositions() {
+        Matter.Body.setPosition(player1, {x: 100, y: 200});
+        Matter.Body.setPosition(player2, {x: 700, y: 200});
+        Matter.Body.setPosition(ball, {x: 400, y: 200});
+        Matter.Body.setVelocity(ball, {x: 0, y: 0});
+    }
+</script>
+</body>
+</html>
