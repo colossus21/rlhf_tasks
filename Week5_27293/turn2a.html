@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicine Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-blue-800 flex items-center justify-center min-h-screen">
+<div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg">
+    <h1 class="text-3xl font-bold mb-6 text-center text-blue-900">Medicines</h1>
+    <ul id="medicineList" class="space-y-3">
+        <!-- Medicine items will be dynamically inserted here -->
+    </ul>
+</div>
+
+<script type="module">
+    const medicines = [
+        { time: "Morning", name: "Aspirin", instruction: "Before Meal", quantity: "1 Tablet" },
+        { time: "Noon", name: "Paracetamol", instruction: "After Meal", quantity: "1 Tablet" },
+        { time: "Evening", name: "Vitamin D", instruction: "With Meal", quantity: "1 Capsule" }
+    ];
+
+    function renderMedicines() {
+        const list = document.getElementById('medicineList');
+        const savedState = JSON.parse(localStorage.getItem('medicineState') || '{}');
+
+        medicines.forEach((medicine, index) => {
+            const isChecked = savedState[index] || false;
+            const li = document.createElement('li');
+            li.className = `flex items-center p-4 rounded-lg transition-all duration-300 ${isChecked ? 'bg-gray-100 order-last opacity-50' : 'bg-blue-100 hover:bg-blue-200'}`;
+            li.innerHTML = `
+                <input type="checkbox" class="form-checkbox h-6 w-6 text-blue-600 rounded-full checked:bg-blue-600" ${isChecked ? 'checked' : ''} data-index="${index}">
+                <label class="ml-4 flex-1">
+                    <span class="text-sm text-gray-500">${medicine.time}</span><br>
+                    <span class="font-semibold text-lg ${isChecked ? 'line-through text-gray-400' : 'text-blue-800'}">${medicine.name}</span>
+                    <span class="text-sm text-gray-600">, ${medicine.instruction}, ${medicine.quantity}</span>
+                </label>
+            `;
+            list.appendChild(li);
+        });
+
+        // Add event listener to checkboxes
+        list.querySelectorAll('input[type="checkbox"]').forEach(box => {
+            box.addEventListener('change', function() {
+                const index = this.getAttribute('data-index');
+                savedState[index] = this.checked;
+                localStorage.setItem('medicineState', JSON.stringify(savedState));
+                renderMedicines(); // Re-render to apply visual changes
+            });
+        });
+    }
+
+    // Initial render
+    renderMedicines();
+</script>
+</body>
+</html>

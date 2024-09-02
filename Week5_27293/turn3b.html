@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicine Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-blue-800 flex justify-center p-4">
+<div class="max-w-md w-full p-6 bg-white rounded-lg shadow-xl relative">
+    <h1 class="text-3xl font-bold mb-6 text-center text-blue-900">Medicines</h1>
+    <ul id="medicineList" class="space-y-3">
+        <!-- Medicine items will be dynamically inserted here -->
+    </ul>
+    <div class="flex justify-end mt-4">
+        <button onclick="document.getElementById('addMedicineModal').classList.remove('hidden')" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Add Medicine</button>
+        <button onclick="resetChecklist()" class="ml-2 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Reset Checklist</button>
+    </div>
+
+    <!-- Modal for adding medicine -->
+    <div id="addMedicineModal" class="hidden fixed pin overflow-auto bg-smoke-light flex justify-center items-center">
+        <div class="bg-white p-6 rounded shadow-md max-w-md w-full">
+            <h2 class="text-2xl font-bold mb-4">Add Medicine</h2>
+            <form id="addMedicineForm">
+                <label class="block mb-2">Time:</label>
+                <select class="block w-full p-2 pl-3 text-sm text-gray-700" id="time">
+                    <option value="Morning">Morning</option>
+                    <option value="Noon">Noon</option>
+                    <option value="Evening">Evening</option>
+                    <option value="Night">Night</option>
+                </select>
+                <label class="block mt-4 mb-2">Medicine Name:</label>
+                <input type="text" id="name" class="w-full p-2 pl-3 text-sm text-gray-700" placeholder="Enter medicine name">
+                <label class="block mt-4 mb-2">Instruction:</label>
+                <input type="text" id="instruction" class="w-full p-2 pl-3 text-sm text-gray-700" placeholder="Enter instruction">
+                <label class="block mt-4 mb-2">Quantity:</label>
+                <select class="block w-full p-2 pl-3 text-sm text-gray-700" id="quantity">
+                    <option value="1/4">1/4</option>
+                    <option value="1/2">1/2</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+                <button type="submit" class="mt-4 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Add</button>
+                <button type="button" onclick="document.getElementById('addMedicineModal').classList.add('hidden')" class="ml-2 bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">Cancel</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    const medicines = JSON.parse(localStorage.getItem('medicines') || '[]');
+    const renderMedicines = () => {
+        const list = document.getElementById('medicineList');
+        list.innerHTML = '';
+        medicines.forEach((medicine, index) => {
+            const checked = medicine.checked ? 'checked' : '';
+            const li = document.createElement('li');
+            li.className = `flex justify-between items-center p-4 rounded-lg ${checked ? 'bg-gray-100 order-last opacity-50' : 'bg-blue-100 hover:bg-blue-200'}`;
+            li.innerHTML = `
+                    <div class="flex items-center">
+                        <input type="checkbox" class="form-checkbox h-6 w-6 text-blue-600 rounded-full" ${checked} data-index="${index}">
+                        <label class="ml-4 flex-1">
+                            <span class="text-sm text-gray-500">${medicine.time}</span><br>
+                            <span class="${checked ? 'line-through text-gray-400' : 'text-blue-800 font-semibold'}">${medicine.name}</span>
+                            <span class="text-sm text-gray-600">, ${medicine.instruction}, ${medicine.quantity}</span>
+                        </label>
+                    </div>
+                    <button onclick="removeMedicine(${index})" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded">X</button>
+                `;
+            list.appendChild(li);
+        });
+
+        // Add event listeners to checkboxes
+        list.querySelectorAll('input[type="checkbox"]').forEach(box => {
+            box.addEventListener('change', function() {
+                const index = this.getAttribute('data-index');
+                medicines[index].checked = this.checked;
+                localStorage.setItem('medicines', JSON.stringify(medicines));
+                renderMedicines();
+            });
+        });
+    };
+
+    document.getElementById('addMedicineForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const time = document.getElementById('time').value;
+        const name = document.getElementById('name').value;
+        const instruction = document.getElementById('instruction').value;
+        const quantity = document.getElementById('quantity').value;
+        medicines.push({ time, name, instruction, quantity, checked: false });
+        localStorage.setItem('medicines', JSON.stringify(medicines));
+        renderMedicines();
+        document.getElementById('addMedicineModal').classList.add('hidden');
+    });
+
+    const removeMedicine = (index) => {
+        medicines.splice(index, 1);
+        localStorage.setItem('medicines', JSON.stringify(medicines));
+        renderMedicines();
+    };
+
+    const resetChecklist = () => {
+        medicines.forEach(medicine => medicine.checked = false);
+        localStorage.setItem('medicines', JSON.stringify(medicines));
+        renderMedicines();
+    };
+
+    renderMedicines();
+</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicine Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Additional custom CSS to override Tailwind defaults for specific needs */
+        .checked {
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body class="bg-blue-300 flex items-center justify-center min-h-screen">
+<div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg">
+    <h1 class="text-3xl font-bold mb-4 text-center text-blue-900">Medicines</h1>
+    <ul id="medicineList" class="space-y-4">
+        <!-- Medicine items will be dynamically inserted here -->
+    </ul>
+</div>
+
+<script type="module">
+    const medicines = [
+        { time: "Morning", name: "Aspirin", instruction: "Before Meal", quantity: "1 Tablet" },
+        { time: "Noon", name: "Paracetamol", instruction: "After Meal", quantity: "1 Tablet" },
+        { time: "Evening", name: "Vitamin D", instruction: "With Meal", quantity: "1 Capsule" }
+    ];
+
+    function renderMedicines() {
+        const list = document.getElementById('medicineList');
+        const storedMedicines = JSON.parse(localStorage.getItem('medicines')) || medicines.map(item => ({...item, checked: false}));
+        storedMedicines.forEach((medicine, index) => {
+            const li = document.createElement('li');
+            li.className = `flex items-center p-3 rounded shadow-sm transition duration-300 ease-in-out ${medicine.checked ? 'bg-gray-100 checked' : (index === 0 ? 'bg-yellow-100' : 'bg-blue-50')}`;
+            li.innerHTML = `
+                    <input type="checkbox" class="form-checkbox h-6 w-6 text-blue-600 rounded-full" ${medicine.checked ? 'checked' : ''} onchange="handleCheckboxChange(this, ${index})">
+                    <label class="ml-4 text-lg ${medicine.checked ? 'text-gray-600' : 'text-blue-800'}">
+                        <span class="font-semibold text-lg ${medicine.checked ? '' : 'text-red-600'}">${medicine.name}</span> -
+                        ${medicine.time}, ${medicine.instruction}, ${medicine.quantity}
+                    </label>
+                `;
+            list.appendChild(li);
+        });
+
+        // Sort list to move checked items to the bottom
+        const listItems = Array.from(list.children);
+        listItems.sort((a, b) => {
+            const aChecked = a.querySelector('input').checked;
+            const bChecked = b.querySelector('input').checked;
+            return aChecked - bChecked;
+        });
+        list.innerHTML = ''; // Clear the list
+        listItems.forEach(item => list.appendChild(item)); // Append sorted items
+    }
+
+    function handleCheckboxChange(checkbox, index) {
+        const storedMedicines = JSON.parse(localStorage.getItem('medicines')) || [...medicines];
+        storedMedicines[index].checked = checkbox.checked;
+        localStorage.setItem('medicines', JSON.stringify(storedMedicines));
+        renderMedicines(); // Rerender the list after change
+    }
+
+    document.addEventListener('DOMContentLoaded', renderMedicines);
+</script>
+</body>
+</html>

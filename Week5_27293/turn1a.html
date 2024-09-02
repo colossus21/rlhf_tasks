@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicine Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-blue-100 flex items-center justify-center min-h-screen">
+<div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg">
+    <h1 class="text-3xl font-bold mb-4 text-center text-blue-800">Medicines</h1>
+    <ul id="medicineList" class="space-y-4">
+        <!-- Medicine items will be dynamically inserted here -->
+    </ul>
+</div>
+
+<script type="module">
+    // Sample JSON data for medicines
+    const medicines = [
+        { time: "Morning", name: "Aspirin", instruction: "Before Meal", quantity: "1 Tablet" },
+        { time: "Noon", name: "Paracetamol", instruction: "After Meal", quantity: "1 Tablet" },
+        { time: "Evening", name: "Vitamin D", instruction: "With Meal", quantity: "1 Capsule" }
+    ];
+
+    // Function to render medicines
+    function renderMedicines() {
+        const list = document.getElementById('medicineList');
+        medicines.forEach(medicine => {
+            const li = document.createElement('li');
+            li.className = "flex items-center bg-blue-50 p-3 rounded shadow-sm";
+            li.innerHTML = `
+                    <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 rounded-full">
+                    <label class="ml-4 text-lg text-blue-700">
+                        <span class="font-bold">${medicine.time}</span> -
+                        ${medicine.name}, ${medicine.instruction}, ${medicine.quantity}
+                    </label>
+                `;
+            list.appendChild(li);
+        });
+    }
+
+    // Call the function when the DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', renderMedicines);
+</script>
+</body>
+</html>
