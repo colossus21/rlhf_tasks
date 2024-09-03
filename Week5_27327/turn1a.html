@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ghost Chase Game</title>
+    <style>
+        #board {
+            display: grid;
+            grid-template-columns: repeat(12, 30px);
+            grid-gap: 1px;
+            width: 372px;
+            margin: 20px auto;
+        }
+        .cell {
+            width: 30px;
+            height: 30px;
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .player {
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 20px solid blue;
+        }
+        .ghost {
+            width: 20px;
+            height: 20px;
+            background: red;
+        }
+        .chalice {
+            font-size: 20px;
+            color: gold;
+        }
+        .wall {
+            background: #333;
+        }
+        .highlight {
+            background: #b0e0e6;
+            cursor: pointer;
+        }
+        #controls, #message {
+            text-align: center;
+            margin: 10px;
+        }
+        .dice {
+            font-size: 24px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game">
+    <div id="board"></div>
+    <div id="controls">
+        <button onclick="rollDice()">Roll Dice</button>
+        <div id="diceDisplay"></div>
+    </div>
+    <div id="message"></div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    let board = Array(12).fill().map(() => Array(12).fill(null));
+    let player = {x: 0, y: 0, chalices: 0};
+    let ghost = {x: 11, y: 11};
+    let diceRoll = {player: 0, ghost: 0};
+    let walls = [];
+
+    function initializeBoard() {
+        // Reset board
+        $('#board').empty();
+        player.chalices = 0;
+        // Place walls
+        for(let i = 0; i < 30; i++) {
+            let x = Math.floor(Math.random() * 12), y = Math.floor(Math.random() * 12);
+            if((x !== 0 || y !== 0) && (x !== 11 || y !== 11)) {
+                board[y][x] = 'wall';
+                walls.push({x, y});
+            }
+        }
+        // Place chalices
+        for(let i = 0; i < 3; i++) {
+            let x, y;
+            do {
+                x = Math.floor(Math.random() * 12);
+                y = Math.floor(Math.random() * 12);
+            } while(board[y][x] !== null);
+            board[y][x] = 'chalice';
+        }
+        // Draw the board
+        board.forEach((row, y) => {
+            row.forEach((cell, x) => {
+                let cellDiv = $('<div class="cell"></div>');
+                if(cell === 'wall') cellDiv.addClass('wall');
+                $('#board').append(cellDiv);
+            });
+        });
+        updateCharacters();
+    }
+
+    function rollDice() {
+        diceRoll.player = Math.floor(Math.random() * 6) + 1;
+        diceRoll.ghost = Math.floor(Math.random() * 6) + 1;
+        $('#diceDisplay').html(`Player rolled: <span class="dice">${diceRoll.player}</span> Ghost rolled: <span class="dice">${diceRoll.ghost}</span>`);
+        highlightMoves();
+    }
+
+    function highlightMoves() {
+        $('.cell').removeClass('highlight');
+        for(let i = 1; i <= diceRoll.player; i++) {
+            let possibleMoves = [
+                {x: player.x + i, y: player.y},
+                {x: player.x - i, y: player.y},
+                {x: player.x, y: player.y + i},
+                {x: player.x, y: player.y - i}
+            ];
+            possibleMoves.forEach(move => {
+                if(move.x >= 0 && move.y >= 0 && move.x < 12 && move.y < 12 && board[move.y][move.x] !== 'wall') {
+                    $(`#board .cell:nth-child(${move.y * 12 + move.x + 1})`).addClass('highlight');
+                }
+            });
+        }
+    }
+
+    function moveCharacter(x, y, isPlayer = true) {
+        if(isPlayer) {
+            if(board[y][x] === 'chalice') player.chalices++;
+            board[player.y][player.x] = null;
+            player.x = x; player.y = y;
+        } else {
+            board[ghost.y][ghost.x] = null;
+            ghost.x = x; ghost.y = y;
+        }
+        updateCharacters();
+        checkWinCondition();
+    }
+
+    function updateCharacters() {
+        $('.player, .ghost, .chalice').remove();
+        $(`#board .cell:nth-child(${player.y * 12 + player.x + 1})`).append('<div class="player"></div>');
+        $(`#board .cell:nth-child(${ghost.y * 12 + ghost.x + 1})`).append('<div class="ghost"></div>');
+        for(let y = 0; y < 12; y++) {
+            for(let x = 0; x < 12; x++) {
+                if(board[y][x] === 'chalice') {
+                    $(`#board .cell:nth-child(${y * 12 + x + 1})`).append('<div class="chalice">★</div>');
+                }
+            }
+        }
+    }
+
+    function checkWinCondition() {
+        if(player.chalices === 3) {
+            $('#message').html('Player wins! <button onclick="initializeBoard()">Restart</button>');
+        } else if(player.x === ghost.x && player.y === ghost.y) {
+            $('#message').html('Ghost wins! <button onclick="initializeBoard()">Restart</button>');
+        }
+    }
+
+    $('#board').on('click', '.highlight', function() {
+        let index = $(this).index();
+        moveCharacter(index % 12, Math.floor(index / 12));
+    });
+
+    initializeBoard();
+</script>
+
+</body>
+</html>

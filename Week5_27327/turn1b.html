@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghost and Chalices</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        #game-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 30px);
+            grid-gap: 1px;
+            background-color: #333;
+            padding: 10px;
+        }
+        .cell {
+            background-color: #fff;
+            height: 30px;
+            text-align: center;
+        }
+        .player {
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            background-color: #007BFF;
+        }
+        .ghost {
+            background-color: #FF6347;
+        }
+        .chalice {
+            clip-path: polygon(50% 0%, 80% 50%, 50% 100%, 20% 50%);
+            background-color: gold;
+        }
+        .wall {
+            background-color: #555;
+        }
+        #dice-display {
+            font-size: 24px;
+            margin-top: 20px;
+        }
+        #restart-button {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div id="game-grid"></div>
+<div id="dice-display">Roll the dice!</div>
+<button id="restart-button" style="display:none;">Restart Game</button>
+<script>
+    const gameGrid = document.getElementById('game-grid');
+    const diceDisplay = document.getElementById('dice-display');
+    const restartButton = document.getElementById('restart-button');
+    const gridSize = 12;
+    let playerPosition = { x: 0, y: 0 };
+    let ghostPosition = { x: gridSize - 1, y: gridSize - 1 };
+    let chalices = [];
+    let walls = [];
+    let playerTurn = true;
+    let diceRoll = 0;
+
+    function initializeGame() {
+        for (let y = 0; y < gridSize; y++) {
+            for (let x = 0; x < gridSize; x++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.x = x;
+                cell.dataset.y = y;
+                gameGrid.appendChild(cell);
+            }
+        }
+        placeChalices();
+        placeWalls();
+        updateDisplay();
+    }
+
+    function placeChalices() {
+        for (let i = 0; i < 3; i++) {
+            let x, y;
+            do {
+                x = Math.floor(Math.random() * gridSize);
+                y = Math.floor(Math.random() * gridSize);
+            } while (isOccupied(x, y) || isWall(x, y));
+            chalices.push({ x, y });
+        }
+    }
+
+    function placeWalls() {
+        for (let i = 0; i < 10; i++) {
+            let x, y;
+            do {
+                x = Math.floor(Math.random() * gridSize);
+                y = Math.floor(Math.random() * gridSize);
+            } while (isOccupied(x, y) || isWall(x, y) || (x === 0 && y === 0) || (x === gridSize - 1 && y === gridSize - 1));
+            walls.push({ x, y });
+        }
+    }
+
+    function isOccupied(x, y) {
+        return chalices.some(chalice => chalice.x === x && chalice.y === y) ||
+            (playerPosition.x === x && playerPosition.y === y) ||
+            (ghostPosition.x === x && ghostPosition.y === y);
+    }
+
+    function isWall(x, y) {
+        return walls.some(wall => wall.x === x && wall.y === y);
+    }
+
+    function rollDice() {
+        return Math.floor(Math.random() * 6) + 1;
+    }
+
+    function updateDisplay() {
+        gameGrid.innerHTML = '';
+        for (let y = 0; y < gridSize; y++) {
+            for (let x = 0; x < gridSize; x++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                if (x === playerPosition.x && y === playerPosition.y) cell.classList.add('player');
+                if (x === ghostPosition.x && y === ghostPosition.y) cell.classList.add('ghost');
+                if (walls.some(wall => wall.x === x && wall.y === y)) cell.classList.add('wall');
+                if (chalices.some(chalice => chalice.x === x && chalice.y === y)) cell.classList.add('chalice');
+                gameGrid.appendChild(cell);
+            }
+        }
+    }
+
+    function highlightAvailableMoves(position, distance) {
+        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]]; // up, down, left, right
+        let possibleMoves = [];
+
+        directions.forEach(([dx, dy]) => {
+            for (let step = 1; step <= distance; step++) {
+                const newX = position.x + dx * step;
+                const newY = position.y + dy * step;
+                if (newX < 0 || newY < 0 || newX >= gridSize || newY >= gridSize || isWall(newX, newY)) break;
+                possibleMoves.push({ x: newX, y: newY });
+            }
+        });
+
+        possibleMoves.forEach(move => {
+            const cell = gameGrid.children[move.y * gridSize + move.x];
+            cell.style.backgroundColor = '#C7F464';
+        });
+    }
+
+    function handleMove(newPosition) {
+        if (playerTurn) playerPosition = newPosition;
+        else ghostPosition = newPosition;
+        updateDisplay();
+        checkGameState();
+    }
+
+    function checkGameState() {
+        if (chalices.every(chalice => playerPosition.x !== chalice.x || playerPosition.y !== chalice.y)) {
+            if (playerPosition.x === ghostPosition.x && playerPosition.y === ghostPosition.y) {
+                alert('Ghost wins!');
+                restartButton.style.display = 'block';
+            }
+        } else {
+            alert('Player wins!');
+            restartButton.style.display = 'block';
+        }
+    }
+
+    restartButton.addEventListener('click', () => {
+        playerPosition = { x: 0, y: 0 };
+        ghostPosition = { x: gridSize - 1, y: gridSize - 1 };
+        chalices = [];
+        walls = [];
+        initializeGame();
+        restartButton.style.display = 'none';
+    });
+
+    gameGrid.addEventListener('click', (e) => {
+        if (e.target.classList.contains('cell') && playerTurn) {
+            const x = parseInt(e.target.dataset.x);
+            const y = parseInt(e.target.dataset.y);
+            if (Math.abs(x - playerPosition.x) + Math.abs(y - playerPosition.y) <= diceRoll) {
+                handleMove({ x, y });
+                playerTurn = false;
+                diceRoll = rollDice();
+                diceDisplay.textContent = `Ghost rolled: ${diceRoll}`;
+                setTimeout(() => {
+                    const ghostMoves = [];
+                    highlightAvailableMoves(ghostPosition, diceRoll);
+                    gameGrid.childNodes.forEach(cell => {
+                        if (cell.style.backgroundColor === 'rgb(199, 244, 100)') {
+                            ghostMoves.push(cell);
+                        }
+                    });
+                    setTimeout(() => {
+                        const randomMove = ghostMoves[Math.floor(Math.random() * ghostMoves.length)];
+                        handleMove({ x: parseInt(randomMove.dataset.x), y: parseInt(randomMove.dataset.y) });
+                        playerTurn = true;
+                        diceDisplay.textContent = 'Roll the dice!';
+                        gameGrid.childNodes.forEach(cell => cell.style.backgroundColor = '');
+                    }, 500);
+                }, 500);
+            }
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        diceRoll = rollDice();
+        diceDisplay.textContent = `You rolled: ${diceRoll}`;
+        initializeGame();
+    });
+
+</script>
+</body>
+</html>
