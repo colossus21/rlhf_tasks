@@ -15,7 +15,7 @@
     - The player or ghost can then click on a highlighted cell to move their character.
     - The player wins the game collecting all three chalices, and the ghost wins the game by chasing the player.
 
-#### Full Code Implementation:
+#### Implementation:
 
 ```html
 <!DOCTYPE html>
