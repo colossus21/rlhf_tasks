@@ -31,8 +31,320 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            margin: 0;
-            background-color: #2c3e50;
+            margin: 0;<!DOCTYPE html>
+        <html lang="en">
+        <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Side-Scroller Game</title>
+        <style>
+        body {
+           margin: 0;
+           display: flex;
+           justify-content: center;
+           align-items: center;
+           height: 100vh;
+           background-color: #282c34;
+           color: white;
+           font-family: Arial, sans-serif;
+        }
+           #game-container {
+              position: relative;
+              overflow: hidden;
+              width: 800px;
+              height: 400px;
+              background-color: #1e1e1e;
+              border: 2px solid #fff;
+           }
+           #timer {
+              position: absolute;
+              top: 10px;
+              width: 100%;
+              text-align: center;
+              font-size: 24px;
+           }
+           #exhaustion-bar-container {
+              display: none;
+              position: absolute;
+              top: 40px;
+              width: 50px;
+              height: 5px;
+              left: calc(50% - 25px);
+              background-color: red;
+           }
+           #distance-remaining {
+              position: absolute;
+              top: 10px;
+              right: 10px;
+              font-size: 18px;
+           }
+           #message {
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              font-size: 32px;
+              text-align: center;
+           }
+           #restart {
+              display: none;
+              position: absolute;
+              top: 60%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              padding: 10px 20px;
+              font-size: 18px;
+              background-color: #007bff;
+              color: white;
+              border: none;
+              cursor: pointer;
+           }
+           .exhaustion-bar {
+              height: 100%;
+              background-color: green;
+           }
+    </style>
+</head>
+<body>
+<div id="game-container">
+   <div id="timer">60</div>
+   <div id="exhaustion-bar-container">
+      <div id="exhaustion-bar" class="exhaustion-bar"></div>
+   </div>
+   <div id="distance-remaining">Distance Remaining: 10000</div>
+   <div id="message"></div>
+   <button id="restart">Restart</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.17.1/matter.min.js"></script>
+<script>
+   const { Engine, Render, Runner, World, Bodies, Body, Events, Composite } = Matter;
+
+   const gameContainer = document.getElementById('game-container');
+   const engine = Engine.create();
+   const world = engine.world;
+
+   const width = 800;
+   const height = 400;
+   const groundHeight = 20;
+   let isMounted = false;
+   let mountedSquare = null;
+   let timer = 60;
+   let gameActive = true;
+   const playerSpeed = 5;
+   let exhaustionInterval;
+   const finishLineX = 10000;
+
+   const render = Render.create({
+      element: gameContainer,
+      engine: engine,
+      options: {
+         width: width,
+         height: height,
+         wireframes: false,
+         background: '#1e1e1e'
+      }
+   });
+
+   const ground = Bodies.rectangle(width * 10, height - groundHeight / 2, width * 20, groundHeight, { isStatic: true });
+   World.add(world, ground);
+
+   // Create the player as a downward-facing triangle
+   const player = Bodies.polygon(100, height - 60, 3, 20, {
+      render: { fillStyle: 'yellow' },
+      friction: 0.001,
+      collisionFilter: {
+         group: -2 // Prevents collision with unmounted squares
+      },
+      inertia: Infinity, // Prevents rotation
+      angle: Math.PI / 2 // Rotate triangle 180 degrees
+   });
+   World.add(world, player);
+
+   const squares = [];
+   let previousX = 200;
+   for (let i = 0; i < 10; i++) {
+      const squareWidth = 50;
+      const squareHeight = 20;
+      const randomDistance = 500 + Math.random() * 800; // Random distance between squares
+      const squareX = previousX + randomDistance;
+      previousX = squareX;
+      const squareY = height - groundHeight - squareHeight / 2;
+      const speed = 2 + Math.random() * 4;
+      const square = Bodies.rectangle(squareX, squareY, squareWidth, squareHeight, {
+         render: { fillStyle: getRandomColor() },
+         friction: 0,
+         frictionAir: 0,
+         isStatic: false, // Square is dynamic and can move
+         speed: speed,
+         collisionFilter: {
+            group: -2 // Prevents collision with mounted player and other squares
+         },
+         inertia: Infinity // Prevents rotation
+      });
+      squares.push(square);
+      World.add(world, square);
+   }
+
+   function getRandomColor() {
+      const letters = '0123456789ABCDEF';
+      let color = '#';
+      for (let i = 0; i < 6; i++) {
+         color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+   }
+
+   let timerInterval = setInterval(() => {
+      if (gameActive) {
+         timer--;
+         document.getElementById('timer').innerText = timer;
+         if (timer <= 0) {
+            endGame('You Lose!');
+         }
+      }
+   }, 1000);
+
+   function updateDistanceRemaining() {
+      const distanceRemaining = Math.max(0, Math.floor(finishLineX - player.position.x));
+      document.getElementById('distance-remaining').innerText = `Distance Remaining: ${distanceRemaining}`;
+   }
+
+   function endGame(message) {
+      gameActive = false;
+      document.getElementById('message').innerText = message;
+      document.getElementById('restart').style.display = 'block';
+      clearInterval(timerInterval);
+      clearInterval(exhaustionInterval);
+      Events.off(engine, 'beforeUpdate');
+   }
+
+   document.getElementById('restart').addEventListener('click', () => {
+      location.reload();
+   });
+
+   const finishLine = Bodies.rectangle(finishLineX, height - groundHeight / 2, 20, height, { isStatic: true, render: { fillStyle: 'red' } });
+   World.add(world, finishLine);
+
+   Events.on(engine, 'beforeUpdate', () => {
+      if (gameActive) {
+         // Move player with WASD
+         let moveX = 0;
+         if (isKeyPressed('KeyW') && Math.abs(player.velocity.y) < 1) {
+            Body.setVelocity(player, { x: player.velocity.x, y: -10 });
+         }
+         if (isKeyPressed('KeyA')) {
+            moveX = isMounted ? -mountedSquare.speed : -playerSpeed;
+         }
+         if (isKeyPressed('KeyD')) {
+            moveX = isMounted ? mountedSquare.speed : playerSpeed;
+         }
+         Body.setVelocity(player, { x: moveX, y: player.velocity.y });
+
+         // Check if player is on a square
+         for (let i = 0; i < squares.length; i++) {
+            const square = squares[i];
+            if (Matter.SAT.collides(player, square).collided && !isMounted && isKeyPressed('KeyW')) {
+               isMounted = true;
+               mountedSquare = square;
+
+               // Stick player to square
+               Body.setVelocity(player, { x: mountedSquare.speed, y: 0 }); // Fix player's velocity when mounted
+               Body.setPosition(player, { x: mountedSquare.position.x, y: mountedSquare.position.y - 35 }); // Adjust player position to sit on top
+
+               // Change collision group to prevent collisions with unmounted horses
+               player.collisionFilter.group = -1;
+               mountedSquare.collisionFilter.group = -1;
+
+               // Start exhaustion countdown and show exhaustion bar
+               startExhaustionCountdown();
+               document.getElementById('exhaustion-bar-container').style.display = 'block';
+            }
+         }
+
+         // Move the mounted square with the player
+         if (isMounted && mountedSquare) {
+            Body.setVelocity(mountedSquare, { x: moveX, y: mountedSquare.velocity.y });
+         }
+
+         // Update the distance remaining
+         updateDistanceRemaining();
+
+         // Scroll the screen based on player movement
+         Render.lookAt(render, {
+            min: { x: player.position.x - width / 2, y: 0 },
+            max: { x: player.position.x + width / 2, y: height }
+         });
+
+         // Check if player crossed the finish line
+         if (Matter.SAT.collides(player, finishLine).collided) {
+            endGame('You Win!');
+         }
+      }
+   });
+
+   function startExhaustionCountdown() {
+      const exhaustionTime = 5000 + Math.random() * 3000; // Random exhaustion time between 5 to 8 seconds
+      let greenWidth = 50;
+      let redWidth = 0;
+      const decrement = greenWidth / (exhaustionTime / 100); // Calculate the decrement per 100ms
+
+      // Create and position the exhaustion bar
+      const exhaustionBar = document.getElementById('exhaustion-bar');
+      exhaustionBar.style.width = `${greenWidth}px`;
+
+      exhaustionInterval = setInterval(() => {
+         if (!isMounted) {
+            clearInterval(exhaustionInterval);
+            document.getElementById('exhaustion-bar-container').style.display = 'none';
+            return;
+         }
+
+         greenWidth -= decrement;
+         redWidth += decrement;
+         exhaustionBar.style.width = `${greenWidth}px`;
+         exhaustionBar.style.background = `linear-gradient(to right, green ${greenWidth}%, red ${redWidth}%)`;
+
+         // Exhaustion reached
+         if (greenWidth <= 0) {
+            clearInterval(exhaustionInterval);
+            dismountPlayer();
+         }
+      }, 100);
+   }
+
+   function dismountPlayer() {
+      isMounted = false;
+      Body.setVelocity(player, { x: playerSpeed, y: player.velocity.y });
+      if (mountedSquare) {
+         mountedSquare.collisionFilter.group = -2; // Reset collision group
+         mountedSquare = null;
+      }
+      player.collisionFilter.group = -2; // Reset collision group
+      document.getElementById('exhaustion-bar-container').style.display = 'none';
+   }
+
+   function isKeyPressed(key) {
+      return !!keys[key];
+   }
+
+   const keys = {};
+   window.addEventListener('keydown', (e) => {
+      keys[e.code] = true;
+   });
+
+   window.addEventListener('keyup', (e) => {
+      keys[e.code] = false;
+   });
+
+   Render.run(render);
+   const runner = Runner.create();
+   Runner.run(runner, engine);
+</script>
+</body>
+</html>
+
+background-color: #2c3e50;
             font-family: Arial, sans-serif;
             color: white;
         }

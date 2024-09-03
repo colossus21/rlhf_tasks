@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Triangle Runner</title>
+    <style>
+        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f0f0; }
+        canvas { border: 1px solid #000; }
+    </style>
+</head>
+<body>
+<div id="gameContainer"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.14.2/matter.min.js"></script>
+<script>
+    const Engine = Matter.Engine,
+        Render = Matter.Render,
+        Runner = Matter.Runner,
+        Bodies = Matter.Bodies,
+        Composite = Matter.Composite;
+
+    const gameContainer = document.getElementById('gameContainer');
+    const canvas = document.createElement('canvas');
+    canvas.width = 800;
+    canvas.height = 400;
+    gameContainer.appendChild(canvas);
+
+    const engine = Engine.create();
+    const render = Render.create({
+        canvas: canvas,
+        engine: engine,
+        options: {
+            width: 800,
+            height: 400,
+            wireframes: false,
+            background: '#fafafa'
+        }
+    });
+
+    // Player
+    const player = Bodies.polygon(100, 200, 3, 20, {
+        isStatic: false,
+        render: { fillStyle: '#ff0000' }
+    });
+
+    // Ground
+    const ground = Bodies.rectangle(400, 380, 810, 60, { isStatic: true });
+
+    // Obstacles
+    const obstacles = [];
+    for (let i = 0; i < 20; i++) {
+        const x = 200 + i * 100;
+        obstacles.push(Bodies.rectangle(x, 300, 30, 30, {
+            isStatic: true,
+            render: { fillStyle: `rgba(${Math.random()*255},${Math.random()*255},${Math.random()*255},0.5)` }
+        }));
+    }
+
+    // Background shapes
+    function createBackgroundShapes() {
+        for (let i = 0; i < 50; i++) {
+            const shape = Math.random() > 0.5 ?
+                Bodies.circle(Math.random() * 800, Math.random() * 400, Math.random() * 30) :
+                Bodies.rectangle(Math.random() * 800, Math.random() * 400, Math.random() * 60, Math.random() * 60);
+            shape.render.opacity = 0.5;
+            Composite.add(engine.world, [shape]);
+        }
+    }
+
+    createBackgroundShapes();
+
+    // Finish line
+    const finishLine = Bodies.rectangle(2100, 200, 10, 400, { isStatic: true, render: { fillStyle: '#00FF00' } });
+
+    Composite.add(engine.world, [player, ground, finishLine, ...obstacles]);
+
+    // Game logic
+    let timeLeft = 60;
+    let distanceToFinish = 2000;
+    const cameraOffset = { x: 0, y: 0 };
+
+    function updateCamera() {
+        cameraOffset.x = -player.position.x + canvas.width / 2;
+    }
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'w' && player.position.y > 300) {
+            Matter.Body.setVelocity(player, { x: player.velocity.x, y: -10 });
+        }
+    });
+
+    // Game loop
+    const runner = Runner.create();
+    Runner.run(runner, engine);
+
+    // UI update
+    function gameLoop() {
+        updateCamera();
+        timeLeft -= 1/60; // Assuming 60 FPS
+        distanceToFinish = Math.max(0, 2000 - player.position.x);
+
+        if (timeLeft <= 0 || player.position.x >= 2100) {
+            endGame(player.position.x >= 2100);
+            return;
+        }
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    function endGame(win) {
+        alert(win ? 'You Win!' : 'Time Up! Try again.');
+        // Here you would add a restart button or functionality
+    }
+
+    gameLoop();
+
+    // Rendering UI
+    Render.lookAt(render, {
+        min: { x: 0, y: 0 },
+        max: { x: canvas.width, y: canvas.height }
+    }, cameraOffset);
+
+    Render.startViewTransform(render);
+</script>
+</body>
+</html>
