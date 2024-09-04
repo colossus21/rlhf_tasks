@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rock, Paper, Scissors Bluff</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .card {
+            width: 100px;
+            height: 150px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin: 5px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-10px);
+        }
+        .cpu-card {
+            background-color: \#f0f0f0;
+            transform: rotate(180deg);
+        }
+        .rock { background-color: \#d2b48c; }
+        .paper { background-color: \#fffaf0; }
+        .scissors { background-color: \#d3d3d3; }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+<div class="container mx-auto">
+    <div id="gameBoard" class="text-center">
+        <div id="cpuHand" class="flex justify-center"></div>
+        <div id="playedCards" class="my-4">
+            <button id="playRock" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">I have played Rock</button>
+            <button id="playPaper" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">I have played Paper</button>
+            <button id="playScissors" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">I have played Scissors</button>
+        </div>
+        <div id="playerHand" class="flex justify-center"></div>
+        <div>
+            <button id="pass" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">Pass</button>
+            <button id="bluff" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded">Call Bluff</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const deck = Array(10).fill('rock').concat(Array(10).fill('paper'), Array(10).fill('scissors'));
+    let playerHand = [], cpuHand = [], currentPlay = null;
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    function dealCards() {
+        shuffle(deck);
+        playerHand = deck.slice(0, 10);
+        cpuHand = deck.slice(10, 20);
+        updateDisplay();
+    }
+
+    function updateDisplay() {
+        document.getElementById('cpuHand').innerHTML = cpuHand.map(() => `<div class="card cpu-card">CPU</div>`).join('');
+        document.getElementById('playerHand').innerHTML = playerHand.map(card => `<div class="card \${card}">\${card.charAt(0).toUpperCase()}</div>`).join('');
+    }
+
+    function isValidMove(claimed, actual) {
+        if ((claimed === 'rock' \&\& (actual === 'rock' || actual === 'paper')) ||
+        (claimed === 'paper' \&\& (actual === 'paper' || actual === 'scissors')) ||
+        (claimed === 'scissors' \&\& (actual === 'scissors' || actual === 'rock'))) {
+            return true;
+        }
+        return false;
+    }
+
+    function playTurn(claimedCard) {
+        if (!currentPlay) {
+            alert('Select a card to play first!');
+            return;
+        }
+        const actualCard = currentPlay;
+        if (!isValidMove(claimedCard, actualCard)) {
+            if (confirm('Are you sure? This move is invalid and could be called a bluff!')) {
+                if (Math.random() > 0.5) { // Simplified CPU logic for calling bluff
+                    alert('Bluff called! You lose.');
+                    resetGame();
+                    return;
+                }
+            } else {
+                return;
+            }
+        }
+        // Logic for playing the card, checking for win, etc.
+        playerHand.splice(playerHand.indexOf(actualCard), 1);
+        if (playerHand.length === 0) alert('You win!');
+        currentPlay = null;
+        cpuTurn();
+        updateDisplay();
+    }
+
+    function cpuTurn() {
+        // Simplified CPU logic
+        if (cpuHand.length > 0) {
+            // CPU plays randomly here; real logic would be more complex
+            const cpuCard = cpuHand[Math.floor(Math.random() * cpuHand.length)];
+            cpuHand.splice(cpuHand.indexOf(cpuCard), 1);
+            if (cpuHand.length === 0) alert('CPU wins!');
+        }
+    }
+
+    function resetGame() {
+        playerHand = [];
+        cpuHand = [];
+        dealCards();
+    }
+
+    document.getElementById('playerHand').onclick = function(e) {
+        if (e.target.classList.contains('card')) {
+            currentPlay = e.target.classList[1];
+        }
+    };
+
+    document.getElementById('playRock').onclick = () => playTurn('rock');
+    document.getElementById('playPaper').onclick = () => playTurn('paper');
+    document.getElementById('playScissors').onclick = () => playTurn('scissors');
+    // Add click handlers for pass and bluff buttons similarly
+
+    dealCards();
+</script>
+</body>
+</html>

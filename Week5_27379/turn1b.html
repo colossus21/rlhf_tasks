@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rock Paper Scissors Bluff</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .card {
+            width: 80px;
+            height: 120px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .rock { background-color: \#d2b48c; }
+        .paper { background-color: \#fffaf0; }
+        .scissors { background-color: \#d3d3d3; }
+        .cpu-card { transform: rotate(180deg); }
+    </style>
+</head>
+<body class="bg-gray-200 p-4">
+<div class="container mx-auto">
+    <h1 class="text-center text-2xl mb-4">Rock Paper Scissors Bluff</h1>
+    <div id="gameArea" class="flex flex-col items-center">
+        <div id="cpuHand" class="flex mb-4"></div>
+        <div id="playerHand" class="flex"></div>
+        <div id="actionButtons" class="hidden mt-4">
+            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2" onclick="claimMove('Rock')">I have played Rock</button>
+            <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2" onclick="claimMove('Paper')">I have played Paper</button>
+            <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" onclick="claimMove('Scissors')">I have played Scissors</button>
+        </div>
+        <div id="gameMessages" class="mt-4 text-center"></div>
+    </div>
+</div>
+
+<script>
+    const deck = Array(10).fill('Rock').concat(Array(10).fill('Paper'), Array(10).fill('Scissors'));
+    let playerHand = [], cpuHand = [];
+    let lastPlayed = null;
+    let currentPlayer = 'Player';
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    function startGame() {
+        shuffle(deck);
+        playerHand = deck.slice(0, 10);
+        cpuHand = deck.slice(10, 20);
+        renderHands();
+        document.getElementById('actionButtons').classList.remove('hidden');
+    }
+
+    function renderHands() {
+        const playerDiv = document.getElementById('playerHand');
+        const cpuDiv = document.getElementById('cpuHand');
+        playerDiv.innerHTML = playerHand.map(card => `<div class="card \${card.toLowerCase()}">\${card}</div>`).join('');
+        cpuDiv.innerHTML = cpuHand.map(() => `<div class="card cpu-card bg-gray-500 text-white">CPU</div>`).join('');
+    }
+
+    function playCard(card) {
+        if (currentPlayer === 'Player') {
+            const index = playerHand.indexOf(card);
+            if (index > -1) {
+                playerHand.splice(index, 1);
+                lastPlayed = card;
+                switchTurn();
+                renderHands();
+                checkGameEnd();
+            }
+        }
+    }
+
+    function claimMove(claimedMove) {
+        const actualMove = lastPlayed;
+        const validMoves = {
+            'Rock': ['Rock', 'Paper'],
+            'Paper': ['Paper', 'Scissors'],
+            'Scissors': ['Scissors', 'Rock']
+        };
+
+        if (!validMoves[actualMove].includes(claimedMove)) {
+            // Bluff or mistake in claim
+            if (Math.random() > 0.5) { // Simplified CPU decision
+                alert('Bluff called! Game Over.');
+                resetGame();
+            } else {
+                lastPlayed = claimedMove; // CPU doesn't call bluff, move proceeds
+                switchTurn();
+            }
+        } else {
+            lastPlayed = claimedMove; // Valid move claimed
+            switchTurn();
+        }
+        checkGameEnd();
+    }
+
+    function switchTurn() {
+        currentPlayer = currentPlayer === 'Player' ? 'CPU' : 'Player';
+        if (currentPlayer === 'CPU') {
+            // Simplified CPU play
+            const cpuMove = cpuHand.pop();
+            lastPlayed = cpuMove;
+            setTimeout(renderHands, 1000);
+            checkGameEnd();
+        }
+    }
+
+    function checkGameEnd() {
+        if (playerHand.length === 0) {
+            alert('Player wins!');
+            resetGame();
+        } else if (cpuHand.length === 0) {
+            alert('CPU wins!');
+            resetGame();
+        }
+    }
+
+    function resetGame() {
+        playerHand = [];
+        cpuHand = [];
+        lastPlayed = null;
+        currentPlayer = 'Player';
+        startGame();
+    }
+
+    startGame();
+</script>
+</body>
+</html>
