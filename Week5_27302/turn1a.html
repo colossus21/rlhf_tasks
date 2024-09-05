@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rainbow Race</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <style>
+        body { margin: 0; padding: 0; background: #000; }
+        canvas { display: block; margin: 0 auto; }
+    </style>
+</head>
+<body>
+<script type="text/javascript">
+    const config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 300 },
+                debug: false
+            }
+        },
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        }
+    };
+
+    const game = new Phaser.Game(config);
+    let player1, player2;
+    let cursors1, cursors2;
+    let colors = ['#9400D3', '#4B0082', '#0000FF', '#00FF00', '#FFFF00', '#FFA500', '#FF0000'];
+    let player1Colors = new Set();
+    let player2Colors = new Set();
+    let text1, text2;
+
+    function preload() {
+        // Preload is not necessary here since we're using only built-in shapes
+    }
+
+    function create() {
+        // Create players
+        player1 = this.physics.add.sprite(100, 450, 'player').setScale(0.5);
+        player2 = this.physics.add.sprite(700, 450, 'player').setScale(0.5);
+        player1.setCollideWorldBounds(true);
+        player2.setCollideWorldBounds(true);
+
+        // Player controls
+        cursors1 = this.input.keyboard.addKeys({ 'up': Phaser.Input.Keyboard.KeyCodes.W, 'left': Phaser.Input.Keyboard.KeyCodes.A, 'right': Phaser.Input.Keyboard.KeyCodes.D });
+        cursors2 = this.input.keyboard.addKeys({ 'up': Phaser.Input.Keyboard.KeyCodes.I, 'left': Phaser.Input.Keyboard.KeyCodes.J, 'right': Phaser.Input.Keyboard.KeyCodes.L });
+
+        // Texts for players
+        text1 = this.add.text(16, 16, 'VIBGYOR', { fontSize: '32px', fill: '#808080' });
+        text2 = this.add.text(650, 16, 'VIBGYOR', { fontSize: '32px', fill: '#808080' });
+
+        // Create falling circles
+        this.time.addEvent({
+            delay: 1000,
+            callback: createCircle,
+            callbackScope: this,
+            loop: true
+        });
+    }
+
+    function update() {
+        // Player 1 movement
+        if (cursors1.left.isDown) {
+            player1.setVelocityX(-160);
+        } else if (cursors1.right.isDown) {
+            player1.setVelocityX(160);
+        } else {
+            player1.setVelocityX(0);
+        }
+
+        if (cursors1.up.isDown && player1.body.touching.down) {
+            player1.setVelocityY(-330);
+        }
+
+        // Player 2 movement
+        if (cursors2.left.isDown) {
+            player2.setVelocityX(-160);
+        } else if (cursors2.right.isDown) {
+            player2.setVelocityX(160);
+        } else {
+            player2.setVelocityX(0);
+        }
+
+        if (cursors2.up.isDown && player2.body.touching.down) {
+            player2.setVelocityY(-330);
+        }
+
+        // Check for win condition
+        if (player1Colors.size === 7) {
+            alert('Player 1 Wins!');
+            this.scene.restart();
+        } else if (player2Colors.size === 7) {
+            alert('Player 2 Wins!');
+            this.scene.restart();
+        }
+    }
+
+    function createCircle() {
+        let circle = this.physics.add.circle(Phaser.Math.Between(50, 750), 0, 20, Phaser.Math.RND.pick(colors));
+        circle.setVelocityY(Phaser.Math.Between(50, 150));
+        this.physics.add.overlap(player1, circle, collectCircle, null, this);
+        this.physics.add.overlap(player2, circle, collectCircle, null, this);
+    }
+
+    function collectCircle(player, circle) {
+        const color = circle.fillColor;
+        if (player === player1) {
+            player1Colors.add(color);
+            updateText(text1, player1Colors);
+        } else {
+            player2Colors.add(color);
+            updateText(text2, player2Colors);
+        }
+        circle.destroy();
+    }
+
+    function updateText(text, colorsSet) {
+        let colorArray = Array.from(colorsSet).map(c => Phaser.Display.Color.HexStringToColor(c));
+        let newText = 'VIBGYOR'.split('').map((char, index) =>
+            colorArray.some(color => color.color === Phaser.Display.Color.HexStringToColor(colors[index]).color) ?
+                `<span style="color: ${colors[index]};">${char}</span>` : char
+        ).join('');
+        text.setText(newText);
+    }
+</script>
+</body>
+</html>
