@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Snakes and Ladders</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.1.3/pixi.min.js"></script>
+    <style>
+        body {
+            background: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: white;
+        }
+        #gameCanvas {
+            border: 2px solid #444;
+        }
+        .dice {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border: 2px solid black;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            margin: 20px auto;
+        }
+        #turnIndicator {
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+<div id="turnIndicator">Player 1's Turn</div>
+<div id="gameCanvas"></div>
+<div class="dice" id="diceDisplay"></div>
+
+<script>
+    const app = new PIXI.Application({ width: 500, height: 500, backgroundColor: 0x2c3e50 });
+    document.getElementById('gameCanvas').appendChild(app.view);
+
+    // Game setup
+    const board = [];
+    const player1 = new PIXI.Graphics().beginFill(0x0000FF).drawRect(0, 0, 30, 30);
+    const player2 = new PIXI.Graphics().beginFill(0xFF0000).drawRect(0, 0, 30, 30);
+    let currentPlayer = player1;
+    let diceValue = 0;
+
+    // Positioning logic would go here (converting board position to x,y)
+    function positionToCoordinates(position) {
+        let row = Math.floor((100 - position) / 10);
+        let col = (position - 1) % 10;
+        if (row % 2 !== 0) col = 9 - col; // Reverse direction for odd rows
+        return {x: col * 50 + 25, y: row * 50 + 25};
+    }
+
+    // Draw board, players, and monsters
+    for (let i = 1; i <= 100; i++) {
+        let cell = new PIXI.Graphics().beginFill(0x34495e).drawRect(0, 0, 50, 50);
+        let coords = positionToCoordinates(i);
+        cell.position.set(coords.x, coords.y);
+        app.stage.addChild(cell);
+        // Add monster graphics here based on rules
+    }
+
+    // Initial positions
+    player1.position.set(positionToCoordinates(1).x, positionToCoordinates(1).y);
+    player2.position.set(positionToCoordinates(1).x, positionToCoordinates(1).y - 10); // Offset for visibility
+    app.stage.addChild(player1);
+    app.stage.addChild(player2);
+
+    // Game logic for dice roll, movement, monster interaction, etc.
+    function rollDice() {
+        diceValue = Math.floor(Math.random() * 6) + 1;
+        document.getElementById('diceDisplay').innerText = diceValue;
+        movePlayer(currentPlayer, diceValue);
+    }
+
+    function movePlayer(player, steps) {
+        // Movement logic, check for monsters, check for win, switch player
+        // This function would be more complex in implementation
+    }
+
+    function switchPlayer() {
+        currentPlayer = currentPlayer === player1 ? player2 : player1;
+        document.getElementById('turnIndicator').innerText = `Player \${currentPlayer === player1 ? '1' : '2'}'s Turn`;
+    }
+
+    // Event listener for dice roll
+    document.getElementById('diceDisplay').addEventListener('click', rollDice);
+
+    // Game loop would handle animations, win conditions, etc.
+</script>
+</body>
+</html>

@@ -1,0 +1,355 @@
+### **Code Plan:**
+
+1. **UI:**
+    - Import PixiJS to the application with a dark background.
+    - Create a container for the game board using a 10x10 grid with 100 cells.
+    - We set cells with red circles for killer monsters and grey squares for grey monsters.
+    - We add the dice below the board and try to make it as realistic as possible. Turn indicator goes above the dice.
+    - Player 1 should be blue square and Player 2 would be a red square.
+   
+2. **Gameplay:**
+    - Player 1 starts the game by rolling the dice. Players move based on dice rolls.
+    - If the player lands on a monster cell then the player moves back few spaces - 10 for killer monsters and 5 for grey monsters.
+    - If the player gets to roll the dice if the new position is over 100.
+    - If the player wins the game stepping on 100th cell.
+    - The winner should be declared and the game should be restarted after the game is over.
+
+### **Implementation:**
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Snakes and Ladders Game</title>
+   <style>
+      body {
+         margin: 0;
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         flex-direction: column;
+         height: 100vh;
+         background-color: #1e1e1e;
+         font-family: 'Arial', sans-serif;
+         color: white;
+      }
+      #legend {
+         margin-bottom: 10px;
+         text-align: center;
+      }
+      #board-container {
+         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+         border-radius: 8px;
+         overflow: hidden;
+      }
+      .dice-container {
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         margin-top: 20px;
+      }
+      .dice {
+         width: 60px;
+         height: 60px;
+         background-color: #f8f8f8;
+         border-radius: 10px;
+         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         position: relative;
+      }
+      .dot {
+         width: 10px;
+         height: 10px;
+         background-color: #333;
+         border-radius: 50%;
+         position: absolute;
+      }
+      .status {
+         margin-top: 20px;
+         font-size: 20px;
+         text-align: center;
+      }
+      #turn-indicator {
+         margin-top: 20px;
+         font-size: 24px;
+         text-align: center;
+         color: #f1c40f;
+      }
+   </style>
+</head>
+<body>
+<div id="legend">
+   <div><strong>Legend:</strong></div>
+   <div style="color: #e74c3c;">Red Monster: Sends you back 10 spaces.</div>
+   <div style="color: #95a5a6;">Grey Monster: Sends you back 5 spaces.</div>
+</div>
+<div id="board-container"></div>
+<div id="turn-indicator">Player 1's Turn</div>
+<div class="dice-container">
+   <div class="dice" onclick="rollDice()">
+      <!-- Dots for dice representation -->
+      <div class="dot" id="dot1"></div>
+      <div class="dot" id="dot2"></div>
+      <div class="dot" id="dot3"></div>
+      <div class="dot" id="dot4"></div>
+      <div class="dot" id="dot5"></div>
+      <div class="dot" id="dot6"></div>
+      <div class="dot" id="dot7"></div>
+   </div>
+</div>
+<div class="status" id="status"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.2.0/pixi.min.js"></script>
+<script>
+   // Create a Pixi Application
+   let app = new PIXI.Application({ width: 600, height: 600, backgroundColor: 0x1e1e1e });
+   document.getElementById('board-container').appendChild(app.view);
+
+   const gridSize = 10;
+   const cellSize = app.renderer.width / gridSize;
+   const player1Color = 0x3498db;  // Vibrant blue
+   const player2Color = 0xe74c3c;  // Vibrant red
+   let player1Position = 1;
+   let player2Position = 1;
+   let currentPlayer = 1;
+   let isAnimating = false;
+
+   // Define special cells
+   const killerMonsters = [19, 37, 55, 73, 91];
+   const greyMonsters = [12, 21, 30, 39, 48, 57, 66, 75, 84, 99];
+
+   // Dice dots positions based on rolled number
+   const diceDots = {
+      1: [[3, 3]],
+      2: [[1, 1], [5, 5]],
+      3: [[1, 1], [3, 3], [5, 5]],
+      4: [[1, 1], [1, 5], [5, 1], [5, 5]],
+      5: [[1, 1], [1, 5], [3, 3], [5, 1], [5, 5]],
+      6: [[1, 1], [1, 3], [1, 5], [5, 1], [5, 3], [5, 5]]
+   };
+
+   // Create the board container
+   let boardContainer = new PIXI.Container();
+   app.stage.addChild(boardContainer);
+
+   // Create the board
+   let cells = [];
+   for (let row = 0; row < gridSize; row++) {
+      cells[row] = [];
+      for (let col = 0; col < gridSize; col++) {
+         let number;
+         if (row % 2 === 0) {
+            number = row * gridSize + col + 1;
+         } else {
+            number = (row + 1) * gridSize - col;
+         }
+
+         let cell = new PIXI.Graphics();
+         cell.lineStyle(2, 0xFFFFFF);
+         cell.beginFill((row + col) % 2 === 0 ? 0x34495e : 0x2c3e50);  // Alternating colors
+         cell.drawRect(0, 0, cellSize, cellSize);
+         cell.endFill();
+         cell.x = col * cellSize;
+         cell.y = (gridSize - 1 - row) * cellSize;
+
+         boardContainer.addChild(cell);
+
+         if (killerMonsters.includes(number)) {
+            let monster = new PIXI.Graphics();
+            monster.beginFill(0xe74c3c);  // Bright red
+            monster.drawCircle(cellSize / 2, cellSize / 2, cellSize / 4);
+            monster.endFill();
+            cell.addChild(monster);
+         } else if (greyMonsters.includes(number)) {
+            let monster = new PIXI.Graphics();
+            monster.beginFill(0x95a5a6);  // Grey color
+            monster.drawRect(cellSize / 4, cellSize / 4, cellSize / 2, cellSize / 2);
+            monster.endFill();
+            cell.addChild(monster);
+         }
+
+         let style = new PIXI.TextStyle({
+            fontFamily: 'Arial',
+            fontSize: 18,
+            fill: '#ecf0f1',  // Lighter color for contrast
+            fontWeight: 'bold'
+         });
+         let numberText = new PIXI.Text(number, style);
+         numberText.anchor.set(0.5);
+         numberText.x = cellSize / 2;
+         numberText.y = cellSize / 2;
+         cell.addChild(numberText);
+
+         cells[row][col] = { number, x: cell.x, y: cell.y };
+      }
+   }
+
+   let player1 = new PIXI.Graphics();
+   player1.beginFill(player1Color);
+   player1.drawRect(0, 0, cellSize * 0.4, cellSize * 0.4);
+   player1.endFill();
+   boardContainer.addChild(player1);
+
+   let player2 = new PIXI.Graphics();
+   player2.beginFill(player2Color);
+   player2.drawRect(0, 0, cellSize * 0.4, cellSize * 0.4);
+   player2.endFill();
+   boardContainer.addChild(player2);
+
+   movePlayer(1, player1Position);
+   movePlayer(2, player2Position);
+
+   function rollDice() {
+      if (isAnimating) return;
+
+      let rollCount = 0;
+      let rollInterval = setInterval(() => {
+         let diceRoll = Math.floor(Math.random() * 6) + 1;
+         setDice(diceRoll);
+         rollCount++;
+         if (rollCount > 10) {
+            clearInterval(rollInterval);
+            document.getElementById('status').textContent = `Player ${currentPlayer} rolled a ${diceRoll}`;
+            updatePlayerPosition(diceRoll);
+         }
+      }, 100);
+   }
+
+   function setDice(number) {
+      let dots = document.querySelectorAll('.dot');
+      dots.forEach(dot => dot.style.display = 'none');  // Hide all dots first
+
+      // Display relevant dots based on the number
+      diceDots[number].forEach((position, index) => {
+         let dot = dots[index];
+         dot.style.display = 'block';
+         dot.style.top = `${position[0] * 15}%`;
+         dot.style.left = `${position[1] * 15 - 4.5}%`;
+      });
+   }
+
+   function updatePlayerPosition(diceRoll) {
+      let playerPosition = currentPlayer === 1 ? player1Position : player2Position;
+      let newPosition = playerPosition + diceRoll;
+      if (newPosition > 100) return;
+
+      movePlayerSmoothly(currentPlayer, playerPosition, newPosition, () => {
+         let isSpecialCell = false
+         let specialMsg = ""
+         let newPos = newPosition
+         if (killerMonsters.includes(newPosition)) {
+            newPos = newPosition - 10;
+            specialMsg = `Killer monster attacks Player ${currentPlayer}!`
+            isSpecialCell = true
+         } else if (greyMonsters.includes(newPosition)) {
+            newPos = newPosition - 5;
+            specialMsg = `Grey monster chases Player ${currentPlayer}!`
+            isSpecialCell = true
+         }
+         if (newPos < 1) newPos = 1;
+         if (isSpecialCell) {
+            movePlayer(currentPlayer, newPos);
+            if (currentPlayer === 1) {
+               currentPlayer = 2;
+               document.getElementById('turn-indicator').textContent = `${specialMsg} It's Player 2's Turn!`;
+            } else {
+               currentPlayer = 1;
+               document.getElementById('turn-indicator').textContent = `${specialMsg} It's Player 1's Turn!`;
+            }
+         } else {
+            if (currentPlayer === 1) {
+               player1Position = newPosition;
+               currentPlayer = 2;
+               document.getElementById('turn-indicator').textContent = "Player 2's Turn";
+            } else {
+               player2Position = newPosition;
+               currentPlayer = 1;
+               document.getElementById('turn-indicator').textContent = "Player 1's Turn";
+            }
+         }
+         checkWin();
+      });
+   }
+
+   function movePlayerSmoothly(player, startPosition, endPosition, callback) {
+      isAnimating = true;
+      let currentPos = startPosition;
+
+      function animate() {
+         if (currentPos !== endPosition) {
+            if (currentPos < endPosition) {
+               currentPos++;
+            } else {
+               currentPos--;
+            }
+            movePlayer(player, currentPos);
+            setTimeout(() => {
+               requestAnimationFrame(animate);
+            }, 200);  // Delay of 200ms between each step, adjust as needed
+         } else {
+            isAnimating = false;
+            callback();
+         }
+      }
+      requestAnimationFrame(animate);
+   }
+
+   function movePlayer(player, position) {
+      let row = Math.floor((position - 1) / gridSize);
+      let col = (position - 1) % gridSize;
+      if (row % 2 !== 0) col = gridSize - 1 - col;
+
+      let playerX, playerY;
+
+      if (player === 1) {
+         // Position Player 1 in the middle left of the cell
+         playerX = cells[row][col].x + cellSize * 0.1;
+         playerY = cells[row][col].y + cellSize * 0.5 - cellSize * 0.2;
+         player1.x = playerX;
+         player1.y = playerY;
+      } else {
+         // Position Player 2 in the middle right of the cell
+         playerX = cells[row][col].x + cellSize * 0.6;
+         playerY = cells[row][col].y + cellSize * 0.5 - cellSize * 0.2;
+         player2.x = playerX;
+         player2.y = playerY;
+      }
+   }
+
+   function checkWin() {
+      if (player1Position === 100) {
+         alert("Player 1 wins!");
+         resetGame();
+      } else if (player2Position === 100) {
+         alert("Player 2 wins!");
+         resetGame();
+      }
+   }
+
+   function resetGame() {
+      player1Position = 1;
+      player2Position = 1;
+      currentPlayer = 1;
+      document.getElementById('turn-indicator').textContent = "Player 1's Turn";
+      movePlayer(1, player1Position);
+      movePlayer(2, player2Position);
+      document.getElementById('status').textContent = "";
+   }
+
+   // Initialize dice with 1 face
+   setDice(1);
+</script>
+</body>
+</html>
+```
+
+### **Explanation:**
+- **HTML/CSS**: The game is centered including the board, dice, and turn indicator. The background is made dark to create a dark theme. For the dice we have made sure to make it as realistic as possible by using CSS only.
+- **PixiJS**: PixiJS handles all the graphical elements and interactions on the board. 
+- **Game Logic**: Functions were implemented to manage the core gameplay loop, including dice rolls and player movement. Function `movePlayerSmoothly` is used to animate the players moving forward after dice rolls. Similarly, the dice should have an animation as well to make it look realistic. We have used JavaScript's `setTimeout` feature and `isAnimating` boolean variable to control the animations. 
+
+This plan outlines the steps to create a fully functional dark-themed Snakes and Ladders-inspired game using PixiJS.
