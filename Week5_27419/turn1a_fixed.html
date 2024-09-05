@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Poco and the Sheep</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
+    <style>
+        body { margin: 0; background: #000; }
+        canvas { display: block; margin: 0 auto; }
+    </style>
+</head>
+<body>
+<script type="text/javascript">
+    const config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        },
+        physics: {
+            default: 'arcade',
+            arcade: {
+                debug: false
+            }
+        }
+    };
+
+    const game = new Phaser.Game(config);
+    let poco, wolf, sheepGroup;
+    const sheepCount = 50;
+
+    function preload() {
+        // Preloading isn't necessary for shapes, but here for completeness
+    }
+
+    function create() {
+        // Background
+        this.cameras.main.setBackgroundColor('#1a1a1a');
+
+        // Boundaries
+        const bounds = this.add.rectangle(400, 300, 780, 580, 0x8B4513).setStrokeStyle(2, 0x8B4513);
+
+        // Create Sheep
+        sheepGroup = this.physics.add.group();
+        for(let i = 0; i < sheepCount; i++) {
+            let x = Phaser.Math.Between(20, 780);
+            let y = Phaser.Math.Between(20, 580);
+            let sheep = sheepGroup.create(x, y, 'sheep').setDisplaySize(10, 10).setTint(0xffffff);
+            sheep.originalPosition = new Phaser.Math.Vector2(x, y);
+        }
+
+        // Poco
+        poco = this.physics.add.image(400, 300, 'triangle').setTint(0xffff00);
+        poco.setCollideWorldBounds(true);
+
+        // Wolf
+        wolf = this.physics.add.image(100, 100, 'triangle').setTint(0xff0000);
+        wolf.setCollideWorldBounds(true);
+
+        // Custom shapes
+        this.add.graphics().fillStyle(0xffff00, 1).fillTriangleShape(poco);
+        this.add.graphics().fillStyle(0xff0000, 1).fillTriangleShape(wolf);
+
+        // Physics
+        this.physics.add.collider(poco, sheepGroup, saveSheep, null, this);
+        this.physics.add.collider(wolf, sheepGroup, eatSheep, null, this);
+    }
+
+    function update() {
+        // Player controls
+        const cursors = this.input.keyboard.createCursorKeys();
+        poco.setVelocity(0);
+
+        if (cursors.left.isDown) {
+            poco.setVelocityX(-160);
+        } else if (cursors.right.isDown) {
+            poco.setVelocityX(160);
+        }
+
+        if (cursors.up.isDown) {
+            poco.setVelocityY(-160);
+        } else if (cursors.down.isDown) {
+            poco.setVelocityY(160);
+        }
+
+        // Wolf AI - simple chase nearest sheep
+        let targetSheep = findNearestSheep(wolf, sheepGroup.getChildren());
+        if (targetSheep) {
+            this.physics.moveToObject(wolf, targetSheep, 100);
+        }
+
+        // Sheep random movement
+        sheepGroup.getChildren().forEach(sheep => {
+            if (Phaser.Math.Distance.Between(sheep.x, sheep.y, sheep.originalPosition.x, sheep.originalPosition.y) > 20) {
+                this.physics.moveToObject(sheep, sheep.originalPosition, 20);
+            } else {
+                sheep.setVelocity(Phaser.Math.Between(-20, 20), Phaser.Math.Between(-20, 20));
+            }
+        });
+    }
+
+    function findNearestSheep(chaser, targets) {
+        return targets.reduce((nearest, current) => {
+            if (!nearest || Phaser.Math.Distance.Between(chaser.x, chaser.y, current.x, current.y) <
+                Phaser.Math.Distance.Between(chaser.x, chaser.y, nearest.x, nearest.y)) {
+                return current;
+            }
+            return nearest;
+        }, null);
+    }
+
+    function saveSheep(poco, sheep) {
+        sheep.setTint(0x00ff00); // Turn sheep green when saved
+    }
+
+    function eatSheep(wolf, sheep) {
+        sheep.destroy(); // Remove sheep from game
+    }
+</script>
+</body>
+</html>

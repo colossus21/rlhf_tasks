@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Poco and the Sheep</title>
+    <style>
+        body { margin: 0; background-color: #000; overflow: hidden; }
+        canvas { display: block; margin: auto; }
+    </style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+<script type="text/javascript">
+    const config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        },
+        physics: {
+            default: 'arcade',
+            arcade: {
+                debug: false
+            }
+        }
+    };
+
+    let game = new Phaser.Game(config);
+    let poco, wolf, sheepGroup;
+    let boundaries;
+    let savedSheep = 0, eatenSheep = 0;
+
+    function preload() {
+        // No images to preload for this game
+    }
+
+    function create() {
+        // Dark background
+        this.cameras.main.setBackgroundColor('#1a1a1a');
+
+        // Create boundaries
+        boundaries = this.add.graphics();
+        boundaries.lineStyle(2, 0x8B4513);
+        boundaries.strokeRect(20, 20, 760, 560);
+
+        // Create Poco
+        poco = this.physics.add.sprite(400, 300, 'poco').setScale(0.5);
+        poco.setCollideWorldBounds(true);
+
+        // Create Wolf
+        wolf = this.physics.add.sprite(100, 100, 'wolf').setScale(0.5);
+        wolf.setCollideWorldBounds(true);
+
+        // Create sheep group
+        sheepGroup = this.physics.add.group();
+        for(let i = 0; i < 50; i++) {
+            let x = Phaser.Math.Between(50, 750);
+            let y = Phaser.Math.Between(50, 550);
+            let sheep = sheepGroup.create(x, y, 'sheep').setScale(0.25);
+            sheep.setBounce(1, 1);
+            sheep.setVelocity(Phaser.Math.Between(-20, 20), Phaser.Math.Between(-20, 20));
+        }
+
+        // Collision detection
+        this.physics.add.overlap(poco, sheepGroup, saveSheep, null, this);
+        this.physics.add.overlap(wolf, sheepGroup, eatSheep, null, this);
+
+        // Simple shapes
+        this.anims.create({ key: 'poco', frames: [{ key: 'poco', frame: null }], frameRate: 20 });
+        this.anims.create({ key: 'wolf', frames: [{ key: 'wolf', frame: null }], frameRate: 20 });
+        this.anims.create({ key: 'sheep', frames: [{ key: 'sheep', frame: null }], frameRate: 20 });
+    }
+
+    function update() {
+        // Player movement
+        if (this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W).isDown) poco.setVelocityX(-160);
+        else if (this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S).isDown) poco.setVelocityX(160);
+        else poco.setVelocityX(0);
+
+        // Wolf AI - simple chase nearest sheep or move randomly
+        let nearestSheep = findNearestSheep(wolf, sheepGroup.getChildren());
+        if(nearestSheep) {
+            this.physics.moveToObject(wolf, nearestSheep, 100);
+        } else {
+            wolf.setVelocity(Phaser.Math.Between(-50, 50), Phaser.Math.Between(-50, 50));
+        }
+    }
+
+    function saveSheep(poco, sheep) {
+        sheep.disableBody(true, true);
+        savedSheep++;
+        checkGameEnd();
+    }
+
+    function eatSheep(wolf, sheep) {
+        sheep.disableBody(true, true);
+        eatenSheep++;
+        checkGameEnd();
+    }
+
+    function findNearestSheep(source, targets) {
+        return targets.reduce((nearest, target) => {
+            if (!target.active) return nearest;
+            let distance = Phaser.Math.Distance.Between(source.x, source.y, target.x, target.y);
+            return (!nearest || distance < Phaser.Math.Distance.Between(source.x, source.y, nearest.x, nearest.y)) ? target : nearest;
+        }, null);
+    }
+
+    function checkGameEnd() {
+        if (savedSheep + eatenSheep === 50) {
+            alert(`Game Over! Saved: \${savedSheep}, Eaten: \${eatenSheep}`);
+            this.scene.restart();
+        }
+    }
+</script>
+</body>
+</html>

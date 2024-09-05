@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Poco and the Sheep</title>
+    <style>
+        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #121212; }
+        canvas { border: 1px solid #8B4513; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
+</head>
+<body>
+<script>
+    const config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        backgroundColor: '#121212',
+        physics: {
+            default: 'arcade',
+            arcade: {
+                debug: false,
+                gravity: { y: 0 }
+            }
+        },
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        }
+    };
+
+    let player;
+    let playerGraphics;
+    let cursors;
+    let sheepGroup;
+    let wolf;
+    let wolfGraphics;
+    let score = 0;
+    let scoreText;
+    let gameOver = false;
+    let restartButton;
+
+    const game = new Phaser.Game(config);
+
+    function preload() {
+        // No assets to load
+    }
+
+    function create() {
+        // Reset game variables
+        score = 0;
+        gameOver = false;
+
+        // Create the player (Poco) as a physics-enabled sprite
+        player = this.physics.add.sprite(400, 300, null).setSize(32, 32).setCollideWorldBounds(true);
+        player.body.setAllowGravity(false);
+        player.setVisible(false);  // Hide the player sprite
+
+        // Draw the triangle on top of the player sprite
+        playerGraphics = this.add.graphics({ fillStyle: { color: 0xFFFF00 } });
+        playerGraphics.fillTriangle(-16, 16, 16, 16, 0, -16);
+
+        // Create the sheep group
+        sheepGroup = this.physics.add.group({
+            bounceX: 1,
+            bounceY: 1,
+            collideWorldBounds: true
+        });
+        for (let i = 0; i < 50; i++) {
+            let sheep = this.add.rectangle(0, 0, 20, 20, 0xFFFFFF);
+            this.physics.add.existing(sheep);
+            sheep.body.setVelocity(Phaser.Math.Between(-50, 50), Phaser.Math.Between(-50, 50));
+            sheep.body.setBounce(1, 1);
+            sheep.body.setCollideWorldBounds(true);
+            sheep.setPosition(Phaser.Math.Between(50, 750), Phaser.Math.Between(50, 550));
+            sheepGroup.add(sheep);
+        }
+
+        // Create the wolf
+        wolf = this.physics.add.sprite(50, 50, null).setSize(32, 32).setCollideWorldBounds(true);
+        wolf.body.setAllowGravity(false);
+        wolf.setVisible(false);  // Hide the wolf sprite
+
+        wolfGraphics = this.add.graphics({ fillStyle: { color: 0xFF0000 } });
+        wolfGraphics.fillTriangle(-16, 16, 16, 16, 0, -16);
+
+        // Setup collisions
+        this.physics.add.collider(sheepGroup, sheepGroup);
+        this.physics.add.collider(sheepGroup, this.physics.world.bounds, changeSheepDirection, null, this);
+        this.physics.add.overlap(player, sheepGroup, saveSheep, null, this);
+        this.physics.add.overlap(wolf, sheepGroup, eatSheep, null, this);
+
+        // Setup controls
+        cursors = this.input.keyboard.createCursorKeys();
+        this.input.keyboard.addKeys('W,A,S,D');
+
+        // Score text
+        scoreText = this.add.text(10, 10, 'Saved Sheep: 0', { fontSize: '20px', fill: '#FFF' });
+    }
+
+    function update() {
+        if (gameOver) {
+            return;
+        }
+
+        // Player movement
+        if (cursors.left.isDown || this.input.keyboard.keys[65].isDown) {
+            player.setVelocityX(-160);
+        } else if (cursors.right.isDown || this.input.keyboard.keys[68].isDown) {
+            player.setVelocityX(160);
+        } else {
+            player.setVelocityX(0);
+        }
+
+        if (cursors.up.isDown || this.input.keyboard.keys[87].isDown) {
+            player.setVelocityY(-160);
+        } else if (cursors.down.isDown || this.input.keyboard.keys[83].isDown) {
+            player.setVelocityY(160);
+        } else {
+            player.setVelocityY(0);
+        }
+
+        // Update player graphics position to follow the player sprite
+        playerGraphics.setPosition(player.x, player.y);
+
+        // Update wolf graphics position to follow the wolf sprite
+        wolfGraphics.setPosition(wolf.x, wolf.y);
+
+        // Wolf AI to chase the nearest sheep
+        let nearestSheep = getNearestSheep(wolf, sheepGroup.getChildren());
+        if (nearestSheep) {
+            this.physics.moveToObject(wolf, nearestSheep, 100);
+        }
+
+        // Randomly change sheep direction periodically
+        sheepGroup.children.iterate(function (sheep) {
+            if (Phaser.Math.Between(0, 100) < 2) { // 2% chance each frame to change direction
+                changeSheepDirection(sheep);
+            }
+        });
+
+        // Check if all sheep are gone
+        if (sheepGroup.countActive(true) === 0) {
+            endGame.call(this);
+        }
+    }
+
+    function saveSheep(player, sheep) {
+        sheep.destroy();
+        score += 1;
+        scoreText.setText('Saved Sheep: ' + score);
+    }
+
+    function eatSheep(wolf, sheep) {
+        sheep.destroy();
+    }
+
+    function getNearestSheep(wolf, sheepArray) {
+        let nearestSheep = null;
+        let nearestDistance = Number.MAX_VALUE;
+        sheepArray.forEach(sheep => {
+            let distance = Phaser.Math.Distance.Between(wolf.x, wolf.y, sheep.x, sheep.y);
+            if (distance < nearestDistance) {
+                nearestSheep = sheep;
+                nearestDistance = distance;
+            }
+        });
+        return nearestSheep;
+    }
+
+    function changeSheepDirection(sheep) {
+        sheep.body.setVelocity(Phaser.Math.Between(-50, 50), Phaser.Math.Between(-50, 50));
+    }
+
+    function endGame() {
+        gameOver = true;
+
+        // Display final score
+        let finalScoreText = this.add.text(400, 300, 'Final Score: ' + score, { fontSize: '32px', fill: '#FFF' });
+        finalScoreText.setOrigin(0.5);
+
+        // Add a restart button
+        restartButton = this.add.text(400, 400, 'Restart', { fontSize: '32px', fill: '#FFF' });
+        restartButton.setOrigin(0.5);
+        restartButton.setInteractive();
+        restartButton.on('pointerdown', () => {
+            this.scene.restart();
+        });
+    }
+</script>
+</body>
+</html>

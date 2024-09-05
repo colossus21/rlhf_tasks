@@ -5,11 +5,11 @@
     - Create a container for the game board using a 10x10 grid with 100 cells.
     - We set cells with red circles for killer monsters and grey squares for grey monsters.
     - We add the dice below the board and try to make it as realistic as possible. Turn indicator goes above the dice.
-    - Player 1 should be blue square and Player 2 would be a red square.
+    - Player 1 should be blue square, and Player 2 would be a red square.
    
 2. **Gameplay:**
     - Player 1 starts the game by rolling the dice. Players move based on dice rolls.
-    - If the player lands on a monster cell then the player moves back few spaces - 10 for killer monsters and 5 for grey monsters.
+    - If the player lands on a monster cell then the player moves back a few spaces—10 for killer monsters and 5 for grey monsters.
     - If the player gets to roll the dice if the new position is over 100.
     - If the player wins the game stepping on 100th cell.
     - The winner should be declared and the game should be restarted after the game is over.

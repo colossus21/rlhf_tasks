@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Snakes and Monsters</title>
+    <style>
+        body { background: #1a1a1a; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        #gameCanvas { background: #333; }
+        .dice {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 10%;
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: inset 0 5px white, inset 0 -5px #bbb, inset 5px 0 #d7d7d7, inset -5px 0 #d7d7d7;
+            display: grid;
+            grid-template-areas: "a . c" "e g f" "d . b";
+            padding: 5px;
+        }
+        .pip {
+            display: block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #333;
+            margin: 2px;
+        }
+        #turnDisplay { color: white; position: absolute; top: 20px; text-align: center; width: 100%; }
+    </style>
+</head>
+<body>
+<div id="gameCanvas"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.2.0/pixi.min.js"></script>
+<script>
+    const app = new PIXI.Application({ width: 500, height: 600, backgroundColor: 0x101010 });
+    document.getElementById('gameCanvas').appendChild(app.view);
+
+    let currentPlayer = 1;
+    let playerPositions = {1: 1, 2: 1};
+    const boardSize = 10;
+    const cellSize = 50;
+    const monsters = {
+        killer: [19, 37, 55, 73, 91],
+        grey: [12, 21, 30, 39, 48, 57, 66, 75, 84, 99]
+    };
+
+    // Setup the board, players, and dice
+    function setupGame() {
+        // Board setup
+        for(let i = 0; i < 100; i++) {
+            let cell = new PIXI.Graphics();
+            cell.beginFill(0x222222);
+            cell.drawRect(0, 0, cellSize, cellSize);
+            cell.endFill();
+            cell.position.set((i % boardSize) * cellSize, Math.floor(i / boardSize) * cellSize);
+            app.stage.addChild(cell);
+
+            // Add number
+            let text = new PIXI.Text(i + 1, {fontFamily : 'Arial', fontSize: 12, fill : 0xaaaaaa});
+            text.x = 5;
+            text.y = 5;
+            cell.addChild(text);
+
+            // Add monsters
+            if(monsters.killer.includes(i + 1)) {
+                let monster = new PIXI.Graphics();
+                monster.beginFill(0xFF0000);
+                monster.drawCircle(cellSize/2, cellSize/2, 10);
+                monster.endFill();
+                cell.addChild(monster);
+            } else if(monsters.grey.includes(i + 1)) {
+                let monster = new PIXI.Graphics();
+                monster.beginFill(0x808080);
+                monster.drawRect(cellSize/4, cellSize/4, cellSize/2, cellSize/2);
+                monster.endFill();
+                cell.addChild(monster);
+            }
+        }
+
+        // Players
+        let player1 = new PIXI.Graphics();
+        player1.beginFill(0x0000FF);
+        player1.drawRect(0, 0, cellSize/2, cellSize/2);
+        player1.position.set(0, 550);
+        app.stage.addChild(player1);
+
+        let player2 = new PIXI.Graphics();
+        player2.beginFill(0xFF0000);
+        player2.drawRect(0, 0, cellSize/2, cellSize/2);
+        player2.position.set(cellSize/2, 550);
+        app.stage.addChild(player2);
+
+        // Dice setup would go here with interaction to roll
+        // UI for player turn would be set here
+    }
+
+    function rollDice() {
+        let roll = Math.floor(Math.random() * 6) + 1;
+        // Animate and show dice result
+        // Move player based on roll, handle monsters, win condition, etc.
+    }
+
+    // Game loop, event listeners for dice roll, etc., would be set up here
+
+    setupGame();
+</script>
+</body>
+</html>
