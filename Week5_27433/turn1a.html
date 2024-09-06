@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Game</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .card {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+        .card .front, .card .back {
+            backface-visibility: hidden;
+        }
+        .card .back {
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center p-4">
+
+<div id="game" class="w-full max-w-3xl">
+    <h1 class="text-2xl text-center mb-4">Current Turn: <span id="currentTurn">Player</span></h1>
+    <div class="grid grid-cols-3 grid-rows-3 gap-4">
+        <!-- Player Positions -->
+        <div class="col-span-1 row-span-1 flex justify-center items-center">Left CPU</div>
+        <div class="col-span-1 row-span-1 flex justify-center items-center">Top CPU</div>
+        <div class="col-span-1 row-span-1 flex justify-center items-center">Right CPU</div>
+        <div class="col-span-3 row-span-1 flex justify-center items-center">
+            <div id="cards" class="flex space-x-4"></div>
+        </div>
+        <div class="col-span-3 row-span-1 flex justify-center items-center">
+            <div id="bottomPlayer" class="text-center">You</div>
+        </div>
+    </div>
+    <button id="nextTurn" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded">Next Turn</button>
+</div>
+
+<script>
+    const cards = [
+        {name: 'King', points: 1000},
+        {name: 'Detective', points: 800},
+        {name: 'Bandit', points: 600},
+        {name: 'Thief', points: 500}
+    ];
+    let gameState = {
+        players: {bottom: 0, top: 0, left: 0, right: 0},
+        currentTurn: 'bottom',
+        deck: []
+    };
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    function flipCard(cardElement) {
+        cardElement.classList.toggle('flipped');
+    }
+
+    function updateDisplay() {
+        document.getElementById('cards').innerHTML = gameState.deck.map(card => `
+            <div class="card w-20 h-32 bg-white rounded shadow-lg cursor-pointer" onclick="selectCard(this)">
+                <div class="front p-2">?</div>
+                <div class="back p-2">${card.name}</div>
+            </div>
+        `).join('');
+    }
+
+    function selectCard(card) {
+        if (gameState.currentTurn === 'bottom') {
+            flipCard(card);
+            const selectedCard = gameState.deck.find(c => c.name === card.querySelector('.back').textContent);
+            gameState.players[gameState.currentTurn] += selectedCard.points;
+            setTimeout(() => {
+                cpuTurn();
+            }, 1000);
+        }
+    }
+
+    function cpuTurn() {
+        ['top', 'right', 'left'].forEach(position => {
+            setTimeout(() => {
+                const card = document.querySelectorAll('#cards .card:not(.flipped)')[0];
+                flipCard(card);
+                const selectedCard = gameState.deck.find(c => c.name === card.querySelector('.back').textContent);
+                gameState.players[position] += selectedCard.points;
+                if (position === 'left') endTurn();
+            }, 1000 * (['top', 'right', 'left'].indexOf(position) + 1));
+        });
+    }
+
+    function endTurn() {
+        if (checkWinner()) return;
+        gameState.currentTurn = 'bottom';
+        shuffle(gameState.deck = [...cards]);
+        updateDisplay();
+        document.getElementById('currentTurn').textContent = 'Player';
+    }
+
+    function checkWinner() {
+        for (const [player, score] of Object.entries(gameState.players)) {
+            if (score >= 3000) {
+                alert(`${player} Player Wins!`);
+                location.reload(); // Simple restart
+                return true;
+            }
+        }
+        return false;
+    }
+
+    document.getElementById('nextTurn').addEventListener('click', () => {
+        if (gameState.currentTurn === 'bottom') endTurn();
+    });
+
+    // Initialize game
+    endTurn();
+</script>
+
+</body>
+</html>

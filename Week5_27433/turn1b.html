@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .card {
+            transition: transform 0.5s;
+        }
+        .flip {
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex flex-col justify-center items-center">
+<div id="turnIndicator" class="mb-4 text-xl">Turn: 1</div>
+<div class="game-board grid grid-cols-3 grid-rows-3 gap-4 w-[600px] h-[600px]">
+    <div id="playerTop" class="col-span-3 flex justify-center items-start">
+        <span class="text-lg">Top CPU: <span id="scoreTop">0</span></span>
+    </div>
+    <div></div>
+    <div id="playerRight" class="flex justify-end items-center">
+        <span class="text-lg">Right CPU: <span id="scoreRight">0</span></span>
+    </div>
+    <div id="playerLeft" class="flex justify-start items-center">
+        <span class="text-lg">Left CPU: <span id="scoreLeft">0</span></span>
+    </div>
+    <div class="col-span-3 flex justify-center items-center">
+        <div id="cards" class="flex space-x-4">
+            <div class="card bg-blue-500 w-24 h-36 rounded-lg flex justify-center items-center text-white text-2xl cursor-pointer"></div>
+            <div class="card bg-blue-500 w-24 h-36 rounded-lg flex justify-center items-center text-white text-2xl cursor-pointer"></div>
+            <div class="card bg-blue-500 w-24 h-36 rounded-lg flex justify-center items-center text-white text-2xl cursor-pointer"></div>
+            <div class="card bg-blue-500 w-24 h-36 rounded-lg flex justify-center items-center text-white text-2xl cursor-pointer"></div>
+        </div>
+    </div>
+    <div id="playerBottom" class="col-span-3 flex justify-center items-end">
+        <span class="text-lg">You: <span id="scoreBottom">0</span></span>
+    </div>
+</div>
+<button id="nextTurn" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Next Turn</button>
+
+<script>
+    const cards = [
+        { name: 'King', points: 1000 },
+        { name: 'Detective', points: 800 },
+        { name: 'Bandit', points: 600 },
+        { name: 'Thief', points: 500 }
+    ];
+
+    let players = ['Bottom', 'Right', 'Top', 'Left'];
+    let currentPlayerIndex = 0;
+    let scores = { 'Bottom': 0, 'Right': 0, 'Top': 0, 'Left': 0 };
+    let currentTurn = 1;
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function startTurn() {
+        const shuffledCards = shuffle([...cards]);
+        document.querySelectorAll('.card').forEach((card, index) => {
+            card.textContent = '?';
+            card.classList.remove('flip');
+            card.onclick = () => pickCard(index);
+            card.dataset.role = shuffledCards[index].name;
+        });
+    }
+
+    function pickCard(cardIndex) {
+        if (currentPlayerIndex !== 0) return; // Only human player can pick directly
+        revealCard(cardIndex);
+    }
+
+    function revealCard(cardIndex) {
+        const card = document.querySelectorAll('.card')[cardIndex];
+        card.classList.add('flip');
+        card.textContent = card.dataset.role;
+        setTimeout(() => {
+            updateScore(card.dataset.role);
+            nextPlayer();
+        }, 500);
+    }
+
+    function updateScore(role) {
+        const points = cards.find(card => card.name === role).points;
+        scores[players[currentPlayerIndex]] += points;
+        document.getElementById(`score${players[currentPlayerIndex]}`).textContent = scores[players[currentPlayerIndex]];
+    }
+
+    function nextPlayer() {
+        currentPlayerIndex++;
+        if (currentPlayerIndex >= players.length) {
+            currentPlayerIndex = 0;
+            currentTurn++;
+            document.getElementById('turnIndicator').textContent = `Turn: ${currentTurn}`;
+            if (checkWin()) return;
+            setTimeout(startTurn, 1000);
+        } else if (currentPlayerIndex !== 0) {
+            // CPU player's turn
+            setTimeout(() => {
+                const availableCards = Array.from(document.querySelectorAll('.card')).filter(c => !c.classList.contains('flip'));
+                const randomCardIndex = Math.floor(Math.random() * availableCards.length);
+                revealCard(availableCards[randomCardIndex].dataset.index);
+            }, 1000);
+        }
+    }
+
+    function checkWin() {
+        for (let player in scores) {
+            if (scores[player] >= 3000) {
+                alert(`${player === 'Bottom' ? 'You' : player} won the game!`);
+                resetGame();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function resetGame() {
+        currentTurn = 1;
+        currentPlayerIndex = 0;
+        for (let player in scores) {
+            scores[player] = 0;
+            document.getElementById(`score${player}`).textContent = '0';
+        }
+        startTurn();
+    }
+
+    document.getElementById('nextTurn').addEventListener('click', () => {
+        if (currentPlayerIndex === 0) nextPlayer();
+    });
+
+    startTurn();
+</script>
+</body>
+</html>

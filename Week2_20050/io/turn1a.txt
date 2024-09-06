@@ -1,0 +1,27 @@
+Input:
+-----------------------------
+node turn1a.js
+-----------------------------
+output:
+-----------------------------
+X |   | X
+---------
+  | O |
+---------
+  |   |
+X
+null
+X
+null
+O
+null
+null
+null
+null
+Is the board full? false
+Board after reset:
+  |   |
+---------
+  |   |
+---------
+  |   |

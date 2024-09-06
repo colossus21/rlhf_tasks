@@ -1,0 +1,69 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Contact Book</title>
+</head>
+<body>
+<form id="contactForm">
+    <input type="text" id="name" placeholder="Name" required>
+    <input type="email" id="email" placeholder="Email" required>
+    <button type="submit">Add Contact</button>
+</form>
+<ul id="contactList"></ul>
+<script>
+    const ContactBook = (function () {
+        const Model = {
+            contacts: [],
+            addContact(contact) {
+                if (contact.name && contact.email) {
+                    this.contacts.push(contact);
+                    return true;
+                }
+                return false;
+            },
+            getContacts() {
+                return this.contacts;
+            }
+        };
+
+        const View = {
+            render(contacts) {
+                const contactList = document.getElementById('contactList');
+                contactList.innerHTML = ''; // Clear existing list
+                contacts.forEach(contact => {
+                    let li = document.createElement('li');
+                    li.textContent = `Name: ${contact.name}, Email: ${contact.email}`;
+                    contactList.appendChild(li);
+                });
+            }
+        };
+
+        const Controller = {
+            init() {
+                document.getElementById('contactForm').addEventListener('submit', this.handleSubmit.bind(this));
+            },
+            handleSubmit(e) {
+                e.preventDefault();
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('email').value;
+                if (this.addContact(name, email)) {
+                    View.render(Model.getContacts());
+                } else {
+                    console.error('Failed to add contact. Name and email are required.');
+                }
+            },
+            addContact(name, email) {
+                return Model.addContact({name, email});
+            }
+        };
+
+        return {
+            Controller: Controller
+        };
+    })();
+
+    // Initialize the application
+    ContactBook.Controller.init();
+</script>
+</body>
+</html>

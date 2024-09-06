@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Contact Book</title>
+    <style>
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+<input type="text" id="searchBar" placeholder="Search contacts...">
+<form id="contactForm">
+    <input type="text" id="name" placeholder="Name" required>
+    <input type="email" id="email" placeholder="Email" required>
+    <button type="submit">Add Contact</button>
+</form>
+<ul id="contactList"></ul>
+<div id="errorMessage" class="hidden"></div>
+
+<script>
+    const ContactBook = {
+        Model: {
+            contacts: [],
+
+            addContact(contact) {
+                if (contact.name && this.isValidEmail(contact.email)) {
+                    this.contacts.push(contact);
+                    return true;
+                }
+                return false;
+            },
+
+            deleteContact(index) {
+                this.contacts.splice(index, 1);
+            },
+
+            isValidEmail(email) {
+                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return re.test(email);
+            }
+        },
+
+        View: {
+            contactListElement: document.getElementById('contactList'),
+            errorMessageElement: document.getElementById('errorMessage'),
+            searchBar: document.getElementById('searchBar'),
+
+            render(contacts) {
+                this.contactListElement.innerHTML = contacts.map((contact, index) => `
+                    <li>
+                        Name: ${contact.name}, Email: ${contact.email}
+                        <button onclick="ContactBook.Controller.deleteContact(${index})">Delete</button>
+                    </li>
+                `).join('');
+            },
+
+            showError(message) {
+                this.errorMessageElement.textContent = message;
+                this.errorMessageElement.classList.remove('hidden');
+            },
+
+            clearError() {
+                this.errorMessageElement.textContent = '';
+                this.errorMessageElement.classList.add('hidden');
+            },
+
+            getSearchQuery() {
+                return this.searchBar.value.toLowerCase();
+            }
+        },
+
+        Controller: {
+            init() {
+                document.getElementById('contactForm').addEventListener('submit', this.handleSubmit.bind(this));
+                ContactBook.View.searchBar.addEventListener('input', this.searchContacts.bind(this));
+            },
+
+            handleSubmit(event) {
+                event.preventDefault();
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('email').value;
+                this.addContact(name, email);
+            },
+
+            addContact(name, email) {
+                ContactBook.View.clearError();
+                const success = ContactBook.Model.addContact({name, email});
+                if (success) {
+                    this.updateView();
+                    document.getElementById('contactForm').reset();
+                } else {
+                    ContactBook.View.showError('Failed to add contact. Please check the name and email.');
+                }
+            },
+
+            deleteContact(index) {
+                ContactBook.Model.deleteContact(index);
+                this.updateView();
+            },
+
+            searchContacts() {
+                const query = ContactBook.View.getSearchQuery();
+                const filteredContacts = ContactBook.Model.contacts.filter(contact =>
+                    contact.name.toLowerCase().includes(query) || contact.email.toLowerCase().includes(query)
+                );
+                ContactBook.View.render(filteredContacts);
+            },
+
+            updateView() {
+                this.searchContacts(); // This will re-render the list with all contacts or filtered ones
+            }
+        }
+    };
+
+    ContactBook.Controller.init();
+</script>
+</body>
+</html>

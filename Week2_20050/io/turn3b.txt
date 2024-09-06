@@ -1,0 +1,61 @@
+Input:
+-----------------------------
+node turn3b.js
+-----------------------------
+output:
+-----------------------------
+Player O's turn:
+Making move: (0, 0)
+Player O placed at (0, 0)
+O |   |
+---------
+  |   |
+---------
+  |   |
+
+Player X's turn:
+Making move: (1, 1)
+Player X placed at (1, 1)
+O |   |
+---------
+  | X |
+---------
+  |   |
+
+Player O's turn:
+Making move: (0, 1)
+Player O placed at (0, 1)
+O | O |
+---------
+  | X |
+---------
+  |   |
+
+Player X's turn:
+Making move: (0, 2)
+Player X placed at (0, 2)
+O | O | X
+---------
+  | X |
+---------
+  |   |
+
+Player O's turn:
+Making move: (2, 0)
+Player O placed at (2, 0)
+O | O | X
+---------
+  | X |
+---------
+O |   |
+
+Player X's turn:
+Making move: (2, 2)
+Player X placed at (2, 2)
+O | O | X
+---------
+  | X |
+---------
+O |   | X
+
+Player O's turn:
