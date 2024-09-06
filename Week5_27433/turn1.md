@@ -1,3 +1,23 @@
+### Code Plan
+
+**UI:**
+  - The human player should be placed at the bottom and the three CPU players at top, left and right.
+  - We place four unrevealed cards in the middle of the table.
+  - Turn indicator should be visible at the top and a "Next Turn" button at the bottom.
+  - TailwindCSS would be used to style the game elements and layout.
+  - A simple animation should be added for card selection, i.e., change to green background if selected.
+
+
+**Gameplay Mechanics:**
+  - Shuffle the cards at the start of each turn.
+  - Cards: King (1000 points), Detective (800 points), Bandit (600 points), Thief (500 points).
+  - The player picks a card first. The selected card reveals its role, and points are added to the player's score.
+  - After the human turn, each CPU player picks a card in sequence, revealing their roles and adding points to their scores.
+  - A player or a CPU wins reaching 3000 points.
+
+### Implementation
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -333,3 +353,6 @@
 
 </body>
 </html>
+```
+
+The game is played by four players with a simple UI layout. The human player picks a card first, followed by the CPUs. Points are assigned based on the card picked. TailwindCSS and CSS grid layout was used to create the board layout, cards, buttons and player pieces. The game progresses with a turn indicator and shuffles the cards each turn. The game ends when a player reaches 3000 points, displaying a winner alert and then restarting for a new round.

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Flappy Triangle</title>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; }
+        #gameCanvas { display: block; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/5.3.3/pixi.min.js"></script>
+</head>
+<body>
+<script>
+    // PixiJS setup
+    const app = new PIXI.Application({
+        width: 800,
+        height: 600,
+        backgroundColor: 0x87CEEB // Sky blue background
+    });
+    document.body.appendChild(app.view);
+
+    let player, scoreText, gameOverText;
+    let birds = [];
+    let score = 0;
+    let gameSpeed = 1;
+    const gravity = 0.5;
+
+    // Player
+    player = new PIXI.Graphics();
+    player.beginFill(0xFFFF00);
+    player.drawPolygon([-15, 15, 0, -15, 15, 15]);
+    player.endFill();
+    player.x = 100;
+    player.y = app.screen.height / 2;
+    player.vy = 0;
+    app.stage.addChild(player);
+
+    // Score
+    scoreText = new PIXI.Text('Score: 0', {fontFamily : 'Arial', fontSize: 24, fill : 0x000000});
+    scoreText.x = app.screen.width - 150;
+    scoreText.y = 10;
+    app.stage.addChild(scoreText);
+
+    // Game Over Text
+    gameOverText = new PIXI.Text('Game Over', {fontFamily : 'Arial', fontSize: 40, fill : 0xFF0000, align : 'center'});
+    gameOverText.anchor.set(0.5);
+    gameOverText.x = app.screen.width / 2;
+    gameOverText.y = app.screen.height / 2;
+
+    const restartButton = new PIXI.Text('Restart', {fontFamily : 'Arial', fontSize: 20, fill : 0x00FF00, align : 'center'});
+    restartButton.anchor.set(0.5);
+    restartButton.x = app.screen.width / 2;
+    restartButton.y = app.screen.height / 2 + 50;
+    restartButton.interactive = true;
+    restartButton.buttonMode = true;
+    restartButton.on('pointerdown', restartGame);
+
+    // Event Listener for jump
+    window.addEventListener('keydown', function(e) {
+        if(e.code === 'Space' && !gameOverText.visible) {
+            player.vy = -10;  // Jump velocity
+        }
+    });
+
+    // Game loop
+    app.ticker.add(delta => gameLoop(delta));
+
+    function gameLoop(delta) {
+        if (!gameOverText.visible) {
+            // Player movement with gravity
+            player.vy += gravity;
+            player.y += player.vy;
+
+            // Bird movement and creation
+            if (app.ticker.lastTime % (120 / gameSpeed) === 0) {
+                spawnBird();
+            }
+            moveBirds(delta);
+
+            // Increase game speed over time
+            gameSpeed += 0.001 * delta;
+
+            // Check for collisions or out of bounds
+            checkCollision();
+            score += delta;
+            scoreText.text = 'Score: ' + Math.floor(score);
+        }
+    }
+
+    function spawnBird() {
+        const bird = new PIXI.Graphics();
+        bird.beginFill(0x000000);
+        bird.drawPolygon([-10, -10, 0, 10, 10, -10]);
+        bird.endFill();
+        bird.x = app.screen.width;
+        bird.y = Math.random() * (app.screen.height - 20) + 10;
+        app.stage.addChild(bird);
+        birds.push(bird);
+    }
+
+    function moveBirds(delta) {
+        for (let bird of birds) {
+            bird.x -= 2 * gameSpeed * delta;
+            if (bird.x < -20) {
+                app.stage.removeChild(bird);
+                birds.splice(birds.indexOf(bird), 1);
+            }
+        }
+    }
+
+    function checkCollision() {
+        if (player.y > app.screen.height || player.y < 0) {
+            gameOver();
+            return;
+        }
+        for (let bird of birds) {
+            if (hitTestRectangle(player, bird)) {
+                gameOver();
+                return;
+            }
+        }
+    }
+
+    function hitTestRectangle(r1, r2) {
+        return !(r2.x > r1.x + 15 ||
+            r2.x + 10 < r1.x - 15 ||
+            r2.y > r1.y + 15 ||
+            r2.y + 10 < r1.y - 15);
+    }
+
+    function gameOver() {
+        gameOverText.visible = true;
+        restartButton.visible = true;
+        app.stage.addChild(gameOverText, restartButton);
+    }
+
+    function restartGame() {
+        player.y = app.screen.height / 2;
+        player.vy = 0;
+        gameSpeed = 1;
+        score = 0;
+        birds.forEach(b => app.stage.removeChild(b));
+        birds = [];
+        gameOverText.visible = false;
+        restartButton.visible = false;
+    }
+</script>
+</body>
+</html>
