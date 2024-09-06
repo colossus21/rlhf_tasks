@@ -1,3 +1,19 @@
+### Code Plan:
+
+1. **UI**:
+    - Set up a canvas with blue background for the game.
+    - Set up a yellow triangle for the player. Black triangles would spawn randomly to kill the player.
+    - Draw the score in the top-right corner of the canvas.
+    - Display restart button after the game is over.
+
+2. **Gameplay**:
+    - The player presses the space key to jump.
+    - If the player touches the black birds (triangles) or go out of the screen, then the game is over.
+    - Score increases with the time of survival. The speed also increases as time progresses.
+
+### Implementation:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -193,3 +209,12 @@
 
 </body>
 </html>
+```
+
+### Explanation:
+
+- **Player setup:** PixiJS was used to apply gravity to player and detect collision between player and the obstacles. Player can also jump by pressing the spacebar.
+- **Obstacles:** Black triangles are generated at intervals and move across the screen. The game ends if the player collides with an obstacle or moves off-screen. The speed of the obstacles would increase as well based on time progression.
+- **Score:** The score is displayed on the top-right of the canvas, score keeps increasing as long as the player lives.
+
+The game should provide an engaging and challenging experience to the players even though the control is as basic as pressing the space key.
