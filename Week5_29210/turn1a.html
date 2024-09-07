@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Color Tao</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #board {
+            width: 400px;
+            height: 400px;
+            margin: 20px auto;
+            display: grid;
+            grid-template: repeat(6, 1fr) / repeat(6, 1fr);
+            background: #f0f0f0;
+            border: 2px solid #333;
+        }
+        .cell {
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .center {
+            grid-column: 2 / span 4;
+            grid-row: 2 / span 4;
+            background: #fff;
+            font-size: 24px;
+            color: #333;
+        }
+        .player {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            position: absolute;
+        }
+        #player1 { background: red; }
+        #player2 { background: blue; }
+        .token {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 2px;
+        }
+        .dice {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border: 2px solid black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        @keyframes roll {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game">
+    <div id="player1Tokens" class="mb-3"></div>
+    <div id="board"></div>
+    <div id="player2Tokens" class="mt-3"></div>
+    <div class="text-center">
+        <button id="rollDice" class="btn btn-primary">Roll Dice</button>
+        <div id="dice" class="dice mt-2"></div>
+        <button id="restart" class="btn btn-secondary mt-2">Restart</button>
+    </div>
+</div>
+
+<script>
+    const board = document.getElementById('board');
+    const player1Tokens = document.getElementById('player1Tokens');
+    const player2Tokens = document.getElementById('player2Tokens');
+    const rollDiceBtn = document.getElementById('rollDice');
+    const dice = document.getElementById('dice');
+    const restartBtn = document.getElementById('restart');
+    let currentPlayer = 1;
+    let player1Position = 0, player2Position = 0;
+    let player1Colors = new Set(), player2Colors = new Set();
+
+    const colors = {3: 'lightred', 7: 'lightgreen', 11: 'lightbrown', 15: 'lightblue', 19: 'lightpurple'};
+    const colorNames = {lightred: 'Light Red', lightgreen: 'Light Green', lightbrown: 'Light Brown', lightblue: 'Light Blue', lightpurple: 'Light Purple'};
+
+    function setupBoard() {
+        for(let i = 0; i < 36; i++) {
+            let cell = document.createElement('div');
+            cell.className = 'cell';
+            if (i === 0) cell.textContent = 'Start';
+            else if (i in colors) cell.style.background = colors[i];
+            else if (i < 20) cell.textContent = i;
+            else if (i >= 6 && i <= 29 && (i % 6 !== 0 && i % 6 !== 5)) cell.textContent = 'Color Tao';
+            board.appendChild(cell);
+        }
+    }
+
+    function rollDice() {
+        let roll = Math.floor(Math.random() * 6) + 1;
+        animateDice(roll);
+        setTimeout(() => movePlayer(roll), 1000);
+    }
+
+    function animateDice(roll) {
+        dice.style.animation = 'roll 1s linear';
+        setTimeout(() => {
+            dice.textContent = roll;
+            dice.style.animation = '';
+        }, 1000);
+    }
+
+    function movePlayer(steps) {
+        let playerPos = currentPlayer === 1 ? player1Position : player2Position;
+        let newPos = (playerPos + steps) % 20;
+        if (newPos === 0) newPos = 20; // If landed on 'Start' but technically 0
+
+        if (currentPlayer === 1) player1Position = newPos;
+        else player2Position = newPos;
+
+        updatePlayerPosition();
+        checkForToken();
+        if (currentPlayer === 1) currentPlayer = 2;
+        else currentPlayer = 1;
+    }
+
+    function checkForToken() {
+        const pos = currentPlayer === 1 ? player1Position : player2Position;
+        if (colors[pos] && !currentPlayer === 1 ? player1Colors.has(colors[pos]) : player2Colors.has(colors[pos])) {
+            let tokenColor = colors[pos];
+            currentPlayer === 1 ? player1Colors.add(tokenColor) : player2Colors.add(tokenColor);
+            updateTokensDisplay();
+            checkWin();
+        }
+    }
+
+    function updateTokensDisplay() {
+        player1Tokens.innerHTML = Array.from(player1Colors).map(color => `<div class="token" style="background:${color};"></div>`).join('');
+        player2Tokens.innerHTML = Array.from(player2Colors).map(color => `<div class="token" style="background:${color};"></div>`).join('');
+    }
+
+    function checkWin() {
+        if (currentPlayer === 1 && player1Colors.size === 5 || currentPlayer === 2 && player2Colors.size === 5) {
+            alert(`Player ${currentPlayer} wins!`);
+            rollDiceBtn.disabled = true;
+        }
+    }
+
+    function updatePlayerPosition() {
+        // Here you would position the player's token on the board. This might require more complex logic or a library like GSAP for smooth animations.
+        // For simplicity, this example skips the visual update of player positions.
+    }
+
+    function restartGame() {
+        player1Position = player2Position = 0;
+        player1Colors.clear();
+        player2Colors.clear();
+        updateTokensDisplay();
+        currentPlayer = 1;
+        rollDiceBtn.disabled = false;
+        dice.textContent = '';
+    }
+
+    setupBoard();
+    rollDiceBtn.addEventListener('click', rollDice);
+    restartBtn.addEventListener('click', restartGame);
+</script>
+
+</body>
+</html>

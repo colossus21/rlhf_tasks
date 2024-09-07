@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Color Tao</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(6, 50px);
+            grid-template-rows: repeat(6, 50px);
+            gap: 2px;
+            margin: 20px 0;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            background: #fff;
+            border: 1px solid #ddd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+        }
+        .center-text {
+            grid-column: 2 / span 4;
+            grid-row: 2 / span 4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: #333;
+        }
+        .player {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            position: absolute;
+            transition: all 0.5s;
+        }
+        #player1 { background: red; }
+        #player2 { background: blue; }
+        .tokens {
+            display: flex;
+            gap: 5px;
+            margin: 10px;
+        }
+        .token {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+        .dice {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border: 2px solid black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            margin: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+        }
+        @keyframes roll {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .rolling {
+            animation: roll 0.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+
+<div class="board">
+    <div class="center-text">Color Tao</div>
+</div>
+
+<div class="tokens" id="player1Tokens"></div>
+<div class="dice" id="dice">🎲</div>
+<div class="tokens" id="player2Tokens"></div>
+
+<button onclick="rollDice()">Roll Dice</button>
+<button onclick="restartGame()">Restart</button>
+
+<script>
+    let currentPlayer = 1;
+    let playerPositions = {1: 0, 2: 0};
+    let playerTokens = {1: new Set(), 2: new Set()};
+    const board = document.querySelector('.board');
+    const cells = [];
+    const colors = ['#FFC0CB', '#90EE90', '#D2B48C', '#ADD8E6', '#E6E6FA'];
+
+    // Setup board
+    for(let i = 0; i < 36; i++) {
+        let cell = document.createElement('div');
+        cell.className = 'cell';
+        if (i === 15) {
+            cell.innerHTML = 'Color Tao';
+            cell.style.backgroundColor = '#eee';
+        } else if (i === 0) {
+            cell.innerHTML = 'Start';
+        } else if (i > 0 && i < 5 || i % 6 === 0 || i % 6 === 5 || i > 30 && i < 35) {
+            cell.innerHTML = i < 6 ? i : i > 30 ? 35 - i : i % 6 === 0 ? 30 - i : i - 5;
+            if (i !== 1 && i !== 5 && i !== 31 && i !== 35) {
+                cell.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            }
+        }
+        board.appendChild(cell);
+        cells.push(cell);
+    }
+
+    // Place players
+    const player1 = document.createElement('div');
+    player1.id = 'player1';
+    player1.className = 'player';
+    cells[0].appendChild(player1);
+
+    const player2 = document.createElement('div');
+    player2.id = 'player2';
+    player2.className = 'player';
+    cells[0].appendChild(player2);
+
+    function rollDice() {
+        const dice = document.getElementById('dice');
+        dice.classList.add('rolling');
+        setTimeout(() => {
+            dice.classList.remove('rolling');
+            const roll = Math.floor(Math.random() * 6) + 1;
+            dice.textContent = roll;
+            movePlayer(roll);
+        }, 500);
+    }
+
+    function movePlayer(spaces) {
+        let player = currentPlayer;
+        let newPosition = playerPositions[player] + spaces;
+        if (newPosition >= 19) newPosition = 19; // Cap at 19
+
+        playerPositions[player] = newPosition;
+        const cellIndex = [0, 1, 2, 3, 4, 9, 14, 19, 24, 29, 34, 33, 32, 31, 30, 25, 20, 15, 10, 5][newPosition];
+        cells[cellIndex].appendChild(document.getElementById(`player${player}`));
+
+        if (cells[cellIndex].style.backgroundColor !== '') {
+            playerTokens[player].add(cells[cellIndex].style.backgroundColor);
+            updateTokensDisplay();
+            checkWin(player);
+        }
+
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+    }
+
+    function updateTokensDisplay() {
+        ['player1Tokens', 'player2Tokens'].forEach((id, index) => {
+            document.getElementById(id).innerHTML = '';
+            playerTokens[index + 1].forEach(color => {
+                let token = document.createElement('div');
+                token.className = 'token';
+                token.style.backgroundColor = color;
+                document.getElementById(id).appendChild(token);
+            });
+        });
+    }
+
+    function checkWin(player) {
+        if (playerTokens[player].size === 5) {
+            alert(`Player ${player} wins!`);
+            disableGame();
+        }
+    }
+
+    function restartGame() {
+        playerPositions = {1: 0, 2: 0};
+        playerTokens = {1: new Set(), 2: new Set()};
+        currentPlayer = 1;
+        document.getElementById('player1').remove();
+        document.getElementById('player2').remove();
+        cells[0].appendChild(player1);
+        cells[0].appendChild(player2);
+        updateTokensDisplay();
+        document.querySelector('button').disabled = false;
+        document.getElementById('dice').textContent = '🎲';
+    }
+
+    function disableGame() {
+        document.querySelector('button').disabled = true;
+    }
+</script>
+</body>
+</html>

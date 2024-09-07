@@ -1,0 +1,8 @@
+Create a game called "Color Tao" using Javascript, it has a monopoly style 6x6 board. Can you implement the following:
+- Create a 6x6 board in which only the outer cells are playable with numbered cells from 1 to 19. There should be a 'Start' cell at the top-left corner. Color Tao could be written at the center.
+- Player 1 (Red circle) and Player 2 (Blue circle) plays the game. They can move spaces from 1-19.
+- Players roll the dice to determine how many spaces they move.
+- When a player lands on a colored cell, they should collect a color token (with five different colors available: light red (3), light green (4), light brown (4), light blue (4), light purple (4).
+- Display tokens for each player above the board for Player 1 and below the board for Player 2 to show the colors they have collected. When a player collects all five colors, they win.
+- Add the dice below the game, a roll button to roll the dice, and restart button to restart after the game ends.
+- Make the game visually appealing by adding the appropriate CSS, any animation on the dice roll is appreciated.
