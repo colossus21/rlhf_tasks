@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Roulette Wheel Chooser</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { width: 80%; margin: 20px auto; text-align: center; }
+        textarea { width: 80%; height: 100px; margin: 10px 0; }
+        button { background-color: green; color: white; border: none; padding: 10px 20px; margin: 5px; cursor: pointer; }
+        #wheelCanvas { margin-top: 20px; }
+        #result { margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Roulette Wheel Chooser</h1>
+    <textarea id="itemsInput" placeholder="Enter items, one per line..."></textarea>
+    <br>
+    <button id="generateBtn">Generate Wheel</button>
+    <button id="clearBtn">Clear</button>
+    <div id="wheelContainer">
+        <canvas id="wheelCanvas" width="400" height="400"></canvas>
+        <div id="result">Selected: <span id="selectedItem"></span></div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('generateBtn').addEventListener('click', generateWheel);
+    document.getElementById('clearBtn').addEventListener('click', function() {
+        document.getElementById('itemsInput').value = '';
+        document.getElementById('wheelContainer').innerHTML = '<canvas id="wheelCanvas" width="400" height="400"></canvas><div id="result">Selected: <span id="selectedItem"></span></div>';
+    });
+
+    function generateWheel() {
+        let items = document.getElementById('itemsInput').value.split('\n').filter(item => item.trim() !== '');
+        if(items.length < 2) {
+            alert('Please enter at least two items.');
+            return;
+        }
+
+        let colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
+        let ctx = document.getElementById('wheelCanvas').getContext('2d');
+        let wheel = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: items,
+                datasets: [{
+                    data: new Array(items.length).fill(1),
+                    backgroundColor: items.map((item, i) => colors[i % colors.length])
+                }]
+            },
+            options: {
+                animation: { animateRotate: true, duration: 5000 },
+                responsive: true,
+                legend: { display: false }
+            }
+        });
+
+        // Simulate spinning
+        setTimeout(() => {
+            let selectedIndex = Math.floor(Math.random() * items.length);
+            wheel.options.rotation = -360 * Math.random() - (360 / items.length * selectedIndex) - 180 / items.length;
+            wheel.update();
+            document.getElementById('selectedItem').textContent = items[selectedIndex];
+        }, 5100); // A bit longer than the animation to ensure the wheel has stopped
+    }
+
+</script>
+</body>
+</html>

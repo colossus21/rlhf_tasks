@@ -1,0 +1,7 @@
+I want to create a Roulette wheel widget in Javascript to choose a random option between multiple options, can you implement the following:
+1. The widget would have a text area where the user can enter items, one per line.
+2. A "Generate Wheel" button that creates the wheel using the items provided. Color the button green with white text.
+3. Add a "Clear" button to reset the input and color it green as well.
+4. The wheel should spin after clicking the generate wheel button.
+5. Mention the selected item after the wheel is stopped. Add a pointer as well to determine which item would be picked. Keep it simple as "Selected: Item Name".
+6. The whole app can have a container and centered in the page. Wheel should be added after the generate wheel button is pressed below the form.

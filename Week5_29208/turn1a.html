@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roulette Wheel Selector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        textarea {
+            width: 300px;
+            height: 100px;
+            margin: 10px 0;
+            padding: 10px;
+            resize: vertical;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        #wheel {
+            margin-top: 20px;
+            position: relative;
+        }
+        .wheel-pointer {
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 20px solid black;
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <textarea id="items" placeholder="Enter items, one per line..."></textarea>
+    <br>
+    <button onclick="generateWheel()">Generate Wheel</button>
+    <button onclick="clearAll()">Clear</button>
+    <div id="wheel">
+        <div class="wheel-pointer"></div>
+    </div>
+    <div id="result"></div>
+</div>
+
+<script>
+    let wheelCanvas, ctx, segments = [], spinning = false;
+
+    function generateWheel() {
+        if (spinning) return;
+        const items = document.getElementById('items').value.split('\n').filter(item => item.trim() !== '');
+        if (items.length < 2) {
+            alert('Please enter at least two items.');
+            return;
+        }
+        segments = items;
+        drawWheel();
+        spinWheel();
+    }
+
+    function drawWheel() {
+        wheelCanvas = document.createElement('canvas');
+        wheelCanvas.width = 300;
+        wheelCanvas.height = 300;
+        ctx = wheelCanvas.getContext('2d');
+        document.getElementById('wheel').appendChild(wheelCanvas);
+        const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c'];
+
+        const total = segments.length;
+        const deg = 360 / total;
+        for (let i = 0; i < total; i++) {
+            ctx.beginPath();
+            ctx.moveTo(150, 150);
+            ctx.arc(150, 150, 150, (i * deg) * Math.PI/180, ((i + 1) * deg) * Math.PI/180);
+            ctx.fillStyle = colors[i % colors.length];
+            ctx.fill();
+            ctx.save();
+            ctx.translate(150, 150);
+            ctx.rotate(((i + 0.5) * deg) * Math.PI/180);
+            ctx.textAlign = "right";
+            ctx.fillStyle = "#fff";
+            ctx.font = '18px Arial';
+            ctx.fillText(segments[i], 140, 0);
+            ctx.restore();
+        }
+    }
+
+    function spinWheel() {
+        spinning = true;
+        const randomSpin = Math.floor(Math.random() * 1080) + 720; // Spin between 3 and 6 full rotations
+        const total = segments.length;
+        wheelCanvas.style.transition = 'transform 5s ease-out';
+        wheelCanvas.style.transform = `rotate(${randomSpin}deg)`;
+
+        setTimeout(() => {
+            const selectedIndex = Math.floor((360 - (randomSpin % 360)) / (360 / total)) % total;
+            document.getElementById('result').innerText = `Selected: ${segments[selectedIndex]}`;
+            spinning = false;
+        }, 5000);
+    }
+
+    function clearAll() {
+        document.getElementById('items').value = '';
+        document.getElementById('wheel').innerHTML = '<div class="wheel-pointer"></div>';
+        document.getElementById('result').innerText = '';
+        segments = [];
+    }
+</script>
+
+</body>
+</html>
