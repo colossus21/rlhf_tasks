@@ -1,0 +1,10 @@
+Let's create a game called "Mystery Detective" in Javascript. Can you implement the game based on following:
+- 4 players play the game - 1 human player, 3 AI opponents (Sleuth 1, Sleuth 2, Sleuth 3)
+- 4 cards are shown at the center while each player sits at top, left, bottom, right. The human player sits at the bottom.
+- The cards are Detective (1000 points), Thief (600 points), Mob (800 points), Serial Killer (1000 points)
+- Each turn, each player picks a card. One who picks the detective cards gets revealed immediately. Other roles would be still hidden.
+- The Detective must guess the location of a specific criminal: first turn thief, second turn mob, third turn serial killer, the cycle repeats.
+- Detective clicks on a card to guess the target criminal's location if human. CPU as a detective picks the target criminal after thinking (3 seconds).
+- If the detective finds the target accurately, everyone except the found criminal gets points. If he fails, everyone except the detective gets points.
+- The first player to reach 4000 points wins.
+- Provide feedback for all game states i.e. Sleuth 1 correctly guessed Sleuth 2 is the Mob!, Pick the Mob etc. Place turn indicator at the top, below the line mention what target needs to be found. Additional, feedback messages can be placed bottom of the game.

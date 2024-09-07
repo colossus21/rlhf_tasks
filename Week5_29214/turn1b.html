@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mystery Detective</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+        #game-board {
+            width: 800px;
+            height: 600px;
+            margin: 20px auto;
+            background: white;
+            border: 2px solid #333;
+            position: relative;
+        }
+        .player {
+            position: absolute;
+            width: 150px;
+            text-align: center;
+        }
+        #player { bottom: 10px; left: 50%; transform: translateX(-50%); }
+        #sleuth1 { left: 10px; top: 50%; transform: translateY(-50%); }
+        #sleuth2 { right: 10px; top: 50%; transform: translateY(-50%); }
+        #sleuth3 { top: 10px; left: 50%; transform: translateX(-50%); }
+        .cards {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            gap: 10px;
+        }
+        .card {
+            width: 100px;
+            height: 150px;
+            background: #ddd;
+            border: 2px solid #000;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5em;
+        }
+        #turn-indicator, #target, #feedback {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .hidden { background: #999; }
+    </style>
+</head>
+<body>
+<div id="game-board">
+    <div id="player" class="player">You</div>
+    <div id="sleuth1" class="player">Sleuth 1</div>
+    <div id="sleuth2" class="player">Sleuth 2</div>
+    <div id="sleuth3" class="player">Sleuth 3</div>
+    <div class="cards">
+        <div class="card hidden" data-role="Detective">🕵️</div>
+        <div class="card hidden" data-role="Thief">🦹</div>
+        <div class="card hidden" data-role="Mob">🕴️</div>
+        <div class="card hidden" data-role="Serial Killer">🔪</div>
+    </div>
+</div>
+<div id="turn-indicator">Sleuth 1's Turn</div>
+<div id="target">Find the Thief</div>
+<div id="feedback"></div>
+
+<script>
+    const roles = ['Detective', 'Thief', 'Mob', 'Serial Killer'];
+    let cards = document.querySelectorAll('.card');
+    let currentPlayerIndex = 0;
+    let scores = { 'player': 0, 'sleuth1': 0, 'sleuth2': 0, 'sleuth3': 0 };
+    let targetIndex = 0;
+    let gameOver = false;
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    function startGame() {
+        shuffle(roles);
+        cards.forEach((card, index) => {
+            card.textContent = '';
+            card.classList.add('hidden');
+            card.dataset.role = roles[index];
+        });
+        updateTurn();
+    }
+
+    function updateTurn() {
+        const players = ['player', 'sleuth1', 'sleuth2', 'sleuth3'];
+        document.getElementById('turn-indicator').textContent = `${players[currentPlayerIndex]}'s Turn`;
+        document.getElementById('target').textContent = `Find the ${roles[targetIndex]}`;
+
+        if (players[currentPlayerIndex] !== 'player') {
+            setTimeout(() => aiTurn(), 3000);
+        }
+    }
+
+    function aiTurn() {
+        let guess = Math.floor(Math.random() * cards.length);
+        if (roles[targetIndex] === 'Detective') {
+            // AI logic for detective guessing can be more complex here
+            guess = Math.floor(Math.random() * 3) + 1; // Avoid picking itself
+        }
+        handleGuess(guess);
+    }
+
+    function handleGuess(index) {
+        const card = cards[index];
+        const guessedRole = card.dataset.role;
+        card.classList.remove('hidden');
+        card.textContent = card.dataset.role[0];
+
+        let feedback = '';
+        if (guessedRole === roles[targetIndex]) {
+            feedback = `${currentPlayerIndex === 0 ? 'You' : 'Sleuth ' + currentPlayerIndex} correctly guessed the ${roles[targetIndex]}!`;
+            Object.keys(scores).forEach(key => {
+                if (key !== roles[targetIndex].toLowerCase()) scores[key] += 1000;
+            });
+        } else if (guessedRole === 'Detective') {
+            feedback = `The Detective has been revealed!`;
+        } else {
+            feedback = `${currentPlayerIndex === 0 ? 'You' : 'Sleuth ' + currentPlayerIndex} guessed wrong!`;
+            Object.keys(scores).forEach(key => {
+                if (key !== currentPlayerIndex.toString()) scores[key] += 1000;
+            });
+        }
+
+        document.getElementById('feedback').textContent = feedback;
+        checkGameOver();
+
+        targetIndex = (targetIndex + 1) % roles.length;
+        currentPlayerIndex = (currentPlayerIndex + 1) % 4;
+        if (!gameOver) setTimeout(updateTurn, 2000);
+    }
+
+    function checkGameOver() {
+        for (let player in scores) {
+            if (scores[player] >= 4000) {
+                document.getElementById('feedback').textContent += ` Game Over! ${player === 'player' ? 'You' : 'Sleuth ' + player.slice(-1)} win!`;
+                gameOver = true;
+                return;
+            }
+        }
+    }
+
+    cards.forEach((card, index) => {
+        card.onclick = () => {
+            if (!gameOver && currentPlayerIndex === 0) handleGuess(index);
+        };
+    });
+
+    startGame();
+</script>
+</body>
+</html>
