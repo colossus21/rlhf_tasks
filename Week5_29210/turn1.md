@@ -1,0 +1,358 @@
+### Code Plan:
+
+1. UI:
+   - Create a 6x6 grid board with CSS grid for the board. 
+   - Outer cells marked 1 to 19 are playable. the top-left corner should be "start" from which the players start playing. 
+   - There should be colored dots above and below the game board for Player 1 and Player 2 respectively to show how many unique colors each player collected.
+   - Display the dice and roll button below the game and a restart button after the game ends.
+
+2. Gameplay:
+   - Each cell of the board should have a random color based on the instruction. 
+   - Each player moves through the cells by rolling the dice. If the color of the cell the player lands on is unique, it should add to the player's color collection.
+   - If a player collects all different colors, that player wins the game.
+
+### Code:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Tao</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f1;
+            font-family: Arial, sans-serif;
+        }
+        #game-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(6, 60px);
+            grid-template-rows: repeat(6, 60px);
+            gap: 2px;
+            background-color: #34495e;
+            padding: 2px;
+            margin-top: 20px;
+        }
+        .cell {
+            background-color: #ecf0f1;
+            border: 1px solid #34495e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            font-weight: bold;
+            position: relative;
+        }
+        .playable {
+            background-color: #3498db;
+            color: white;
+        }
+        #center {
+            grid-column: 2 / span 4;
+            grid-row: 2 / span 4;
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+        }
+        #controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            width: 100%;
+        }
+        #dice {
+            width: 60px;
+            height: 60px;
+            background-color: white;
+            border: 2px solid #000;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        #roll-button, #restart-button {
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        #roll-button:hover, #restart-button:hover {
+            background-color: #2980b9;
+        }
+        #status {
+            font-size: 18px;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .player-piece {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            position: absolute;
+            top: 5px;
+            transition: all 0.3s ease;
+        }
+        .color-collection {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        #player1-colors {
+            margin-bottom: -10px;
+        }
+        #player2-colors {
+            margin-top: 20px;
+        }
+        .color-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin: 0 5px;
+            border: 1px solid #000;
+            opacity: 0.2;
+        }
+        .filled {
+            opacity: 1;
+        }
+        @keyframes roll {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+<div id="game-container">
+    <div class="color-collection" id="player1-colors">
+        <div class="color-dot" id="p1-token1"></div>
+        <div class="color-dot" id="p1-token2"></div>
+        <div class="color-dot" id="p1-token3"></div>
+        <div class="color-dot" id="p1-token4"></div>
+        <div class="color-dot" id="p1-token5"></div>
+    </div>
+    <div id="board">
+        <div class="cell playable">Start</div>
+        <div class="cell playable">1</div>
+        <div class="cell playable">2</div>
+        <div class="cell playable">3</div>
+        <div class="cell playable">4</div>
+        <div class="cell playable">5</div>
+        <div class="cell playable">19</div>
+        <div class="cell playable">6</div>
+        <div class="cell playable">18</div>
+        <div class="cell playable">7</div>
+        <div class="cell playable">17</div>
+        <div class="cell playable">8</div>
+        <div class="cell playable">16</div>
+        <div class="cell playable">9</div>
+        <div class="cell playable">15</div>
+        <div class="cell playable">11</div>
+        <div class="cell playable">14</div>
+        <div class="cell playable">13</div>
+        <div class="cell playable">12</div>
+        <div class="cell playable">10</div>
+        <div id="center">Color Tao</div>
+    </div>
+    <div class="color-collection" id="player2-colors">
+        <div class="color-dot" id="p2-token1"></div>
+        <div class="color-dot" id="p2-token2"></div>
+        <div class="color-dot" id="p2-token3"></div>
+        <div class="color-dot" id="p2-token4"></div>
+        <div class="color-dot" id="p2-token5"></div>
+    </div>
+    <div id="controls">
+        <div id="dice">1</div>
+        <button id="roll-button">Roll Dice</button>
+        <button id="restart-button" style="display:none;">Restart Game</button>
+    </div>
+    <div id="status"></div>
+</div>
+
+<script>
+    const colors = [
+        {color: '#ffcccb', count: 3},  // light red
+        {color: '#90EE90', count: 4},  // light green
+        {color: '#DEB887', count: 4},  // light brown
+        {color: '#ADD8E6', count: 4},  // light blue
+        {color: '#D8BFD8', count: 4}   // light purple
+    ];
+    let players = [
+        {name: 'Player 1', color: '#FF0000', position: 0, collectedColors: new Set()},
+        {name: 'Player 2', color: '#0000FF', position: 0, collectedColors: new Set()}
+    ];
+    let currentPlayer = 0;
+
+    // Update the game status message
+    function updateStatus(message) {
+        document.getElementById('status').textContent = message;
+    }
+
+    // Initialize the game board and assign colors to cells
+    function initializeBoard() {
+        const cells = document.querySelectorAll('.cell.playable');
+        let colorIndex = 0;
+
+        cells.forEach((cell, index) => {
+            if (index === 0) return; // Skip the 'Start' cell
+            if (colors[colorIndex].count > 0) {
+                cell.style.backgroundColor = colors[colorIndex].color;
+                colors[colorIndex].count--;
+                if (colors[colorIndex].count === 0) colorIndex++;
+            }
+        });
+
+        updateColorCollectionDisplay();
+        updatePlayerPositions();
+        document.getElementById('roll-button').style.display = 'inline-block';
+        document.getElementById('restart-button').style.display = 'none';
+        updateStatus("Player 1's turn");
+    }
+
+    // Move the player to a specific cell
+    function goToCell(player, cellNo) {
+        const cells = document.querySelectorAll('.cell.playable');
+
+        player.position = cellNo;
+        updatePlayerPositions();
+        checkColorCollection(player);
+        updateStatus(`${player.name} moved to ${cellNo === 0 ? 'Start' : `space ${cellNo}`}`);
+
+        if (checkWinCondition(player)) {
+            updateStatus(`${player.name} wins!`);
+            endGame();
+        } else {
+            currentPlayer = 1 - currentPlayer;
+            updateStatus(`${players[currentPlayer].name}'s turn`);
+        }
+    }
+
+    // Simulate dice rolling and move the player based on the result
+    function rollDice() {
+        const dice = document.getElementById('dice');
+        const rollButton = document.getElementById('roll-button');
+        rollButton.disabled = true;
+
+        dice.style.animation = 'roll 0.5s linear';
+        setTimeout(() => {
+            dice.style.animation = 'none';
+            const result = Math.floor(Math.random() * 6) + 1;
+            dice.textContent = result;
+
+            const player = players[currentPlayer];
+            let newPosition = player.position + result;
+
+            // Wrap around if the player exceeds the maximum cell number (19 in this case)
+            if (newPosition > 19) {
+                newPosition = newPosition % 20;
+            }
+
+            goToCell(player, newPosition);
+
+            if (!checkWinCondition(player)) {
+                rollButton.disabled = false;
+            }
+        }, 500);
+    }
+
+    // Update player positions on the board
+    function updatePlayerPositions() {
+        const cells = document.querySelectorAll('.cell.playable');
+        cells.forEach(cell => {
+            const existingPieces = cell.querySelectorAll('.player-piece');
+            existingPieces.forEach(piece => piece.remove());
+        });
+        players.forEach((player, index) => {
+            const cellNumber = player.position;
+            const targetCell = Array.from(cells).find(cell =>
+                cell.textContent === 'Start' ? cellNumber === 0 : parseInt(cell.textContent) === cellNumber
+            );
+            if (targetCell) {
+                const piece = document.createElement('div');
+                piece.className = 'player-piece';
+                piece.style.backgroundColor = player.color;
+                targetCell.appendChild(piece);
+                piece.style.left = `${index * 25 + 5}px`;
+            }
+        });
+    }
+
+    // Check if the player has landed on a colored cell and collect the color
+    function checkColorCollection(player) {
+        const cellNumber = player.position;
+        const currentCell = Array.from(document.querySelectorAll('.cell.playable'))
+            .find(cell => cell.textContent === 'Start' ? cellNumber === 0 : parseInt(cell.textContent) === cellNumber);
+        const cellColor = currentCell ? currentCell.style.backgroundColor : null;
+        if (cellColor && cellColor !== 'rgb(52, 152, 219)') { // Not the default blue
+            player.collectedColors.add(cellColor);
+            updateColorCollectionDisplay();
+        }
+    }
+
+    // Update the collected colors for both players
+    function updateColorCollectionDisplay() {
+        updateTokens(players[0], 'player1-colors');
+        updateTokens(players[1], 'player2-colors');
+    }
+
+    // Display the collected tokens for a player
+    function updateTokens(player, containerId) {
+        const playerTokens = document.getElementById(containerId).children;
+        const collectedColors = Array.from(player.collectedColors);
+        for (let i = 0; i < playerTokens.length; i++) {
+            playerTokens[i].style.backgroundColor = collectedColors[i] || 'transparent';
+            if (collectedColors[i]) {
+                playerTokens[i].classList.add('filled');
+            }
+        }
+    }
+
+    // Check if a player has won the game by collecting all colors
+    function checkWinCondition(player) {
+        return player.collectedColors.size === 5;
+    }
+
+    // End the game and show the restart button
+    function endGame() {
+        document.getElementById('roll-button').style.display = 'none';
+        document.getElementById('restart-button').style.display = 'inline-block';
+    }
+
+    // Reload the page to restart the game
+    function restartGame() {
+        location.reload();
+    }
+
+    document.getElementById('roll-button').addEventListener('click', rollDice);
+    document.getElementById('restart-button').addEventListener('click', restartGame);
+
+    initializeBoard();
+</script>
+</body>
+</html>
+```
+
+The provided code fully implements 'Color Tao'. It initializes a 6x6 game board with gameplay according to the guidelines. Two player markers (red and blue) move around the outer edge of the board based on the roll of a dice. Player's tokens are displayed above and below the board as colored dots. A player wins the game by collecting all five differently colored tokens.
