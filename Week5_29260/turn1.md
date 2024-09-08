@@ -1,0 +1,389 @@
+Certainly! I'll create a single HTML file for an IELTS vocabulary matching game based on your requirements. Here's the code plan:
+
+### Code Plan:
+
+1. UI:
+   - Two columns: left for words, right for definitions should be created.
+   - Submit and Restart buttons should be placed below the game. Submit buttons shows up after all pairs are matched. 
+   - Create canvas elements for drawing lines between two columns.
+
+2. Gameplay:
+   - Randomly select 10 word-definition pairs from a pool of 50 pairs. Shuffle the array after selecting 10 items.
+   - Player can create a connection by dragging a word from the left to the definitions at right.
+   - Validate connections by display correct matches as green and incorrect connections as red.
+   - Show the score and a restart button to reset the game.
+
+### Code:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>IELTS Vocabulary Matching Game</title>
+   <style>
+      body {
+         font-family: Arial, sans-serif;
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         height: 100vh;
+         margin: 0;
+         background-color: #f0f0f0;
+      }
+      .game-container {
+         display: flex;
+         flex-direction: column;
+         align-items: center;
+         background-color: #ffffff;
+         padding: 20px;
+         border-radius: 10px;
+         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      .columns-container {
+         display: flex;
+         justify-content: space-between;
+         width: 800px;
+         margin-bottom: 20px;
+         position: relative;
+      }
+      .column {
+         width: 45%;
+      }
+      .item {
+         background-color: #e0e0e0;
+         margin: 5px 0;
+         padding: 10px;
+         border-radius: 5px;
+         transition: all 0.3s;
+      }
+      .item:hover {
+         background-color: #d0d0d0;
+      }
+      .word {
+         cursor: move;
+      }
+      .definition {
+         cursor: default;
+      }
+      .item.highlighted {
+         background-color: #4CAF50;
+         color: white;
+      }
+      .item.drag-over {
+         border: 2px solid #4CAF50;
+         background-color: #e8f5e9;
+      }
+      .item.dragging {
+         opacity: 0.5;
+         background-color: #81c784;
+         color: white;
+      }
+      canvas {
+         position: absolute;
+         top: 0;
+         left: 0;
+         pointer-events: none;
+      }
+      .buttons {
+         margin-top: 20px;
+      }
+      button {
+         background-color: #4CAF50;
+         border: none;
+         color: white;
+         padding: 10px 20px;
+         text-align: center;
+         text-decoration: none;
+         display: inline-block;
+         font-size: 16px;
+         margin: 4px 2px;
+         cursor: pointer;
+         border-radius: 5px;
+         transition: background-color 0.3s;
+      }
+      button:hover {
+         background-color: #45a049;
+      }
+      #score, #feedback {
+         font-size: 18px;
+         font-weight: bold;
+         margin-top: 10px;
+         text-align: center;
+      }
+   </style>
+</head>
+<body>
+<div class="game-container">
+   <h1>IELTS Vocabulary Matching Game</h1>
+   <div class="columns-container">
+      <div id="words" class="column"></div>
+      <div id="definitions" class="column"></div>
+      <canvas id="lineCanvas"></canvas>
+   </div>
+   <div class="buttons">
+      <button id="submitBtn" style="display: none; background: cornflowerblue">Submit</button>
+      <button id="restartBtn" style="display: none; background: palevioletred">Restart</button>
+   </div>
+   <div id="feedback"></div>
+   <div id="score"></div>
+</div>
+<script>
+   const pool = [
+      ["Abandon", "To leave something or someone behind"],
+      ["Absorb", "To take in or soak up"],
+      ["Accommodate", "To provide space or lodging"],
+      ["Accomplish", "To complete or achieve something"],
+      ["Accumulate", "To gather or build up gradually"],
+      ["Adapt", "To change to fit new circumstances"],
+      ["Adequate", "Sufficient or satisfactory"],
+      ["Adjacent", "Next to or adjoining something else"],
+      ["Adjust", "To modify or alter slightly"],
+      ["Advocate", "To publicly support or recommend"],
+      ["Affect", "To have an influence on or cause a change in"],
+      ["Aggregate", "A whole formed by combining several elements"],
+      ["Allocate", "To distribute or set aside for a specific purpose"],
+      ["Ambiguous", "Open to more than one interpretation"],
+      ["Analogy", "A comparison between two things"],
+      ["Analyze", "To examine in detail"],
+      ["Annual", "Occurring once every year"],
+      ["Anticipate", "To expect or predict"],
+      ["Apparent", "Clearly visible or understood"],
+      ["Approach", "A way of dealing with something"],
+      ["Appropriate", "Suitable or proper in the circumstances"],
+      ["Approximate", "Close to the actual amount or number"],
+      ["Arbitrary", "Based on random choice rather than reason"],
+      ["Aspect", "A particular part or feature of something"],
+      ["Assemble", "To gather together in one place"],
+      ["Assert", "To state firmly or forcefully"],
+      ["Assess", "To evaluate or estimate"],
+      ["Associate", "To connect or link in the mind"],
+      ["Assume", "To suppose to be the case without proof"],
+      ["Attribute", "A quality or feature of someone or something"],
+      ["Authentic", "Of undisputed origin and genuine"],
+      ["Aware", "Having knowledge or perception of a situation"],
+      ["Beneficial", "Favorable or advantageous"],
+      ["Capacity", "The maximum amount that something can contain"],
+      ["Category", "A class or division of people or things"],
+      ["Cease", "To come or bring to an end"],
+      ["Challenge", "A task or situation that tests abilities"],
+      ["Characteristic", "A typical or distinctive feature"],
+      ["Clarify", "To make more comprehensible"],
+      ["Collaborate", "To work jointly on an activity or project"],
+      ["Combine", "To join or merge to form a single unit"],
+      ["Comment", "A verbal or written remark"],
+      ["Communicate", "To share or exchange information"],
+      ["Compare", "To assess the similarities and differences"],
+      ["Compensate", "To make up for loss or disadvantage"],
+      ["Compile", "To collect information from various sources"],
+      ["Complement", "To add to or enhance"],
+      ["Compose", "To write or create"],
+      ["Comprehensive", "Including or dealing with all aspects"],
+      ["Comprise", "To consist of or be made up of"]
+   ];
+
+   let vocabularyList = [];
+   let gameWords = [];
+   let gameDefinitions = [];
+   let connections = [];
+
+   const wordsContainer = document.getElementById('words');
+   const definitionsContainer = document.getElementById('definitions');
+   const canvas = document.getElementById('lineCanvas');
+   const ctx = canvas.getContext('2d');
+   const submitBtn = document.getElementById('submitBtn');
+   const restartBtn = document.getElementById('restartBtn');
+   const scoreDisplay = document.getElementById('score');
+   const feedbackDisplay = document.getElementById('feedback');
+
+   function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+         const j = Math.floor(Math.random() * (i + 1));
+         [array[i], array[j]] = [array[j], array[i]];
+      }
+   }
+
+   function initializeGame() {
+      shuffleArray(pool)
+      vocabularyList = pool.slice(0, 10)
+      gameWords = vocabularyList.map(pair => pair[0]);
+      gameDefinitions = vocabularyList.map(pair => pair[1]);
+      connections = [];
+
+      shuffleArray(gameWords);
+      shuffleArray(gameDefinitions);
+
+      wordsContainer.innerHTML = '';
+      definitionsContainer.innerHTML = '';
+
+      gameWords.forEach((word, index) => {
+         const wordElement = document.createElement('div');
+         wordElement.textContent = word;
+         wordElement.classList.add('item', 'word');
+         wordElement.draggable = true;
+         wordElement.dataset.index = index;
+         wordElement.addEventListener('dragstart', dragStart);
+         wordElement.addEventListener('dragend', dragEnd);
+         wordsContainer.appendChild(wordElement);
+      });
+
+      gameDefinitions.forEach((definition, index) => {
+         const definitionElement = document.createElement('div');
+         definitionElement.textContent = definition;
+         definitionElement.classList.add('item', 'definition');
+         definitionElement.dataset.index = index;
+         definitionElement.addEventListener('dragenter', dragEnter);
+         definitionElement.addEventListener('dragleave', dragLeave);
+         definitionElement.addEventListener('dragover', dragOver);
+         definitionElement.addEventListener('drop', drop);
+         definitionsContainer.appendChild(definitionElement);
+      });
+
+      canvas.width = 800;
+      canvas.height = 600;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      scoreDisplay.textContent = '';
+      feedbackDisplay.textContent = 'Drag words from the left to their matching definitions on the right.';
+      submitBtn.style.display = 'none';
+      restartBtn.style.display = 'none';
+   }
+
+   function dragStart(event) {
+      event.dataTransfer.setData('text/plain', event.target.dataset.index);
+      event.target.classList.add('dragging');
+      setTimeout(() => {
+         event.target.classList.add('drag-over');
+      }, 0);
+   }
+
+   function dragEnd(event) {
+      event.target.classList.remove('dragging', 'drag-over');
+   }
+
+   function dragEnter(event) {
+      event.preventDefault();
+      if (event.target.classList.contains('definition')) {
+         event.target.classList.add('drag-over');
+      }
+   }
+
+   function dragLeave(event) {
+      if (event.target.classList.contains('definition')) {
+         event.target.classList.remove('drag-over');
+      }
+   }
+
+   function dragOver(event) {
+      event.preventDefault();
+   }
+
+   function drop(event) {
+      event.preventDefault();
+      const wordIndex = event.dataTransfer.getData('text/plain');
+      const wordElement = document.querySelector(`.word[data-index="${wordIndex}"]`);
+      const definitionElement = event.target;
+
+      if (definitionElement.classList.contains('definition')) {
+         definitionElement.classList.remove('drag-over');
+         wordElement.classList.remove('drag-over');
+
+         // Remove existing connections for this word or definition
+         connections = connections.filter(conn => conn.word !== wordElement && conn.definition !== definitionElement);
+
+         // Add new connection
+         connections.push({ word: wordElement, definition: definitionElement });
+
+         // Update highlighting
+         document.querySelectorAll('.item').forEach(item => item.classList.remove('highlighted'));
+         connections.forEach(conn => {
+            conn.word.classList.add('highlighted');
+            conn.definition.classList.add('highlighted');
+         });
+
+         drawConnections();
+         checkAllConnected();
+         feedbackDisplay.textContent = 'Great! Keep matching words with their definitions.';
+      }
+   }
+
+   function drawConnections() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      connections.forEach(connection => {
+         const wordRect = connection.word.getBoundingClientRect();
+         const definitionRect = connection.definition.getBoundingClientRect();
+         const containerRect = canvas.getBoundingClientRect();
+
+         ctx.beginPath();
+         ctx.moveTo(wordRect.right - containerRect.left, wordRect.top + wordRect.height / 2 - containerRect.top);
+         ctx.lineTo(definitionRect.left - containerRect.left, definitionRect.top + definitionRect.height / 2 - containerRect.top);
+         ctx.strokeStyle = 'black';
+         ctx.lineWidth = 2;
+         ctx.stroke();
+      });
+   }
+
+   function checkAllConnected() {
+      if (connections.length === vocabularyList.length) {
+         submitBtn.style.display = 'inline-block';
+         feedbackDisplay.textContent = 'All words are connected! You can now submit your answers.';
+      } else {
+         submitBtn.style.display = 'none';
+      }
+   }
+
+   function submitAnswers() {
+      let correctAnswers = 0;
+      connections.forEach(connection => {
+         const wordIndex = vocabularyList.findIndex(item => item[0] === connection.word.textContent);
+         const isCorrect = vocabularyList[wordIndex][1] === connection.definition.textContent;
+
+         const wordRect = connection.word.getBoundingClientRect();
+         const definitionRect = connection.definition.getBoundingClientRect();
+         const containerRect = canvas.getBoundingClientRect();
+
+         ctx.beginPath();
+         ctx.moveTo(wordRect.right - containerRect.left, wordRect.top + wordRect.height / 2 - containerRect.top);
+         ctx.lineTo(definitionRect.left - containerRect.left, definitionRect.top + definitionRect.height / 2 - containerRect.top);
+         ctx.strokeStyle = isCorrect ? 'green' : 'red';
+         ctx.lineWidth = 3;
+         ctx.stroke();
+
+         if (isCorrect) correctAnswers++;
+      });
+
+      scoreDisplay.textContent = `Score: ${correctAnswers} / 10`;
+      feedbackDisplay.textContent = `You got ${correctAnswers} out of 10 correct! Green lines show correct matches, red lines show incorrect ones.`;
+      submitBtn.style.display = 'none';
+      restartBtn.style.display = 'inline-block';
+   }
+
+   submitBtn.addEventListener('click', submitAnswers);
+   restartBtn.addEventListener('click', initializeGame);
+   window.addEventListener('resize', drawConnections);
+
+   initializeGame();
+</script>
+</body>
+</html>
+```
+
+### Explanation:
+
+1. UI:
+   - The game is contained within a `div` with the class `game-container`.
+   - Two columns are created for words and definitions.
+   - A canvas element is used for drawing connection lines.
+   - Submit and Restart buttons are added.
+
+2. Styling:
+   - Words and definitions are styled as clickable items with hover effects.
+   - Buttons have a green color scheme and hover effects.
+
+3. JavaScript Functionality:
+   - A list of 50 IELTS vocabulary words and definitions is defined.
+   - The game randomly selects 10 word-definition pairs for each round.
+   - Words and definitions are shuffled and displayed in their respective columns.
+   - The score is displayed after submission.
+
+This game provides an interactive and visually appealing way to practice IELTS vocabulary.

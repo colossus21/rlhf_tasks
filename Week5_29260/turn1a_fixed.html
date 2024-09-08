@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>IELTS Vocabulary Game</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* Inline CSS for game-specific styles */
+        .word, .definition {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            cursor: move;
+        }
+        .word.drag-over { border: 2px solid green; }
+        .line {
+            position: absolute;
+            width: 2px;
+            background-color: black;
+            display: none;
+        }
+        .correct { background-color: lightgreen; }
+        .incorrect { background-color: lightcoral; }
+        #feedback { margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>IELTS Vocabulary Matching Game</h1>
+    <div id="gameArea">
+        <div class="row">
+            <div class="col" id="words"></div>
+            <div class="col" id="definitions"></div>
+        </div>
+        <button id="submitBtn" class="btn btn-primary" style="display:none;">Submit</button>
+        <button id="restartBtn" class="btn btn-secondary" style="display:none;">Restart</button>
+    </div>
+    <div id="feedback"></div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script>
+    // JavaScript and jQuery for functionality
+    $(function() {
+        const wordsPool = ['word1', 'word2']; // Add your 50 words here
+        const definitionsPool = ['def1', 'def2']; // Corresponding definitions
+
+        let selectedWords = [];
+        let matches = {};
+        let lines = [];
+
+        function initGame() {
+            selectedWords = $.merge($.merge([], wordsPool), definitionsPool).sort(() => Math.random() - 0.5).slice(0, 20);
+            selectedWords.forEach((item, index) => {
+                if (index < 10) {
+                    $('#words').append($('<div class="word">' + item + '</div>'));
+                } else {
+                    $('#definitions').append($('<div class="definition" data-index="' + (index - 10) + '">' + item + '</div>'));
+                }
+            });
+
+            $('.word, .definition').draggable({
+                revert: 'invalid',
+                helper: 'clone'
+            });
+
+            $('.definition').droppable({
+                drop: function(event, ui) {
+                    let wordIndex = $('.word').index(ui.draggable);
+                    let defIndex = $(this).data('index');
+                    matches[wordIndex] = defIndex;
+                    drawLine(ui.draggable, $(this));
+                },
+                over: function() {
+                    $(this).addClass('drag-over');
+                },
+                out: function() {
+                    $(this).removeClass('drag-over');
+                }
+            });
+        }
+
+        function drawLine($from, $to) {
+            let fromPos = $from.offset();
+            let toPos = $to.offset();
+            let line = $('<div class="line"></div>');
+            line.css({
+                'left': fromPos.left + $from.width() / 2,
+                'top': fromPos.top + $from.height() / 2,
+                'height': toPos.top - fromPos.top
+            });
+            $('body').append(line);
+            lines.push(line);
+        }
+
+        $('#submitBtn').on('click', function() {
+            let allCorrect = true;
+            for (let [word, def] of Object.entries(matches)) {
+                if (wordsPool.indexOf(selectedWords[word]) !== definitionsPool.indexOf(selectedWords[parseInt(def) + 10])) {
+                    allCorrect = false;
+                    lines[word].css('background-color', 'red');
+                } else {
+                    lines[word].css('background-color', 'green');
+                }
+            }
+            $('#feedback').text(allCorrect ? 'All correct! Well done!' : 'Some matches are incorrect. Try again!');
+            $(this).hide();
+            $('#restartBtn').show();
+        });
+
+        $('#restartBtn').on('click', function() {
+            $('#words, #definitions').empty();
+            $('.line').remove();
+            $('#feedback').empty();
+            $(this).hide();
+            $('#submitBtn').show();
+            initGame();
+        });
+
+        initGame();
+    });
+</script>
+</body>
+</html>

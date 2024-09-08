@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Vocabulary Game</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .game-container {
+            width: 80%;
+            background: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .columns {
+            display: flex;
+            justify-content: space-around;
+        }
+        .column {
+            width: 45%;
+        }
+        .word, .definition {
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            cursor: move;
+            background: #fff;
+        }
+        .definition {
+            cursor: default;
+        }
+        .word.drag-over {
+            border: 2px dashed green;
+        }
+        .line {
+            stroke: black;
+            stroke-width: 2;
+        }
+        .correct {
+            stroke: green;
+        }
+        .incorrect {
+            stroke: red;
+        }
+        #feedback {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div class="columns">
+        <div id="words" class="column"></div>
+        <svg id="lines" width="100%" height="100%"></svg>
+        <div id="definitions" class="column"></div>
+    </div>
+    <div id="feedback"></div>
+    <div class="button-container">
+        <button id="submit" style="display:none;">Submit</button>
+        <button id="restart" style="display:none;">Restart</button>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<script>
+    const vocabulary = [
+        {word: "Abandon", definition: "Cease to support or look after"},
+        {word: "Benevolent", definition: "Well meaning and kindly"},
+        // ... Add more words here up to 50 ...
+    ];
+
+    let gameWords = [];
+    const lines = [];
+
+    function initGame() {
+        gameWords = [...vocabulary].sort(() => 0.5 - Math.random()).slice(0, 10);
+        const wordsContainer = $('#words');
+        const defsContainer = $('#definitions');
+        wordsContainer.empty();
+        defsContainer.empty();
+        lines.length = 0;
+
+        gameWords.forEach((item, index) => {
+            wordsContainer.append(`<div class="word" draggable="true" data-index="${index}">${item.word}</div>`);
+            defsContainer.append(`<div class="definition" data-match="${index}">${item.definition}</div>`);
+        });
+
+        $('.word').on('dragstart', function(e) {
+            e.originalEvent.dataTransfer.setData('text', $(this).data('index'));
+        });
+
+        $('.definition').on('dragover', function(e) {
+            e.preventDefault();
+            $(this).addClass('drag-over');
+        }).on('dragleave', function(e) {
+            $(this).removeClass('drag-over');
+        }).on('drop', function(e) {
+            e.preventDefault();
+            $(this).removeClass('drag-over');
+            const wordIndex = e.originalEvent.dataTransfer.getData('text');
+            const defIndex = $(this).data('match');
+            if (!lines.some(line => line.word === wordIndex)) {
+                lines.push({word: wordIndex, def: defIndex});
+                drawLines();
+                if (lines.length === 10) $('#submit').show();
+            }
+        });
+
+        $('#submit').hide();
+        $('#restart').hide();
+        $('#feedback').text("Drag the words to match with their definitions.");
+    }
+
+    function drawLines() {
+        const svg = document.getElementById('lines');
+        svg.innerHTML = '';
+        lines.forEach(line => {
+            const word = document.querySelector(`#words .word[data-index="${line.word}"]`);
+            const def = document.querySelector(`#definitions .definition[data-match="${line.def}"]`);
+            const rect1 = word.getBoundingClientRect();
+            const rect2 = def.getBoundingClientRect();
+            const x1 = rect1.left + rect1.width / 2 - svg.getBoundingClientRect().left;
+            const y1 = rect1.top + rect1.height / 2 - svg.getBoundingClientRect().top;
+            const x2 = rect2.left + rect2.width / 2 - svg.getBoundingClientRect().left;
+            const y2 = rect2.top + rect2.height / 2 - svg.getBoundingClientRect().top;
+            const lineElement = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            lineElement.setAttribute('x1', x1);
+            lineElement.setAttribute('y1', y1);
+            lineElement.setAttribute('x2', x2);
+            lineElement.setAttribute('y2', y2);
+            lineElement.classList.add('line');
+            svg.appendChild(lineElement);
+        });
+    }
+
+    function checkAnswers() {
+        lines.forEach(line => {
+            const correct = line.def === parseInt(line.word);
+            document.querySelector(`#lines line:nth-child(${lines.indexOf(line) + 1})`).classList.toggle('correct', correct);
+            document.querySelector(`#lines line:nth-child(${lines.indexOf(line) + 1})`).classList.toggle('incorrect', !correct);
+        });
+        const correctCount = lines.filter(line => line.def === parseInt(line.word)).length;
+        $('#feedback').text(`You got ${correctCount} out of 10 correct!`);
+        $('#submit').hide();
+        $('#restart').show();
+    }
+
+    $('#submit').on('click', checkAnswers);
+    $('#restart').on('click', initGame);
+
+    initGame();
+</script>
+
+</body>
+</html>

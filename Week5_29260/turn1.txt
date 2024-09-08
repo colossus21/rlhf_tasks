@@ -1,0 +1,13 @@
+I'm trying to create an interactive vocabulary game to help me study for the IELTS test. Here's what I am thinking:
+1. It should be a matching game where you drag words from the left side to their definitions on the right side.
+2. There should be 10 random word-definition pairs in each game from a pool of 50.
+3. As you drag a word, can you highlight it somehow? Maybe change its color or make it semi-transparent?
+4. When you're dragging over a potential match (a definition), can you highlight that too? Like maybe give it a green border or something?
+5. Once you drop a word on a definition, can you draw a line connecting them? And keep them highlighted to show they're matched?
+6. It'd be cool if you couldn't submit your answers until all words are matched.
+7. After submitting, can you show which ones are right and wrong? Maybe green lines for correct matches and red for incorrect?
+8. Oh, and add a restart button that shows up after you submit, so you can play again with new words.
+9. Can you make it look nice too? Nothing fancy, just clean and easy to use.
+10. Last thing - can you add some feedback text that guides the user? Like telling them what to do next or how they did at the end.
+
+Do you think you could create something like that? It should all be in one HTML file so I can easily save and use it. Thanks!
