@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color of Life</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #gameCanvas { border: 1px solid black; }
+        .controls { margin-top: 10px; }
+        .color-picker { margin-top: 10px; }
+        .color-option { width: 30px; height: 30px; display: inline-block; cursor: pointer; }
+    </style>
+</head>
+<body>
+<canvas id="gameCanvas" width="400" height="400"></canvas>
+<div class="controls">
+    <button id="startStop">Start</button>
+    <button id="reset">Reset</button>
+    <input type="range" min="1" max="60" value="10" id="fpsSlider">
+    <span id="fpsValue">10 FPS</span>
+</div>
+<div class="color-picker">
+    <div class="color-option" style="background-color: red;" data-color="255,0,0"></div>
+    <div class="color-option" style="background-color: green;" data-color="0,255,0"></div>
+    <div class="color-option" style="background-color: blue;" data-color="0,0,255"></div>
+    <div class="color-option" style="background-color: yellow;" data-color="255,255,0"></div>
+    <div class="color-option" style="background-color: cyan;" data-color="0,255,255"></div>
+    <div class="color-option" style="background-color: magenta;" data-color="255,0,255"></div>
+    <div class="color-option" style="background-color: white;" data-color="255,255,255"></div>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const size = 10; // size of each cell
+    const rows = canvas.height / size;
+    const cols = canvas.width / size;
+    let grid = createGrid(rows, cols);
+    let isRunning = false;
+    let currentColor = [255, 0, 0]; // Start with red
+    let intervalId = null;
+    const fpsSlider = document.getElementById('fpsSlider');
+    const fpsValue = document.getElementById('fpsValue');
+
+    // Initialize grid
+    function createGrid(rows, cols) {
+        return Array.from({ length: rows }, () => Array(cols).fill([0, 0, 0]));
+    }
+
+    // Draw grid
+    function drawGrid() {
+        for(let y = 0; y < rows; y++) {
+            for(let x = 0; x < cols; x++) {
+                ctx.fillStyle = `rgb(${grid[y][x][0]},${grid[y][x][1]},${grid[y][x][2]})`;
+                ctx.fillRect(x * size, y * size, size, size);
+            }
+        }
+    }
+
+    // Game logic
+    function updateGrid() {
+        const newGrid = grid.map(arr => [...arr]);
+
+        for(let y = 0; y < rows; y++) {
+            for(let x = 0; x < cols; x++) {
+                const neighbors = countNeighbors(y, x);
+                if (grid[y][x].every(v => v === 0)) { // If cell is empty
+                    const majorityColor = getMajorityColor(neighbors);
+                    if (majorityColor && neighbors.filter(n => n.toString() === majorityColor.toString()).length === 3) {
+                        newGrid[y][x] = majorityColor;
+                    }
+                } else if (neighbors.filter(n => n.toString() === grid[y][x].toString()).length !== 2) {
+                    newGrid[y][x] = [0, 0, 0]; // Cell dies
+                }
+            }
+        }
+
+        grid = newGrid;
+    }
+
+    function countNeighbors(y, x) {
+        let neighbors = [];
+        for(let dy = -1; dy <= 1; dy++) {
+            for(let dx = -1; dx <= 1; dx++) {
+                if (dx === 0 && dy === 0) continue;
+                let ny = (y + dy + rows) % rows;
+                let nx = (x + dx + cols) % cols;
+                if (grid[ny][nx].some(v => v !== 0)) {
+                    neighbors.push(grid[ny][nx]);
+                }
+            }
+        }
+        return neighbors;
+    }
+
+    function getMajorityColor(neighbors) {
+        const colorCount = {};
+        neighbors.forEach(color => {
+            const key = color.toString();
+            colorCount[key] = (colorCount[key] || 0) + 1;
+        });
+        let maxCount = 0, majorityColor = null;
+        for(const [color, count] of Object.entries(colorCount)) {
+            if (count > maxCount) {
+                maxCount = count;
+                majorityColor = color.split(',').map(Number);
+            }
+        }
+        return majorityColor;
+    }
+
+    // Event listeners
+    canvas.onmousedown = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = Math.floor((e.clientX - rect.left) / size);
+        const y = Math.floor((e.clientY - rect.top) / size);
+        grid[y][x] = currentColor;
+        drawGrid();
+        canvas.onmousemove = (e) => {
+            const x = Math.floor((e.clientX - rect.left) / size);
+            const y = Math.floor((e.clientY - rect.top) / size);
+            grid[y][x] = currentColor;
+            drawGrid();
+        };
+        document.onmouseup = () => {
+            canvas.onmousemove = null;
+            document.onmouseup = null;
+        };
+    };
+
+    document.getElementById('startStop').onclick = function() {
+        if (isRunning) {
+            clearInterval(intervalId);
+            this.textContent = 'Start';
+        } else {
+            const fps = fpsSlider.value;
+            intervalId = setInterval(() => {
+                updateGrid();
+                drawGrid();
+            }, 1000 / fps);
+            this.textContent = 'Stop';
+        }
+        isRunning = !isRunning;
+    };
+
+    document.getElementById('reset').onclick = function() {
+        grid = createGrid(rows, cols);
+        drawGrid();
+        if (isRunning) {
+            clearInterval(intervalId);
+            document.getElementById('startStop').textContent = 'Start';
+            isRunning = false;
+        }
+    };
+
+    fpsSlider.oninput = function() {
+        fpsValue.textContent = this.value + ' FPS';
+        if (isRunning) {
+            clearInterval(intervalId);
+            intervalId = setInterval(() => {
+                updateGrid();
+                drawGrid();
+            }, 1000 / this.value);
+        }
+    };
+
+    document.querySelectorAll('.color-option').forEach(option => {
+        option.onclick = function() {
+            currentColor = this.getAttribute('data-color').split(',').map(Number);
+        };
+    });
+
+    // Initial draw
+    drawGrid();
+</script>
+</body>
+</html>

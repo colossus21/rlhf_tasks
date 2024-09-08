@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Color of Life</title>
+    <style>
+        canvas { border: 1px solid black; display: block; margin: 20px auto; }
+        #controls { text-align: center; }
+        button, input { margin: 5px; }
+    </style>
+</head>
+<body>
+<canvas id="gameCanvas" width="600" height="600"></canvas>
+<div id="controls">
+    <button id="startStop">Start</button>
+    <button id="reset">Reset</button>
+    <input type="range" id="fpsSlider" min="1" max="60" value="10">
+    <div>Color:
+        <select id="colorSelect">
+            <option value="red">Red</option>
+            <option value="green">Green</option>
+            <option value="blue">Blue</option>
+            <option value="yellow">Yellow</option>
+            <option value="cyan">Cyan</option>
+            <option value="magenta">Magenta</option>
+            <option value="white">White</option>
+        </select>
+    </div>
+</div>
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const colors = ['red', 'green', 'blue', 'yellow', 'cyan', 'magenta', 'white'];
+    let grid = [], nextGrid = [];
+    let cellSize = 10;
+    let cols = Math.floor(canvas.width / cellSize);
+    let rows = Math.floor(canvas.height / cellSize);
+    let isRunning = false;
+    let fps = 10;
+
+    // Initialize grid
+    function initializeGrid() {
+        grid = Array(cols).fill().map(() => Array(rows).fill(null));
+        nextGrid = Array(cols).fill().map(() => Array(rows).fill(null));
+    }
+
+    // Draw grid
+    function drawGrid() {
+        for (let c = 0; c < cols; c++) {
+            for (let r = 0; r < rows; r++) {
+                let cell = grid[c][r];
+                ctx.fillStyle = cell || 'black';
+                ctx.fillRect(c * cellSize, r * cellSize, cellSize, cellSize);
+            }
+        }
+    }
+
+    // Update grid based on game rules
+    function updateGrid() {
+        for (let x = 0; x < cols; x++) {
+            for (let y = 0; y < rows; y++) {
+                let neighbors = countNeighbors(x, y);
+                if (grid[x][y] && neighbors[grid[x][y]] !== 2) {
+                    nextGrid[x][y] = null;
+                } else if (!grid[x][y] && neighbors.total === 3) {
+                    nextGrid[x][y] = Object.keys(neighbors).reduce((a, b) => neighbors[a] > neighbors[b] ? a : b);
+                } else {
+                    nextGrid[x][y] = grid[x][y];
+                }
+            }
+        }
+        [grid, nextGrid] = [nextGrid, grid];
+    }
+
+    // Count neighbors with color blending
+    function countNeighbors(x, y) {
+        let counts = {total: 0};
+        for (let i = -1; i <= 1; i++) {
+            for (let j = -1; j <= 1; j++) {
+                let col = (x + i + cols) % cols;
+                let row = (y + j + rows) % rows;
+                if (grid[col][row]) {
+                    counts[grid[col][row]] = (counts[grid[col][row]] || 0) + 1;
+                    counts.total++;
+                }
+            }
+        }
+        return counts;
+    }
+
+    // Game loop
+    function gameLoop() {
+        if (isRunning) {
+            updateGrid();
+            drawGrid();
+            setTimeout(() => {
+                requestAnimationFrame(gameLoop);
+            }, 1000 / fps);
+        }
+    }
+
+    // Event listeners for controls
+    document.getElementById('startStop').onclick = function() {
+        isRunning = !isRunning;
+        this.textContent = isRunning ? 'Stop' : 'Start';
+        if (isRunning) gameLoop();
+    };
+
+    document.getElementById('reset').onclick = function() {
+        isRunning = false;
+        initializeGrid();
+        drawGrid();
+    };
+
+    document.getElementById('fpsSlider').oninput = function() {
+        fps = this.value;
+    };
+
+    // Drawing on the grid
+    canvas.onmousedown = function(e) {
+        if (!isRunning) {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / cellSize);
+            const y = Math.floor((e.clientY - rect.top) / cellSize);
+            grid[x][y] = document.getElementById('colorSelect').value;
+            drawGrid();
+        }
+    };
+
+    // Initial setup
+    initializeGrid();
+    drawGrid();
+</script>
+</body>
+</html>

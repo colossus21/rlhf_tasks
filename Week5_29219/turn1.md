@@ -1,3 +1,14 @@
+### Code Plan:
+
+1. Set up the HTML structure, define CSS styles and create a canvas for the game.
+2. Create the color palette for drawing purpose.
+3. Create a grid on which cells would be drawn.
+4. Set up the game loop, and it would implement the logic of Color of Life.
+5. Add buttons (Start/Stop, Reset) and a slider to control FPS. 
+
+### Code:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -263,3 +274,20 @@
 </script>
 </body>
 </html>
+```
+
+### Explanation:
+
+- A canvas with `600x600` pixels and `15x15` pixel cells is created.
+- Seven colors are defined: red, green, blue, yellow, cyan, magenta, white. Initial cells would be empty.
+- `updateGrid` function implements the game rules:
+    - Survival: cell survives if it has two neighbors of the same color.
+    - Birth: empty cell fills if it has three colored neighbors, using color mixing.
+- Color mixing uses average RGB values of neighbors.
+- `requestAnimationFrame` was used for smoother animation.
+- Start/Stop and Reset buttons control game state.
+- Speed slider adjusts frames per second (1 to 60 FPS).
+- Players can draw on the grid by clicking and dragging the mouse.
+- For better color selection, a color palette is added.
+
+This implementation creates a new variation of the Conway's "Game of Life" game using colors which is called "Color of Life".
