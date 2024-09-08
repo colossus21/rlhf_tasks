@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Path Finder Game</title>
+    <style>
+        body { margin: 0; padding: 0; background: #333; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        canvas { display: block; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+</head>
+<body>
+<script type="module">
+    const config = {
+        type: Phaser.AUTO,
+        width: 400,
+        height: 400,
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        },
+        physics: {
+            default: 'arcade',
+            arcade: {
+                debug: false
+            }
+        }
+    };
+
+    const game = new Phaser.Game(config);
+    let player;
+    let cursors;
+    let grid;
+    let safePath;
+    let gameText;
+    let restartButton;
+
+    function preload() {}
+
+    function create() {
+        // Grid setup
+        grid = this.add.grid(200, 200, 320, 320, 40, 40, 0xadd8e6).setAltFillStyle(0x87ceeb);
+        // Mark start and end
+        grid.getCell(0, 7).fillColor = 0x00ff00; // Start
+        grid.getCell(7, 0).fillColor = 0xff0000; // End
+
+        // Player setup
+        player = this.add.rectangle(20, 380, 30, 30, 0xffffff);
+        this.physics.add.existing(player);
+
+        // Safe path (example path, modify as needed)
+        safePath = [[0,7], [0,6], [1,6], [2,6], [2,5], [2,4], [3,4], [4,4], [5,4], [5,3], [5,2], [6,2], [7,2], [7,1], [7,0]];
+
+        cursors = this.input.keyboard.createCursorKeys();
+
+        // UI
+        gameText = this.add.text(200, 20, 'Find the safe path!', { font: '24px Arial', fill: '#ffffff' }).setOrigin(0.5, 0);
+        restartButton = this.add.text(200, 380, 'Restart', { font: '24px Arial', fill: '#ffffff' })
+            .setOrigin(0.5, 1)
+            .setInteractive()
+            .on('pointerdown', () => this.scene.restart());
+    }
+
+    function update() {
+        if (cursors.left.isDown) {
+            player.x -= 40;
+        } else if (cursors.right.isDown) {
+            player.x += 40;
+        } else if (cursors.up.isDown) {
+            player.y -= 40;
+        } else if (cursors.down.isDown) {
+            player.y += 40;
+        }
+
+        // Keep player within grid
+        player.x = Phaser.Math.Clamp(player.x, 20, 380);
+        player.y = Phaser.Math.Clamp(player.y, 20, 380);
+
+        // Check cell color and game state
+        let cellX = Math.floor(player.x / 40);
+        let cellY = 7 - Math.floor(player.y / 40); // Invert Y for grid coordinates
+        if (grid.getCell(cellX, cellY).fillColor === 0x000000) {
+            gameText.setText('Game Over! Try again.');
+            this.physics.pause();
+        } else if (cellX === 7 && cellY === 0) {
+            gameText.setText('You Win!');
+            this.physics.pause();
+        }
+
+        // Change cell color if not on safe path
+        if (!safePath.some(cell => cell[0] === cellX && cell[1] === cellY)) {
+            let currentCell = grid.getCell(cellX, cellY);
+            currentCell.fillColor = 0xffa500; // Orange
+            this.time.delayedCall(1500, () => {
+                if (currentCell.fillColor === 0xffa500) currentCell.fillColor = 0x000000; // Black
+            });
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+Create a PhaserJS game in which:
+1. There would be a 8x8 grid world, bottom-left contains Start and top-right End.
+2. Player moves using WASD keys, starts from 'Start' and wins the game reaching 'End' cell.
+3. All cells start light blue. Unsafe cells turn orange when stepped on, then black after 1.5 seconds. It represents falling tiles.
+4. Game is over if the player touches a black cell.
+5. Build one safe path from start to end.
+6. Show "Find the sade path!" top-center, bottom-center "Restart" button.
+8. Do not use any external image for the game.
