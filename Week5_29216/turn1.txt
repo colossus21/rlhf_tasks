@@ -1,0 +1,8 @@
+Can you create a top-down Phaser.js game with the following features:
+1. Two human players play the game. Player 1 (red square) uses WASD keys, starts top-left. Player 2 (blue square) uses arrow keys, starts bottom-right.
+2. Randomly spawn rotating shapes: yellow stars (10 points, 20% chance), magenta circles (7 points, 30% chance), and cyan triangles (5 points, 50% chance).
+3. Players collect shapes to gain points. Show scores in the top corners.
+4. Display a countdown timer. Each game should be 30 seconds short.
+5. When time's up, show the winner or declare a tie.
+6. Add a restart button to play again.
+7. Make sure the game is centered, make the necessary adjustments for visual improvements.

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Phaser Top-Down Collector</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: #f0f0f0;
+        }
+        #gameCanvas {
+            border: 2px solid #333;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+</head>
+<body>
+
+<div id="gameCanvas"></div>
+
+<script type="module">
+    const config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        },
+        physics: {
+            default: 'arcade',
+            arcade: {
+                debug: false
+            }
+        }
+    };
+
+    const game = new Phaser.Game(config);
+    let player1, player2, shapes, cursors, arrows, scoreText1, scoreText2, timerText, gameOver = false;
+
+    function preload() {
+        this.load.image('star', 'path/to/star.png'); // Assume you have these images
+        this.load.image('circle', 'path/to/circle.png');
+        this.load.image('triangle', 'path/to/triangle.png');
+    }
+
+    function create() {
+        // Players
+        player1 = this.physics.add.sprite(50, 50, 'player').setTint(0xff0000);
+        player2 = this.physics.add.sprite(750, 550, 'player').setTint(0x0000ff);
+
+        // Controls
+        cursors = this.input.keyboard.createCursorKeys();
+        arrows = this.input.keyboard.addKeys({ 'up': Phaser.Input.Keyboard.KeyCodes.W, 'down': Phaser.Input.Keyboard.KeyCodes.S, 'left': Phaser.Input.Keyboard.KeyCodes.A, 'right': Phaser.Input.Keyboard.KeyCodes.D });
+
+        // Shapes group
+        shapes = this.physics.add.group();
+
+        // Score
+        scoreText1 = this.add.text(16, 16, 'P1: 0', { fontSize: '32px', fill: '#ff0000' });
+        scoreText2 = this.add.text(650, 16, 'P2: 0', { fontSize: '32px', fill: '#0000ff' });
+
+        // Timer
+        let timeEvent = this.time.addEvent({ delay: 30000, callback: gameOverFunction, callbackScope: this });
+        timerText = this.add.text(350, 16, 'Time: 30', { fontSize: '32px' });
+
+        // Spawn shapes
+        this.time.addEvent({ delay: 1000, callback: spawnShape, callbackScope: this, loop: true });
+    }
+
+    function update() {
+        if (gameOver) return;
+
+        // Player 1 movement
+        player1.setVelocity(0);
+        if (arrows.left.isDown) player1.setVelocityX(-160);
+        else if (arrows.right.isDown) player1.setVelocityX(160);
+        if (arrows.up.isDown) player1.setVelocityY(-160);
+        else if (arrows.down.isDown) player1.setVelocityY(160);
+
+        // Player 2 movement
+        player2.setVelocity(0);
+        if (cursors.left.isDown) player2.setVelocityX(-160);
+        else if (cursors.right.isDown) player2.setVelocityX(160);
+        if (cursors.up.isDown) player2.setVelocityY(-160);
+        else if (cursors.down.isDown) player2.setVelocityY(160);
+
+        // Update timer
+        timerText.setText('Time: ' + Math.ceil((30000 - this.time.now) / 1000));
+    }
+
+    function spawnShape() {
+        let x = Phaser.Math.Between(100, 700);
+        let y = Phaser.Math.Between(100, 500);
+        let shapeType = Phaser.Math.RND.weightedPick([10, 30, 50]); // 10% star, 30% circle, 50% triangle
+        let shape;
+
+        switch(shapeType) {
+            case 10: shape = shapes.create(x, y, 'star').setTint(0xffff00); break;
+            case 30: shape = shapes.create(x, y, 'circle').setTint(0xff00ff); break;
+            case 50: shape = shapes.create(x, y, 'triangle').setTint(0x00ffff); break;
+        }
+        shape.setVelocity(Phaser.Math.Between(-50, 50), Phaser.Math.Between(-50, 50));
+        shape.setBounce(1, 1);
+        shape.setCollideWorldBounds(true);
+        shape.setRotation(Phaser.Math.FloatBetween(0, 3.14));
+    }
+
+    function collectShape(player, shape) {
+        shape.disableBody(true, true);
+        // Update score based on shape type
+        let score = player === player1 ? 1 : 2;
+        if (shape.texture.key === 'star') this.registry.values['score' + score] += 10;
+        else if (shape.texture.key === 'circle') this.registry.values['score' + score] += 7;
+        else this.registry.values['score' + score] += 5;
+
+        scoreText1.setText('P1: ' + this.registry.values['score1']);
+        scoreText2.setText('P2: ' + this.registry.values['score2']);
+    }
+
+    function gameOverFunction() {
+        gameOver = true;
+        let result = this.registry.values['score1'] > this.registry.values['score2'] ? 'Player 1 Wins!' :
+            (this.registry.values['score1'] < this.registry.values['score2'] ? 'Player 2 Wins!' : 'It\'s a Tie!');
+        this.add.text(300, 300, result, { fontSize: '48px', fill: '#000' });
+        let restartButton = this.add.text(350, 350, 'Restart', { fontSize: '24px', fill: '#000' })
+            .setInteractive()
+            .on('pointerdown', () => this.scene.restart());
+    }
+
+    // Collision detection
+    this.physics.add.overlap(player1, shapes, collectShape, null, this);
+    this.physics.add.overlap(player2, shapes, collectShape, null, this);
+</script>
+
+</body>
+</html>

@@ -355,4 +355,9 @@
 </html>
 ```
 
-The provided code fully implements 'Color Tao'. It initializes a 6x6 game board with gameplay according to the guidelines. Two player markers (red and blue) move around the outer edge of the board based on the roll of a dice. Player's tokens are displayed above and below the board as colored dots. A player wins the game by collecting all five differently colored tokens.
+The provided code fully implements 'Color Tao
+A 6x6 game board is initialized with gameplay according to the guidelines.
+Two player markers—Red and Blue (both human players)
+move around the outer edge of the board based on the roll of the dice.
+Player's tokens are displayed above and below the board as colored dots.
+A player wins the game by collecting all five differently colored tokens.

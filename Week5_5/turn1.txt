@@ -1,0 +1,7 @@
+I want to create a variation of Conway's Game of Life using colors.
+Can you create a 2D grid-based game where each cell can be empty or colored:
+- Colors mix based on RGB blending. Colors those can be used are: red, green, blue, yellow, cyan, magenta, white.
+- A cell survives if it has exactly 2 neighbors of the same color.
+- An empty cell fills if it has exactly 3 colored neighbors, taking the majority color.
+- Game should have Start/Stop and Reset buttons. A slider should be able to control the FPS (speed of simulation) having values 1-60 FPS.
+- Player should be able to continuously draw on the grid by selecting a color.

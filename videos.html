@@ -1,0 +1,273 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Index</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 50;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding-top: 60px;
+        }
+        .modal-content {
+            margin: 5% auto;
+            padding: 20px;
+            width: 90%;
+            max-width: 600px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+    <div class="container mx-auto py-8">
+        <h1 class="text-4xl font-bold mb-6 text-center text-blue-600">Video Index</h1>
+        
+        
+        <div class="mb-8">
+            <h2 class="text-3xl font-semibold text-gray-700 mb-4">Week 5</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week5_2\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 2</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week5_27293\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 27293</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week5_27302\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 27302</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week5_27309\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 27309</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week5_27327\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 27327</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week5_27364\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 27364</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week5_27379\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 27379</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week5_27419\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 27419</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week5_27428\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 27428</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week5_27431\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 27431</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week5_27433\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 27433</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week5_29208\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 29208</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week5_3\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 3</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week5_4\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 4</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week5_5\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 5</h3>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        <hr class="border-gray-300 my-6">
+        
+        <div class="mb-8">
+            <h2 class="text-3xl font-semibold text-gray-700 mb-4">Week 4</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week4_27151\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 27151</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week4_27158\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 27158</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week4_27170\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 27170</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week4_27199\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 27199</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week4_27217\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 27217</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week4_27230\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 27230</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week4_27255\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 27255</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week4_27260\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 27260</h3>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        <hr class="border-gray-300 my-6">
+        
+        <div class="mb-8">
+            <h2 class="text-3xl font-semibold text-gray-700 mb-4">Week 3</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week3_23660\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 23660</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week3_23663\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 23663</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week3_23674\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 23674</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week3_23675\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 23675</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week3_23688\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 23688</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week3_23700\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 23700</h3>
+                    </div>
+                </div>
+                
+                <div class="bg-white shadow-lg rounded-lg p-6 transition-transform transform hover:scale-105 cursor-pointer" onclick="showModal('Week3_23706\\io\\final.mp4')">
+                    <div class="text-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Task 23706</h3>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        <hr class="border-gray-300 my-6">
+        
+    </div>
+
+    <div id="myModal" class="modal">
+        <div class="modal-content bg-white rounded shadow-lg">
+            <span class="close text-gray-600 text-xl float-right cursor-pointer">&times;</span>
+            <video id="videoPlayer" controls class="w-full mt-4">
+                <source src="" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+    </div>
+
+    <script>
+        function showModal(videoSrc) {
+            const modal = document.getElementById("myModal");
+            const videoPlayer = document.getElementById("videoPlayer");
+            videoPlayer.src = videoSrc;
+            modal.style.display = "block";
+        }
+
+        document.getElementsByClassName("close")[0].onclick = function() {
+            document.getElementById("myModal").style.display = "none";
+            document.getElementById("videoPlayer").pause();
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById("myModal");
+            if (event.target == modal) {
+                modal.style.display = "none";
+                document.getElementById("videoPlayer").pause();
+            }
+        }
+    </script>
+</body>
+</html>
