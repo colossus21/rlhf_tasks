@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Typing Racer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
+    <style>
+        body { background-color: #00008B; font-family: Arial, sans-serif; color: white; }
+        #gameCanvas { margin: 0 auto; display: block; }
+        .letterBox {
+            background-color: #4169E1;
+            color: white;
+            padding: 10px;
+            width: 30px;
+            text-align: center;
+            font-size: 20px;
+            margin: 10px auto;
+        }
+        #gameOver { text-align: center; }
+    </style>
+</head>
+<body>
+
+<div id="gameContainer">
+    <h3 id="instruction">Type the letters to move!</h3>
+    <div id="gameCanvas"></div>
+    <div class="letterBox" id="letterDisplay"></div>
+    <div id="gameOver" style="display:none;">
+        <h2></h2>
+        <button onClick="restartGame()">Restart</button>
+    </div>
+</div>
+
+<script type="text/javascript">
+    const config = {
+        type: Phaser.AUTO,
+        width: 400, // 8 cells * 50px
+        height: 440, // 8 cells * 50px + space for UI
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        }
+    };
+
+    const game = new Phaser.Game(config);
+    let car;
+    let grid;
+    let currentLetter;
+    let letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let timer;
+    let timeLeft = 45;
+    let keysPressed = 0;
+    let isGameOver = false;
+
+    function preload() {
+        // Preload any assets if necessary
+    }
+
+    function create() {
+        // Create grid
+        grid = this.add.grid(200, 220, 400, 400, 50, 50, 0x0000ff, 1, 0x000044, 1);
+
+        // Car representation
+        car = this.add.rectangle(25, 395, 30, 30, 0xff0000).setOrigin(0.5);
+
+        // Display instructions
+        this.add.text(10, 10, 'Type the letters to move!', { font: '18px Arial', fill: '#ffffff' });
+
+        // Setup key capture
+        this.input.keyboard.on('keydown', onKeyPress, this);
+
+        // Start game
+        newLetter();
+        setupTimer(this);
+    }
+
+    function update() {
+        if (!isGameOver) {
+            // Car movement logic can be implemented here if needed
+        }
+    }
+
+    function onKeyPress(event) {
+        if (isGameOver) return;
+        if (event.key.toUpperCase() === currentLetter) {
+            moveCar();
+            newLetter();
+            keysPressed++;
+        }
+    }
+
+    function moveCar() {
+        // Implement car movement logic here
+        // This would involve checking current position and moving accordingly
+    }
+
+    function newLetter() {
+        currentLetter = letters.charAt(Math.floor(Math.random() * letters.length));
+        document.getElementById('letterDisplay').innerText = currentLetter;
+    }
+
+    function setupTimer(scene) {
+        timer = scene.time.addEvent({
+            delay: 45000,
+            callback: gameOver,
+            callbackScope: scene
+        });
+    }
+
+    function gameOver() {
+        isGameOver = true;
+        let cpm = Math.round((keysPressed / 45) * 60);
+        document.getElementById('gameOver').style.display = 'block';
+        document.getElementById('gameOver').querySelector('h2').innerText =
+            (keysPressed === 64 ? 'Congratulations!' : 'Game Over') + ' Your typing speed: ' + cpm + ' CPM';
+    }
+
+    function restartGame() {
+        window.location.reload();
+    }
+</script>
+
+</body>
+</html>

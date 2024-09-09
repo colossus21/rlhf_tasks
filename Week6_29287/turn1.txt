@@ -1,0 +1,8 @@
+Can you create a typing game similar using PhaserJS in which:
+i) a 8x8 grid world with a car would be racing from start to end and progress upon pressing random keys. Bottom-left should have start, top-right should be end. Car should traverses all cells.
+ii) There would be a 45-second timer, game ends automatically after 45 seconds.
+iii) Random letters appear below the grid, preferably in a square box with the letter in white inside it.
+iv) Car moves right, then up when reaching edge, then left - follows this sequence to reach end. Car can be a red rectangle, centered to the cells.
+v) Show "Congratulations!" message on winning. Display typing speed in CPM at the end regardless of a win or lose.
+v) Place a restart button after game over instead of the character.
+vi) Make the game blue themed, blue colored cells and deep blue background. Add "Type the letters to move!" above the grid.

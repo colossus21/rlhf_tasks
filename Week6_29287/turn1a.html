@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Typing Racer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
+    <style>
+        body {
+            background-color: #000022;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        #gameContainer {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div id="gameContainer"></div>
+<script>
+    const gameConfig = {
+        type: Phaser.AUTO,
+        width: 480,
+        height: 600,
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        },
+        parent: 'gameContainer'
+    };
+
+    const game = new Phaser.Game(gameConfig);
+    let car;
+    let grid;
+    let textToType;
+    let timer;
+    let timeLeft = 45;
+    let keysPressed = 0;
+    let gameOver = false;
+
+    function preload() {
+        // Preload isn't necessary here since we're using basic shapes and text, but kept for structure.
+    }
+
+    function create() {
+        // Background
+        this.add.rectangle(240, 300, 480, 600, 0x000044);
+
+        // Grid creation
+        grid = this.add.grid(240, 240, 320, 320, 40, 40, 0x0000ff, 1, 0x0000aa).setAltFillStyle(0x0000cc);
+
+        // Car
+        car = this.add.rectangle(60, 420, 30, 30, 0xff0000).setOrigin(0.5);
+
+        // Instruction text
+        this.add.text(240, 40, 'Type the letters to move!', { font: '20px Arial', fill: '#ffffff' }).setOrigin(0.5);
+
+        // Random text to type
+        textToType = this.add.text(240, 520, generateRandomLetter(), { font: '32px Arial', fill: '#ffffff' }).setOrigin(0.5).setInteractive();
+        textToType.box = this.add.rectangle(240, 520, 60, 60, 0x0000ff).setStrokeStyle(2, 0xffffff);
+
+        // Timer
+        timer = this.add.text(40, 40, `Time: ${timeLeft}`, { font: '20px Arial', fill: '#ffffff' });
+
+        // Key input
+        this.input.keyboard.on('keydown', function(event) {
+            if (!gameOver) {
+                if (event.key === textToType.text) {
+                    moveCar();
+                    textToType.setText(generateRandomLetter());
+                    keysPressed++;
+                }
+            }
+        });
+
+        // Timer event
+        this.time.addEvent({
+            delay: 1000,
+            callback: updateTimer,
+            callbackScope: this,
+            loop: true
+        });
+    }
+
+    function update() {
+        // Update isn't necessary for this game mechanics, but kept for structure.
+    }
+
+    function moveCar() {
+        let carX = car.x;
+        let carY = car.y;
+        if (carX < 420 && carY === 420) carX += 40; // Move right
+        else if (carX === 420 && carY > 60) carY -= 40; // Move up
+        else if (carX > 60 && carY === 60) carX -= 40; // Move left
+        else if (carX === 60 && carY < 420) carY += 40; // Move down
+        car.setPosition(carX, carY);
+
+        if (carX === 420 && carY === 60) {
+            gameOver = true;
+            endGame(true);
+        }
+    }
+
+    function generateRandomLetter() {
+        return String.fromCharCode(65 + Math.floor(Math.random() * 26));
+    }
+
+    function updateTimer() {
+        if (timeLeft > 0) {
+            timeLeft--;
+            timer.setText(`Time: ${timeLeft}`);
+        } else {
+            gameOver = true;
+            endGame(false);
+        }
+    }
+
+    function endGame(win) {
+        let message = win ? "Congratulations!" : "Time's Up!";
+        let cpm = Math.round((keysPressed / 45) * 60);
+        this.add.text(240, 280, `${message}\nCPM: ${cpm}`, { font: '24px Arial', fill: '#ffffff', align: 'center' }).setOrigin(0.5);
+
+        // Restart button
+        let restartButton = this.add.text(240, 350, 'Restart', { font: '24px Arial', fill: '#ffffff', backgroundColor: '#0000ff' })
+            .setOrigin(0.5)
+            .setPadding(10)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => this.scene.restart());
+    }
+
+</script>
+</body>
+</html>
