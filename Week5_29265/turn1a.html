@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1 to 20 Counting Game</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #gameBoard { display: flex; flex-wrap: wrap; width: 400px; margin: 20px 0; }
+        .number { width: 10%; height: 40px; line-height: 40px; text-align: center; border: 1px solid #000; }
+        .red { background-color: #ffcccc; }
+        .blue { background-color: #cceeff; }
+        #playerIndicator { margin-bottom: 10px; font-weight: bold; }
+        #playerIndicator div { display: inline-block; width: 50px; height: 20px; }
+        #controls button { margin: 5px; padding: 10px; font-size: 16px; }
+        #winnerMessage { margin-top: 20px; font-size: 20px; font-weight: bold; color: green; }
+    </style>
+</head>
+<body>
+<div id="gameContainer">
+    <div id="playerIndicator">
+        <div style="background-color: red;"></div> Player 1
+        <div style="background-color: blue;"></div> Player 2
+    </div>
+    <div id="gameBoard"></div>
+    <div id="controls">
+        <button onclick="nextNumber()">Next Number</button>
+        <button onclick="nextTwoNumbers()">Next Two Numbers</button>
+    </div>
+    <div id="winnerMessage"></div>
+</div>
+
+<script>
+    let currentNumber = 0;
+    let currentPlayer = 1;
+    let playerMoves = {1: [], 2: []};
+
+    function initializeBoard() {
+        const board = document.getElementById('gameBoard');
+        for(let i = 1; i <= 20; i++) {
+            const numberDiv = document.createElement('div');
+            numberDiv.className = 'number';
+            numberDiv.textContent = i;
+            board.appendChild(numberDiv);
+        }
+    }
+
+    function switchPlayer() {
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+        document.getElementById('playerIndicator').style.color = currentPlayer === 1 ? 'red' : 'blue';
+    }
+
+    function colorNumber(number, player) {
+        document.querySelector(`#gameBoard .number:nth-child(${number})`).className = `number ${player === 1 ? 'red' : 'blue'}`;
+    }
+
+    function nextNumber() {
+        if (currentNumber < 20) {
+            currentNumber += 1;
+            playerMoves[currentPlayer].push(currentNumber);
+            colorNumber(currentNumber, currentPlayer);
+            checkWin();
+            if (currentNumber < 20) switchPlayer();
+        }
+    }
+
+    function nextTwoNumbers() {
+        if (currentNumber < 19) {
+            currentNumber += 2;
+            for(let i = currentNumber - 1; i <= currentNumber; i++) {
+                playerMoves[currentPlayer].push(i);
+                colorNumber(i, currentPlayer);
+            }
+            checkWin();
+            if (currentNumber < 20) switchPlayer();
+        }
+    }
+
+    function checkWin() {
+        if (currentNumber >= 20) {
+            document.getElementById('winnerMessage').textContent = `Player ${currentPlayer} wins!`;
+            document.querySelectorAll('#controls button').forEach(btn => btn.disabled = true);
+        }
+    }
+
+    initializeBoard();
+</script>
+</body>
+</html>

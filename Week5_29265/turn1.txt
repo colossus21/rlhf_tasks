@@ -1,0 +1,8 @@
+I want to create a game called '1 to 20 Counting Game' in Javascript. Can you implement the following:
+
+i) 2 players play this game taking turns and counts from 1 to 20
+ii) Each player in each turn has two actions - "Next Number", "Next Two Numbers". Next number increments current count by 1 and next two numbers by 2.
+iii) Player who by pressing next turn or next two numbers reach to 20 or more wins the game.
+iv) The UI should display a row containing 20 columns each having numbers 1-20. Add a player indicator above the game for Player 1 (red), Player 2 (blue).
+v) Color the columns based on player's color. For example, player 1 is at 3, he says next two - color 4 and 5 red.
+vi) Announce the winner below the buttons say next, say next two.

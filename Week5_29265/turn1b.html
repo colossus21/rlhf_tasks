@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>1 to 20 Counting Game</title>
+    <style>
+        .game-board { display: flex; flex-wrap: wrap; width: 400px; }
+        .cell { width: 50px; height: 50px; border: 1px solid #000; text-align: center; line-height: 50px; }
+        .player1 { background-color: red; }
+        .player2 { background-color: blue; }
+        .controls { margin: 20px 0; }
+        button { padding: 10px; margin-right: 10px; }
+        #playerIndicator { height: 20px; width: 20px; display: inline-block; }
+        #winnerAnnouncement { margin-top: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div id="playerIndicator"></div>
+<div id="currentNumber">Current Number: 0</div>
+<div class="game-board" id="gameBoard"></div>
+<div class="controls">
+    <button onclick="nextNumber()">Next Number</button>
+    <button onclick="nextTwoNumbers()">Next Two Numbers</button>
+</div>
+<div id="winnerAnnouncement"></div>
+
+<script>
+    let currentNumber = 0;
+    let currentPlayer = 1;
+    const cells = {1: [], 2: []}; // To track which cells are colored by which player
+
+    function updateBoard() {
+        const board = document.getElementById('gameBoard');
+        board.innerHTML = '';
+        for(let i = 1; i <= 20; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.textContent = i;
+            if(cells[1].includes(i)) cell.classList.add('player1');
+            else if(cells[2].includes(i)) cell.classList.add('player2');
+            board.appendChild(cell);
+        }
+    }
+
+    function nextNumber() {
+        move(1);
+    }
+
+    function nextTwoNumbers() {
+        move(2);
+    }
+
+    function move(step) {
+        currentNumber += step;
+        cells[currentPlayer].push(currentNumber - step + 1);
+        if(step === 2) cells[currentPlayer].push(currentNumber);
+
+        if (currentNumber >= 20) {
+            announceWinner();
+            return;
+        }
+
+        updateBoard();
+        document.getElementById('currentNumber').textContent = `Current Number: ${currentNumber}`;
+        switchPlayer();
+    }
+
+    function switchPlayer() {
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+        document.getElementById('playerIndicator').className = currentPlayer === 1 ? 'player1' : 'player2';
+    }
+
+    function announceWinner() {
+        document.getElementById('winnerAnnouncement').textContent = `Player ${currentPlayer} wins!`;
+        document.querySelectorAll('button').forEach(button => button.disabled = true);
+    }
+
+    // Initialize the game board
+    updateBoard();
+</script>
+</body>
+</html>
