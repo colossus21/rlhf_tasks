@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Maze Chalice Game</title>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+        }
+        #gameArea {
+            border: 4px solid red;
+            background: #333;
+        }
+        .cell {
+            width: 20px;
+            height: 20px;
+            background: #444;
+            float: left;
+        }
+        .path {
+            background: #222;
+        }
+        .player1, .player2, .chalice {
+            width: 16px;
+            height: 16px;
+            position: absolute;
+            border-radius: 50%;
+        }
+        .player1 { background: red; }
+        .player2 { background: cyan; }
+        .chalice {
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            width: 10px;
+            height: 10px;
+            margin: 5px;
+        }
+        #restartBtn {
+            display: none;
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+        #winMessage {
+            color: white;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div id="gameArea"></div>
+<div id="winMessage"></div>
+<button id="restartBtn">Restart Game</button>
+<script>
+    // Maze generation and game logic here
+    const size = 20;
+    let maze = [];
+    let player1 = {x: 0, y: 0, score: 0};
+    let player2 = {x: size-1, y: size-1, score: 0};
+    const colors = ['#FFD700', '#C0C0C0', '#CD7F32', '#FF6347', '#4682B4']; // Chalice colors
+    let chalices = [];
+
+    function generateMaze() {
+        // Simplified maze generation logic (Recursive Backtracking)
+        for(let i = 0; i < size; i++) {
+            maze[i] = [];
+            for(let j = 0; j < size; j++) {
+                maze[i][j] = 1; // 1 means wall
+            }
+        }
+        carvePath(0, 0);
+        maze[0][0] = maze[size-1][size-1] = 0; // Openings
+    }
+
+    function carvePath(x, y) {
+        maze[x][y] = 0; // 0 means path
+        const directions = [[1,0], [-1,0], [0,1], [0,-1]].sort(() => Math.random() - 0.5);
+        for(let dir of directions) {
+            let nx = x + dir[0] * 2, ny = y + dir[1] * 2;
+            if(nx >= 0 && ny >= 0 && nx < size && ny < size && maze[nx][ny] == 1) {
+                maze[x + dir[0]][y + dir[1]] = 0;
+                carvePath(nx, ny);
+            }
+        }
+    }
+
+    function spawnChalices() {
+        chalices = [];
+        for(let i = 0; i < 5; i++) {
+            let x, y;
+            do {
+                x = Math.floor(Math.random() * size);
+                y = Math.floor(Math.random() * size);
+            } while(maze[x][y] != 0 || (x == 0 && y == 0) || (x == size-1 && y == size-1));
+            chalices.push({x, y, color: colors[i]});
+        }
+    }
+
+    function drawMaze() {
+        const gameArea = document.getElementById('gameArea');
+        gameArea.style.width = `${size * 20}px`;
+        gameArea.innerHTML = '';
+        for(let y = 0; y < size; y++) {
+            for(let x = 0; x < size; x++) {
+                const cell = document.createElement('div');
+                cell.className = maze[x][y] ? 'cell' : 'cell path';
+                gameArea.appendChild(cell);
+            }
+        }
+        // Place players and chalices
+        placeElement('player1', player1.x, player1.y);
+        placeElement('player2', player2.x, player2.y);
+        chalices.forEach((chalice, index) => {
+            const chaliceDiv = document.createElement('div');
+            chaliceDiv.className = 'chalice';
+            chaliceDiv.style.background = chalice.color;
+            placeElement('chalice' + index, chalice.x, chalice.y, chaliceDiv);
+        });
+    }
+
+    function placeElement(id, x, y, element = null) {
+        if (!element) {
+            element = document.getElementById(id);
+        }
+        element.style.left = `${x * 20}px`;
+        element.style.top = `${y * 20}px`;
+    }
+
+    function movePlayer(player, dx, dy) {
+        const newX = player.x + dx, newY = player.y + dy;
+        if(newX >= 0 && newX < size && newY >= 0 && newY < size && maze[newX][newY] == 0) {
+            player.x = newX;
+            player.y = newY;
+            checkChalice(player);
+            placeElement(player === player1 ? 'player1' : 'player2', player.x, player.y);
+        }
+    }
+
+    function checkChalice(player) {
+        const index = chalices.findIndex(c => c.x === player.x && c.y === player.y);
+        if(index !== -1) {
+            player.score++;
+            chalices.splice(index, 1);
+            if(player.score === 3) {
+                endGame(player === player1 ? 'Red' : 'Cyan');
+            }
+        }
+    }
+
+    function endGame(winnerColor) {
+        document.getElementById('winMessage').innerText = `${winnerColor} Player Wins!`;
+        document.getElementById('restartBtn').style.display = 'block';
+    }
+
+    function restartGame() {
+        player1.score = player2.score = 0;
+        player1.x = player1.y = 0;
+        player2.x = player2.y = size - 1;
+        generateMaze();
+        spawnChalices();
+        drawMaze();
+        document.getElementById('winMessage').innerText = '';
+        document.getElementById('restartBtn').style.display = 'none';
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if(e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            movePlayer(player1,
+                e.key === 'ArrowRight' ? 1 : (e.key === 'ArrowLeft' ? -1 : 0),
+                e.key === 'ArrowDown' ? 1 : (e.key === 'ArrowUp' ? -1 : 0));
+        }
+        if(e.key === 'w' || e.key === 's' || e.key === 'a' || e.key === 'd') {
+            movePlayer(player2,
+                e.key === 'd' ? 1 : (e.key === 'a' ? -1 : 0),
+                e.key === 's' ? 1 : (e.key === 'w' ? -1 : 0));
+        }
+    });
+
+    document.getElementById('restartBtn').onclick = restartGame;
+    restartGame();
+</script>
+</body>
+</html>

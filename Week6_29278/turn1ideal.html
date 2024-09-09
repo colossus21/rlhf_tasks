@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enchanted Maze Hunters</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #e94560;
+        }
+        #gameContainer {
+            text-align: center;
+        }
+        #gameCanvas {
+            border: 4px solid #e94560;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+        }
+        #scoreDisplay {
+            font-size: 1.5em;
+            margin: 15px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        #winMessage {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 15px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        #restartButton {
+            font-size: 1.2em;
+            padding: 10px 20px;
+            background: #e94560;
+            color: #1a1a2e;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        #restartButton:hover {
+            background: #ff6b6b;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+<div id="gameContainer">
+    <canvas id="gameCanvas" width="600" height="600"></canvas>
+    <div id="scoreDisplay">Player 1: 0 | Player 2: 0</div>
+    <div id="winMessage"></div>
+    <button id="restartButton">Restart Game</button>
+</div>
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const winMessage = document.getElementById('winMessage');
+    const restartButton = document.getElementById('restartButton');
+
+    const cellSize = 30;
+    const mazeSize = 20;
+    let maze = [];
+    let players = [
+        { x: 0, y: 0, color: '#ff6b6b', score: 0 },
+        { x: mazeSize - 1, y: mazeSize - 1, color: '#4ecdc4', score: 0 }
+    ];
+    let chalices = [];
+
+    function generateMaze() {
+        maze = Array(mazeSize).fill().map(() => Array(mazeSize).fill(1));
+        const stack = [[0, 0]];
+        maze[0][0] = 0;
+
+        while (stack.length > 0) {
+            const [x, y] = stack.pop();
+            const directions = [[0, -1], [1, 0], [0, 1], [-1, 0]].sort(() => Math.random() - 0.5);
+
+            for (const [dx, dy] of directions) {
+                const nx = x + dx * 2, ny = y + dy * 2;
+                if (nx >= 0 && ny >= 0 && nx < mazeSize && ny < mazeSize && maze[ny][nx] === 1) {
+                    maze[y + dy][x + dx] = 0;
+                    maze[ny][nx] = 0;
+                    stack.push([nx, ny]);
+                }
+            }
+        }
+
+        maze[mazeSize - 1][mazeSize - 1] = 0;
+        maze[mazeSize - 2][mazeSize - 1] = 0;
+        maze[mazeSize - 1][mazeSize - 2] = 0;
+
+        let x = mazeSize - 1, y = mazeSize - 1;
+        while (x > mazeSize / 2 || y > mazeSize / 2) {
+            if (x > mazeSize / 2) {
+                maze[y][x-1] = 0;
+                x--;
+            }
+            if (y > mazeSize / 2) {
+                maze[y-1][x] = 0;
+                y--;
+            }
+        }
+    }
+
+    function placeChalices() {
+        const colors = ['#ffd700', '#c0c0c0', '#cd7f32', '#e94560', '#4ecdc4'];
+        chalices = [];
+
+        for (let i = 0; i < 5; i++) {
+            let x, y;
+            do {
+                x = Math.floor(Math.random() * mazeSize);
+                y = Math.floor(Math.random() * mazeSize);
+            } while (maze[y][x] === 1 || chalices.some(c => c.x === x && c.y === y) ||
+            (x === 0 && y === 0) || (x === mazeSize - 1 && y === mazeSize - 1));
+
+            chalices.push({ x, y, color: colors[i] });
+        }
+    }
+
+    function drawMaze() {
+        ctx.fillStyle = '#0f0f1e';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        for (let y = 0; y < mazeSize; y++) {
+            for (let x = 0; x < mazeSize; x++) {
+                if (maze[y][x] === 1) {
+                    const gradient = ctx.createRadialGradient(
+                        x * cellSize + cellSize / 2, y * cellSize + cellSize / 2, 0,
+                        x * cellSize + cellSize / 2, y * cellSize + cellSize / 2, cellSize / 2
+                    );
+                    gradient.addColorStop(0, '#2a2a4e');
+                    gradient.addColorStop(1, '#1a1a2e');
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                } else {
+                    // Draw the maze path
+                    ctx.fillStyle = '#2e2e4e';
+                    ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+
+                    // Add a subtle grid pattern to the path
+                    ctx.strokeStyle = '#3a3a5e';
+                    ctx.lineWidth = 0.5;
+                    ctx.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                }
+            }
+        }
+
+        chalices.forEach(chalice => {
+            ctx.fillStyle = chalice.color;
+            ctx.beginPath();
+            ctx.moveTo(chalice.x * cellSize + cellSize / 2, chalice.y * cellSize + cellSize / 4);
+            ctx.lineTo(chalice.x * cellSize + cellSize * 3 / 4, chalice.y * cellSize + cellSize * 3 / 4);
+            ctx.lineTo(chalice.x * cellSize + cellSize / 4, chalice.y * cellSize + cellSize * 3 / 4);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        });
+
+        players.forEach(player => {
+            const gradient = ctx.createRadialGradient(
+                player.x * cellSize + cellSize / 2, player.y * cellSize + cellSize / 2, 0,
+                player.x * cellSize + cellSize / 2, player.y * cellSize + cellSize / 2, cellSize / 2
+            );
+            gradient.addColorStop(0, player.color);
+            gradient.addColorStop(1, shadeColor(player.color, -20));
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(player.x * cellSize + cellSize / 2, player.y * cellSize + cellSize / 2, cellSize / 2 - 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        });
+    }
+
+    function shadeColor(color, percent) {
+        const num = parseInt(color.replace("#", ""), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = (num >> 16) + amt;
+        const G = (num >> 8 & 0x00FF) + amt;
+        const B = (num & 0x0000FF) + amt;
+        return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+            (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+            (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+    }
+
+    function movePlayer(player, dx, dy) {
+        const newX = player.x + dx;
+        const newY = player.y + dy;
+
+        if (newX >= 0 && newY >= 0 && newX < mazeSize && newY < mazeSize && maze[newY][newX] === 0) {
+            player.x = newX;
+            player.y = newY;
+
+            const chaliceIndex = chalices.findIndex(c => c.x === newX && c.y === newY);
+            if (chaliceIndex !== -1) {
+                player.score++;
+                chalices.splice(chaliceIndex, 1);
+                updateScoreDisplay();
+                checkWinCondition();
+            }
+        }
+    }
+
+    function updateScoreDisplay() {
+        scoreDisplay.innerHTML = `
+                <span style="color: ${players[0].color}">Player 1: ${players[0].score}</span> |
+                <span style="color: ${players[1].color}">Player 2: ${players[1].score}</span>
+            `;
+    }
+
+    function checkWinCondition() {
+        const winner = players.find(player => player.score >= 3);
+        if (winner) {
+            winMessage.textContent = `${winner.color === players[0].color ? 'Player 1' : 'Player 2'} wins!`;
+            winMessage.style.color = winner.color;
+            document.removeEventListener('keydown', handleKeyPress);
+        }
+    }
+
+    function handleKeyPress(e) {
+        switch (e.key) {
+            case 'ArrowUp': movePlayer(players[0], 0, -1); break;
+            case 'ArrowDown': movePlayer(players[0], 0, 1); break;
+            case 'ArrowLeft': movePlayer(players[0], -1, 0); break;
+            case 'ArrowRight': movePlayer(players[0], 1, 0); break;
+            case 'w': movePlayer(players[1], 0, -1); break;
+            case 's': movePlayer(players[1], 0, 1); break;
+            case 'a': movePlayer(players[1], -1, 0); break;
+            case 'd': movePlayer(players[1], 1, 0); break;
+        }
+        drawMaze();
+    }
+
+    function startGame() {
+        generateMaze();
+        placeChalices();
+        players[0].x = 0;
+        players[0].y = 0;
+        players[1].x = mazeSize - 1;
+        players[1].y = mazeSize - 1;
+        players[0].score = 0;
+        players[1].score = 0;
+        updateScoreDisplay();
+        winMessage.textContent = '';
+        drawMaze();
+        document.addEventListener('keydown', handleKeyPress);
+    }
+
+    restartButton.addEventListener('click', startGame);
+    startGame();
+</script>
+</body>
+</html>

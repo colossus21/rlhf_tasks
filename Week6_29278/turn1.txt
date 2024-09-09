@@ -1,0 +1,6 @@
+I want to develop a game with the following idea:
+i) A 20x20 cells maze is generated in which there would be 5 chalices spawned randomly - different colored, triangular. Generate the maze as such there would be two opening top-left and bottom-right.
+ii) Player 1 (Red circle) starts from top-left, Player 2 (Blue/Cyan circle) starts from bottom right.
+iii) Player who collects 3 chalices wins the game.
+iv) Add a restart button after a win / game ends.
+v) Make the game visually look good - stylize the maze and the floor and use dark-colored background, make the game border red, make the restart button red. The player who wins should be mentioned above the restart button with appropriate colors.
