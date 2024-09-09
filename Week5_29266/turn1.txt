@@ -1,0 +1,6 @@
+I want to create a rage-quit game called "Throw the Briefcase" in MatterJS. Can you implement the following:
+i) The idea is rope holds a briefcase and sways, the player needs to press "SPACE" to make it fall.
+ii) Add a blue background to the game for ocean. Add a ship at the bottom. The ship can have a white body and a blue container on top. It can move left and right slightly.
+iii) The rope hangs from the top center of the screen should swing 60 degrees each side like a pendulum.
+iv) Suitcase can have different colors. Add a score if a suitcase lands on the ship (not the blue container above the ship), game is over if the suitcase falls outside the ship. Add a restart button as well.
+v) Feel free to make it visually appealing and add animation when necessary.

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Phaser Grid Game</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <style>
+        body { margin: 0; padding: 0; background: #000; }
+        canvas { display: block; margin: auto; }
+        #gameContainer { text-align: center; }
+        #restartBtn { margin-top: 10px; padding: 10px; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div id="gameContainer"></div>
+<button id="restartBtn">Restart</button>
+<script>
+    const gameConfig = {
+        type: Phaser.AUTO,
+        width: 400,
+        height: 400,
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        },
+        parent: 'gameContainer'
+    };
+
+    const game = new Phaser.Game(gameConfig);
+    let player;
+    let grid;
+    let safePath;
+    let messageText;
+    let currentCell;
+
+    function preload() {
+        // Preloading isn't necessary here since we're using shapes, but kept for structure.
+    }
+
+    function create() {
+        // Setup grid
+        grid = [];
+        for(let y = 0; y < 8; y++) {
+            for(let x = 0; x < 8; x++) {
+                let cell = this.add.rectangle(x * 50, y * 50, 48, 48, 0xadd8e6).setOrigin(0);
+                grid.push(cell);
+            }
+        }
+
+        // Define a safe path (example path, can be randomized)
+        safePath = [0, 1, 9, 17, 25, 33, 41, 49, 57];
+
+        // Player setup
+        player = this.add.circle(25, 375, 10, 0xff0000).setOrigin(0.5);
+
+        // Movement
+        this.input.keyboard.on('keydown', (event) => {
+            movePlayer(event.key);
+        });
+
+        // UI
+        messageText = this.add.text(200, 10, 'Find the safe path!', { font: '20px Arial', fill: '#ffffff' }).setOrigin(0.5);
+
+        // Start and End markers
+        this.add.text(25, 375, 'Start', { font: '12px Arial', fill: '#000000' }).setOrigin(0.5);
+        this.add.text(375, 25, 'End', { font: '12px Arial', fill: '#000000' }).setOrigin(0.5);
+
+        // Initial position
+        currentCell = 0;
+    }
+
+    function update() {
+        // Game loop if needed
+    }
+
+    function movePlayer(key) {
+        let newCell;
+        switch(key) {
+            case 'w': newCell = currentCell - 8; break;
+            case 's': newCell = currentCell + 8; break;
+            case 'a': newCell = currentCell - 1; break;
+            case 'd': newCell = currentCell + 1; break;
+        }
+
+        if (newCell >= 0 && newCell < 64 && grid[newCell]) {
+            currentCell = newCell;
+            player.x = (currentCell % 8) * 50 + 25;
+            player.y = Math.floor(currentCell / 8) * 50 + 25;
+
+            if (!safePath.includes(currentCell)) {
+                grid[currentCell].fillColor = 0xFFA500; // Orange
+                this.time.delayedCall(1500, () => {
+                    if (currentCell === grid.findIndex(cell => cell.fillColor === 0xFFA500)) {
+                        grid[currentCell].fillColor = 0x000000; // Black
+                    }
+                });
+            }
+
+            if (currentCell === 56) { // End position
+                messageText.setText('You Win!');
+            } else if (grid[currentCell].fillColor === 0x000000) {
+                messageText.setText('Game Over!');
+            }
+        }
+    }
+
+    document.getElementById('restartBtn').onclick = function() {
+        game.scene.scenes[0].scene.restart();
+    };
+</script>
+</body>
+</html>

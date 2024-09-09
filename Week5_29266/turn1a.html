@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Throw the Briefcase</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #87CEEB; /* Light blue for sky */
+        }
+        canvas {
+            display: block;
+        }
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 20px;
+        }
+        #restart {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 10px;
+            background-color: #ff4500;
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div id="score">Score: 0</div>
+<button id="restart">Restart</button>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<script>
+    // Matter.js module aliases
+    const { Engine, Render, Runner, Bodies, Composite, Constraint } = Matter;
+
+    // Create an engine
+    const engine = Engine.create();
+    const world = engine.world;
+
+    // Create a renderer
+    const render = Render.create({
+        element: document.body,
+        engine: engine,
+        options: {
+            width: 800,
+            height: 600,
+            wireframes: false,
+            background: '#87CEEB' // Ocean blue background
+        }
+    });
+
+    // Create runner
+    const runner = Runner.create();
+
+    // Add bodies
+    const ground = Bodies.rectangle(400, 600, 810, 60, { isStatic: true, render: { fillStyle: '#6A5ACD' } }); // Purple for visibility, not visible in final design
+
+    // Ship body
+    const shipBody = Bodies.rectangle(400, 550, 150, 20, {
+        isStatic: true,
+        render: {
+            fillStyle: 'white',
+            strokeStyle: 'black',
+            lineWidth: 3
+        }
+    });
+
+    // Ship container
+    const shipContainer = Bodies.rectangle(400, 530, 100, 40, {
+        isStatic: true,
+        render: {
+            fillStyle: 'blue'
+        }
+    });
+
+    // Briefcase
+    const briefcase = Bodies.rectangle(400, 100, 40, 40, {
+        render: {
+            fillStyle: ['#FF6347', '#4682B4', '#DAA520', '#228B22'][Math.floor(Math.random() * 4)],
+            strokeStyle: 'black',
+            lineWidth: 2
+        }
+    });
+
+    // Pendulum constraint
+    const pendulum = Constraint.create({
+        pointA: { x: 400, y: 0 },
+        bodyB: briefcase,
+        length: 200,
+        stiffness: 0.01,
+        damping: 0.01
+    });
+
+    Composite.add(world, [ground, shipBody, shipContainer, briefcase, pendulum]);
+
+    // Score and game logic
+    let score = 0;
+    let gameOver = false;
+
+    document.addEventListener('keydown', event => {
+        if (event.code === 'Space' && !gameOver) {
+            pendulum.bodyB = null; // Release the briefcase
+        }
+    });
+
+    // Collision detection for scoring or game over
+    Matter.Events.on(engine, 'collisionStart', event => {
+        const pairs = event.pairs;
+        for (let pair of pairs) {
+            if ((pair.bodyA === briefcase && pair.bodyB === shipBody) ||
+                (pair.bodyB === briefcase && pair.bodyA === shipBody)) {
+                score++;
+                document.getElementById('score').innerText = `Score: ${score}`;
+                resetBriefcase();
+            } else if (pair.bodyA === briefcase || pair.bodyB === briefcase) {
+                gameOver = true;
+                document.getElementById('restart').style.display = 'block';
+            }
+        }
+    });
+
+    function resetBriefcase() {
+        Matter.Body.setPosition(briefcase, { x: 400, y: 100 });
+        Matter.Body.setVelocity(briefcase, { x: 0, y: 0 });
+        pendulum.bodyB = briefcase;
+        briefcase.render.fillStyle = ['#FF6347', '#4682B4', '#DAA520', '#228B22'][Math.floor(Math.random() * 4)];
+    }
+
+    document.getElementById('restart').onclick = () => {
+        gameOver = false;
+        score = 0;
+        document.getElementById('score').innerText = `Score: ${score}`;
+        document.getElementById('restart').style.display = 'none';
+        resetBriefcase();
+    };
+
+    // Slight movement of the ship
+    Matter.Events.on(runner, 'beforeUpdate', () => {
+        const time = Date.now() * 0.0005;
+        Matter.Body.setPosition(shipBody, { x: 400 + Math.sin(time) * 20, y: 550 });
+        Matter.Body.setPosition(shipContainer, { x: 400 + Math.sin(time) * 20, y: 530 });
+    });
+
+    // Run the engine
+    Runner.run(runner, engine);
+    Render.run(render);
+</script>
+</body>
+</html>

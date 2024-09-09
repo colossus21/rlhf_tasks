@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Throw the Briefcase</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #87CEEB; /* Sky blue for ocean effect */
+        }
+        #gameCanvas {
+            display: block;
+        }
+        #score, #restart {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-family: Arial, sans-serif;
+            color: white;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #restart {
+            display: none;
+            left: calc(50% - 50px);
+            width: 80px;
+            text-align: center;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div id="score">Score: 0</div>
+<div id="restart">Restart</div>
+<canvas id="gameCanvas"></canvas>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.14.2/matter.min.js"></script>
+<script>
+    // Plan:
+    // 1. Set up Matter.js engine and render
+    // 2. Create a ship that moves slightly
+    // 3. Create a swinging rope with a briefcase
+    // 4. Handle spacebar to release the briefcase
+    // 5. Detect collision for scoring or game over
+    // 6. Implement restart functionality
+
+    // Setup Matter.js
+    const { Engine, Render, Runner, Bodies, Constraint, World, Body } = Matter;
+
+    const engine = Engine.create();
+    const render = Render.create({
+        element: document.body,
+        canvas: document.getElementById('gameCanvas'),
+        engine: engine,
+        options: {
+            width: 800,
+            height: 600,
+            background: 'transparent', // Background set by CSS
+            wireframes: false
+        }
+    });
+
+    const world = engine.world;
+    world.gravity.y = 1;
+
+    // Ship
+    const ship = Bodies.rectangle(400, 550, 200, 50, {
+        isStatic: true,
+        render: { fillStyle: 'white' }
+    });
+    const shipTop = Bodies.rectangle(400, 520, 150, 30, {
+        isStatic: true,
+        render: { fillStyle: 'blue' }
+    });
+    World.add(world, [ship, shipTop]);
+
+    // Briefcase and rope
+    const briefcase = Bodies.rectangle(400, 200, 30, 50, {
+        render: { fillStyle: ['#8B4513', '#A52A2A', '#DAA520'][Math.floor(Math.random() * 3)] }
+    });
+    const rope = Constraint.create({
+        pointA: { x: 400, y: 0 },
+        bodyB: briefcase,
+        length: 200,
+        stiffness: 0.01
+    });
+    World.add(world, [briefcase, rope]);
+
+    // Game logic
+    let score = 0;
+    let gameOver = false;
+
+    // Release mechanism
+    document.addEventListener('keydown', function(event) {
+        if (event.code === 'Space' && !gameOver) {
+            World.remove(world, rope);
+        }
+    });
+
+    // Collision detection
+    Matter.Events.on(engine, 'collisionStart', function(event) {
+        const pairs = event.pairs;
+        for (let i = 0; i < pairs.length; i++) {
+            const { bodyA, bodyB } = pairs[i];
+            if ((bodyA === briefcase && bodyB === ship) ||
+                (bodyB === briefcase && bodyA === ship)) {
+                score++;
+                updateScore();
+            } else if (bodyA.y > 600 || bodyB.y > 600) {
+                gameOver = true;
+                document.getElementById('restart').style.display = 'block';
+            }
+        }
+    });
+
+    // Restart game
+    document.getElementById('restart').onclick = function() {
+        World.clear(world);
+        Engine.clear(engine);
+        location.reload(); // Simple restart by reloading the page
+    };
+
+    function updateScore() {
+        document.getElementById('score').textContent = `Score: ${score}`;
+    }
+
+    // Animation for ship
+    let direction = 1;
+    Matter.Events.on(engine, 'beforeUpdate', () => {
+        if (ship.position.x > 450 || ship.position.x < 350) direction *= -1;
+        Body.translate(ship, {x: direction * 0.5, y: 0});
+    });
+
+    // Run the engine
+    Engine.run(engine);
+    Render.run(render);
+</script>
+</body>
+</html>
