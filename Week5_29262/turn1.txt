@@ -1,0 +1,7 @@
+Create a simple 2 player Pearl Guessing Game using JavaScript. The game should have:
+i) The game should have 12 clickable cards in a 4x3 grid. 3 of these pearls can have pearl, use unicode blue pearl symbol and red cross symbol.
+ii) When a player clicks on a card the card is revealed, it can be a cross or a pearl. Keep the card flipped rest of the game.
+iii) A turn indicator at the top should show "Player 1's Turn" or "Player 2's Turn" in green for Player 1 and red for Player 2.
+iv) Below the turn indicator should show the pearl collected by each player something like "Player 1: 1 | Player 2: 0"
+v) If a player picks a pearl, he can have another turn (also show a wobble animation on the game board for feedback). Player who collect 2 pearls first wins the game.
+vi) Add a restart button after game is over.

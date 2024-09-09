@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pearl Guessing Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+
+        #gameBoard {
+            text-align: center;
+        }
+
+        #cards {
+            display: grid;
+            grid-template-columns: repeat(4, 100px);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .card {
+            width: 100px;
+            height: 100px;
+            background-color: #4a90e2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        .card.revealed {
+            background-color: white;
+            cursor: default;
+        }
+
+        #turnIndicator {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        #score {
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+
+        #restart {
+            display: none;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        @keyframes wobble {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-5deg); }
+            75% { transform: rotate(5deg); }
+        }
+
+        .wobble {
+            animation: wobble 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+<div id="gameBoard">
+    <div id="turnIndicator" style="color: green;">Player 1's Turn</div>
+    <div id="score">Player 1: 0 | Player 2: 0</div>
+    <div id="cards"></div>
+    <button id="restart">Restart Game</button>
+</div>
+
+<script>
+    const cardsContainer = document.getElementById('cards');
+    const turnIndicator = document.getElementById('turnIndicator');
+    const scoreDisplay = document.getElementById('score');
+    const restartButton = document.getElementById('restart');
+    let currentPlayer = 1;
+    let scores = {1: 0, 2: 0};
+    let cards = [];
+    let gameOver = false;
+
+    function setupGame() {
+        const symbols = ['🔵', '🔵', '🔵', '❌', '❌', '❌', ' ', ' ', ' ', ' ', ' ', ' '];
+        cards = shuffle(symbols);
+
+        cardsContainer.innerHTML = '';
+        cards.forEach((symbol, index) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.index = index;
+            card.textContent = ' ';
+            card.addEventListener('click', () => flipCard(card));
+            cardsContainer.appendChild(card);
+        });
+    }
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function flipCard(card) {
+        if (gameOver || card.classList.contains('revealed')) return;
+
+        const index = card.dataset.index;
+        card.textContent = cards[index];
+        card.classList.add('revealed');
+
+        if (cards[index] === '🔵') {
+            scores[currentPlayer]++;
+            document.getElementById('gameBoard').classList.add('wobble');
+            setTimeout(() => document.getElementById('gameBoard').classList.remove('wobble'), 500);
+            checkWin();
+        } else {
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+        }
+        updateDisplay();
+    }
+
+    function updateDisplay() {
+        turnIndicator.textContent = `Player ${currentPlayer}'s Turn`;
+        turnIndicator.style.color = currentPlayer === 1 ? 'green' : 'red';
+        scoreDisplay.textContent = `Player 1: ${scores[1]} | Player 2: ${scores[2]}`;
+    }
+
+    function checkWin() {
+        if (scores[1] === 2 || scores[2] === 2) {
+            gameOver = true;
+            turnIndicator.textContent = `Player ${scores[1] === 2 ? '1' : '2'} Wins!`;
+            restartButton.style.display = 'inline-block';
+        }
+    }
+
+    function restartGame() {
+        currentPlayer = 1;
+        scores = {1: 0, 2: 0};
+        gameOver = false;
+        restartButton.style.display = 'none';
+        setupGame();
+        updateDisplay();
+    }
+
+    restartButton.addEventListener('click', restartGame);
+    setupGame();
+</script>
+</body>
+</html>

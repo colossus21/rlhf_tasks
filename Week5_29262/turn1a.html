@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pearl Guessing Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            background-color: #f0f0f0;
+        }
+        #gameBoard {
+            display: grid;
+            grid-template-columns: repeat(4, 100px);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .card {
+            width: 100px;
+            height: 100px;
+            background: #2c3e50;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            cursor: pointer;
+            user-select: none;
+        }
+        .revealed {
+            background: #ecf0f1;
+            cursor: default;
+        }
+        #turnIndicator, #score {
+            margin: 10px;
+            font-size: 1.2em;
+        }
+        #restart {
+            display: none;
+            padding: 10px 20px;
+            font-size: 1em;
+        }
+        .wobble {
+            animation: wobble 0.5s;
+        }
+        @keyframes wobble {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-10deg); }
+            75% { transform: rotate(10deg); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="turnIndicator" style="color: green;">Player 1's Turn</div>
+<div id="score">Player 1: 0 | Player 2: 0</div>
+<div id="gameBoard"></div>
+<button id="restart">Restart Game</button>
+
+<script>
+    const symbols = { pearl: '&#128036;', cross: '&#10060;' };
+    let gameBoard = document.getElementById('gameBoard');
+    let turnIndicator = document.getElementById('turnIndicator');
+    let scoreDisplay = document.getElementById('score');
+    let restartButton = document.getElementById('restart');
+    let currentPlayer = 1;
+    let scores = {1: 0, 2: 0};
+    let cards = [];
+    let gameActive = true;
+
+    function setupGame() {
+        let pearls = [symbols.pearl, symbols.pearl, symbols.pearl];
+        let crosses = Array(9).fill(symbols.cross);
+        let allCards = [...pearls, ...crosses].sort(() => Math.random() - 0.5);
+
+        allCards.forEach((symbol, index) => {
+            let card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.symbol = symbol;
+            card.dataset.index = index;
+            card.addEventListener('click', () => flipCard(card));
+            gameBoard.appendChild(card);
+            cards.push(card);
+        });
+    }
+
+    function flipCard(card) {
+        if (!gameActive || card.classList.contains('revealed')) return;
+
+        card.innerHTML = card.dataset.symbol;
+        card.classList.add('revealed');
+
+        if (card.dataset.symbol === symbols.pearl) {
+            scores[currentPlayer]++;
+            updateScore();
+            if (scores[currentPlayer] < 2) {
+                gameBoard.classList.add('wobble');
+                setTimeout(() => gameBoard.classList.remove('wobble'), 500);
+            } else {
+                endGame();
+            }
+        } else {
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            turnIndicator.style.color = currentPlayer === 1 ? 'green' : 'red';
+            turnIndicator.textContent = `Player ${currentPlayer}'s Turn`;
+        }
+    }
+
+    function updateScore() {
+        scoreDisplay.textContent = `Player 1: ${scores[1]} | Player 2: ${scores[2]}`;
+    }
+
+    function endGame() {
+        gameActive = false;
+        turnIndicator.textContent = `Player ${currentPlayer} Wins!`;
+        restartButton.style.display = 'block';
+    }
+
+    function restartGame() {
+        currentPlayer = 1;
+        scores = {1: 0, 2: 0};
+        gameActive = true;
+        turnIndicator.textContent = "Player 1's Turn";
+        turnIndicator.style.color = 'green';
+        scoreDisplay.textContent = 'Player 1: 0 | Player 2: 0';
+        cards.forEach(card => {
+            card.innerHTML = '';
+            card.classList.remove('revealed');
+        });
+        restartButton.style.display = 'none';
+        setupGame();
+    }
+
+    restartButton.addEventListener('click', restartGame);
+    setupGame();
+</script>
+
+</body>
+</html>
