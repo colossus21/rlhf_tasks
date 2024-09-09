@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mythical Item Collector</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: 'Arial', sans-serif; background-color: #f0f0f0; text-align: center; }
+        .game-container { margin: 20px auto; width: 80%; max-width: 600px; }
+        .player { margin: 20px 0; padding: 10px; border-radius: 8px; }
+        #player1 { background-color: #add8e6; }
+        #player2 { background-color: #ffcccb; }
+        .inventory div { display: inline-block; width: 50px; height: 50px; margin: 5px; border: 2px solid black; background: white; }
+        .item-list { margin-bottom: 20px; }
+        .item { margin: 5px; padding: 5px; border: 1px solid #ccc; display: inline-block; }
+        .dice { font-size: 24px; margin: 10px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+        .highlight { border: 3px solid yellow; }
+        .active-player { box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>Mythical Item Collector</h1>
+    <div class="item-list"></div>
+    <div id="player1" class="player">
+        <h2>Player 1 (Blue)</h2>
+        <div class="inventory" id="p1Inventory"></div>
+        <div>Score: <span id="p1Score">0</span></div>
+    </div>
+    <div id="player2" class="player">
+        <h2>Player 2 (Red)</h2>
+        <div class="inventory" id="p2Inventory"></div>
+        <div>Score: <span id="p2Score">0</span></div>
+    </div>
+    <button id="rollDice">Roll Dice</button>
+    <button id="restartGame" style="display:none;">Restart Game</button>
+</div>
+
+<script>
+    $(document).ready(function() {
+        const items = {
+            2: { symbol: '⚔️', name: 'Excalibur', cost: 8500 },
+            3: { symbol: '🪶', name: 'Phoenix Feather', cost: 5000 },
+            // ... other items ...
+            12: { symbol: '💎', name: 'Philosopher\'s Stone', cost: 10000 }
+        };
+
+        let currentPlayer = 1;
+        let rounds = 0;
+
+        // Populate item list
+        $('.item-list').html(Object.entries(items).map(([key, item]) =>
+            `<div class="item" data-value="${key}">${item.symbol} - ${item.name} (${item.cost} gold)</div>`).join(''));
+
+        function rollDice() {
+            const dice1 = Math.floor(Math.random() * 6) + 1;
+            const dice2 = Math.floor(Math.random() * 6) + 1;
+            const total = dice1 + dice2;
+            return {total, dice1, dice2};
+        }
+
+        function updateGame() {
+            const {total} = rollDice();
+            const item = items[total];
+            if (!item) return; // If no item for this number, do nothing or handle edge case
+
+            const inventoryId = `#p${currentPlayer}Inventory`;
+            const $emptySlot = $(`${inventoryId} div:not(:has(*))`).first();
+            if ($emptySlot.length) {
+                $emptySlot.html(item.symbol);
+                $(`.item-list .item[data-value="${total}"]`).addClass('highlight');
+                setTimeout(() => $(`.item-list .item`).removeClass('highlight'), 1000);
+            }
+
+            const scoreId = `#p${currentPlayer}Score`;
+            let score = parseInt($(scoreId).text());
+            score += item.cost;
+            $(scoreId).text(score);
+
+            rounds++;
+            if (rounds >= 10) {
+                endGame();
+            } else {
+                switchPlayer();
+            }
+        }
+
+        function switchPlayer() {
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            $('.player').removeClass('active-player');
+            $(`#player${currentPlayer}`).addClass('active-player');
+        }
+
+        function endGame() {
+            $('#rollDice').hide();
+            $('#restartGame').show();
+            const p1Score = parseInt($('#p1Score').text());
+            const p2Score = parseInt($('#p2Score').text());
+            const winner = p1Score > p2Score ? 'Player 1' : (p2Score > p1Score ? 'Player 2' : 'It\'s a tie!');
+            alert(`Game Over! ${winner} wins!`);
+        }
+
+        $('#rollDice').on('click', updateGame);
+        $('#restartGame').on('click', function() {
+            location.reload();
+        });
+
+        // Initial highlight for active player
+        $('#player1').addClass('active-player');
+    });
+</script>
+
+</body>
+</html>

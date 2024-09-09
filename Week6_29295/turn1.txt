@@ -1,0 +1,21 @@
+I want to create an interesting game in Javascript called "Mythical Item Collector". Here are the rules:
+i) The game is played by 2 players, turn based. Player 1 is blue, Player 2 is red.
+ii) Each player has 5 empty boxes under his name resembling an inventory, these boxes can be empty or can have an item image (symbol).
+iii) Player rolls 2 dice, then the sum is added. Player receives the item assigned to that number in the inventory.
+iv) This goes on for 5 rounds until all 5 inventory slots are filled up.
+v) At the end, the player receives a score sum of the cost of all the items gotten by each player. Then, declare the winner. Add a restart button as well.
+vi) Add a reference list of the items above the game. Add visual feedback - Highlight the active player, animate when an item is added to inventory and highlight the acquired item in the reference list.
+
+Here are the item names, use the symbol for inventory:
+
+2: Excalibur ⚔️ - 8,500 gold
+3: Phoenix Feather 🪶 - 5,000 gold
+4: Midas Touch Glove 🧤 - 7,500 gold
+5: Ankh of Immortality ☥ - 9,500 gold
+6: Cloak of Invisibility 🧥 - 9,000 gold
+7: Pandora's Box 📦 - 4,500 gold
+8: Golden Fleece 🐑 - 7,000 gold
+9: Mjölnir 🔨 - 8,000 gold
+10: Aladdin's Lamp 🪔 - 6,500 gold
+11: Ambrosia Chalice 🏆 - 5,500 gold
+12: Philosopher's Stone 💎 - 10,000 gold
