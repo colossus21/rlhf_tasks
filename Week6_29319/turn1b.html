@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Road Rush</title>
+<style>
+    body { margin: 0; overflow: hidden; background: #87CEEB; }
+    #score { position: absolute; top: 40px; left: 20px; color: white; font-family: Arial, sans-serif; }
+    #title { position: absolute; top: 10px; left: 20px; color: white; font-family: Arial, sans-serif; }
+    #gameOver { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 2em; }
+    #restartBtn { display: none; position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); padding: 10px; }
+</style>
+</head>
+<body>
+<div id="title">Road Rush</div>
+<div id="score">Score: 0</div>
+<div id="gameOver">Game Over</div>
+<button id="restartBtn">Restart</button>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+    let scene, camera, renderer, player, road, obstacles = [];
+    let score = 0, speed = 0.05, gameOver = false;
+
+    function init() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Player
+        const geometry = new THREE.BoxGeometry(1, 2, 1);
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        player = new THREE.Mesh(geometry, material);
+        player.position.set(0, 1, -10);
+        scene.add(player);
+
+        // Road
+        const roadGeometry = new THREE.PlaneGeometry(10, 1000);
+        const roadMaterial = new THREE.MeshBasicMaterial({ color: 0x808080 });
+        road = new THREE.Mesh(roadGeometry, roadMaterial);
+        road.rotation.x = -Math.PI / 2;
+        scene.add(road);
+
+        // Lights
+        const light = new THREE.AmbientLight(0x404040); // soft white light
+        scene.add(light);
+
+        camera.position.set(0, 5, 5);
+
+        document.addEventListener('keydown', onDocumentKeyDown, false);
+        window.addEventListener('resize', onWindowResize, false);
+    }
+
+    function onDocumentKeyDown(event) {
+        const keyCode = event.which;
+        if (keyCode == 37) player.position.x -= 1; // Left
+        else if (keyCode == 39) player.position.x += 1; // Right
+        else if (keyCode == 32 && player.position.y <= 1) player.velocityY = 0.1; // Jump, if grounded
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+
+        if (!gameOver) {
+            // Player jump logic
+            if (player.velocityY !== undefined) {
+                player.position.y += player.velocityY;
+                player.velocityY -= 0.005; // Gravity
+                if (player.position.y <= 1) {
+                    player.position.y = 1;
+                    player.velocityY = undefined;
+                }
+            }
+
+            // Move obstacles and check collision
+            obstacles.forEach((obstacle, index) => {
+                obstacle.position.z += speed;
+                if (obstacle.position.z > 10) {
+                    scene.remove(obstacle);
+                    obstacles.splice(index, 1);
+                } else if (Math.abs(obstacle.position.x - player.position.x) < 1 && Math.abs(obstacle.position.z - player.position.z) < 1) {
+                    gameOver = true;
+                }
+            });
+
+            // Spawn obstacles
+            if (Math.random() < 0.02) {
+                let obstacle = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({color: 0xff0000}));
+                obstacle.position.set((Math.random() - 0.5) * 8, 0.5, -100);
+                scene.add(obstacle);
+                obstacles.push(obstacle);
+            }
+
+            // Increase speed over time
+            speed += 0.00001;
+
+            // Update score
+            score += speed;
+            document.getElementById('score').innerText = 'Score: ' + Math.floor(score);
+        } else {
+            document.getElementById('gameOver').style.display = 'block';
+            document.getElementById('restartBtn').style.display = 'block';
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function restartGame() {
+        gameOver = false;
+        score = 0;
+        speed = 0.05;
+        document.getElementById('gameOver').style.display = 'none';
+        document.getElementById('restartBtn').style.display = 'none';
+        // Reset player and remove obstacles
+        player.position.set(0, 1, -10);
+        obstacles.forEach(ob => scene.remove(ob));
+        obstacles = [];
+    }
+
+    document.getElementById('restartBtn').onclick = restartGame;
+    init();
+    animate();
+</script>
+</body>
+</html>

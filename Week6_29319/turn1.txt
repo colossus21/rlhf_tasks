@@ -1,0 +1,7 @@
+Create a an endless 3D runner game named "Road Rush" using Three.js. Can you implement the following:
+i) The player is a vertical cuboid character running forward automatically and can move left and right using arrow keys. Player can also jump just for the animation.
+ii) The road can have textures and trees on both sides of the road.
+iii) Red cubes would spawn on the roads and player must avoid it to survive.
+iv) The player scores on distance traveled. The game is over if the player touches any red cubes on the road.
+v) You can gradually increase difficulty by speeding up the game over time.
+vi) For UI, show the game name top-left and the score below that. Make the background blue. Add a restart button after game is over.
