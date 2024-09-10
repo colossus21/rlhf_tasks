@@ -1,0 +1,13 @@
+I want to create an alchemy-based game in JavaScript. Can you implement the following:
+i) The game should show 4 elements at start: Fire, Water, Earth, and Air. Each element should have a unicode symbol.
+ii) Below the elements there should be 3 boxes represented like box 1 + box 2 = box 3. These boxes should be square shaped.
+iii) Player can drag elements to box 1 and box 2. Box 3 would show the combined elements. Use a unicode symbol of the element.
+iv) Here's a list of combinations:
+Fire + Water = Steam
+Fire + Earth = Lava
+Air + Earth = Dust
+Water + Earth = Mud
+Fire + Air = Energy
+Water + Energy = Life
+v) Show a progress report of how many elements have been discovered, congrats the player upon finding all combinations.
+vi) Make it visually appealing by centering the container, applying borders to boxes etc.

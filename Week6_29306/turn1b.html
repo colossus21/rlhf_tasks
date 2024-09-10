@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Alchemy Game</title>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        background-color: #f4f4f4;
+    }
+    .game-container {
+        text-align: center;
+        margin-top: 50px;
+        width: 80%;
+    }
+    .elements, .combination {
+        display: flex;
+        justify-content: center;
+        margin: 20px 0;
+    }
+    .element, .box {
+        border: 2px solid #333;
+        padding: 10px;
+        margin: 5px;
+        width: 50px;
+        height: 50px;
+        line-height: 50px;
+        text-align: center;
+        background: white;
+    }
+    .box {
+        width: 100px;
+        height: 100px;
+        line-height: 100px;
+        font-size: 1.5em;
+    }
+    .result {
+        font-size: 2em;
+    }
+    #progress {
+        margin-top: 20px;
+        font-weight: bold;
+    }
+</style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>Alchemy Discovery</h1>
+    <div class="elements">
+        <div class="element" draggable="true" data-element="🔥">🔥</div>
+        <div class="element" draggable="true" data-element="💧">💧</div>
+        <div class="element" draggable="true" data-element="🌍">🌍</div>
+        <div class="element" draggable="true" data-element="💨">💨</div>
+    </div>
+    <div class="combination">
+        <div id="box1" class="box"></div>
+        <div>+</div>
+        <div id="box2" class="box"></div>
+        <div>=</div>
+        <div id="box3" class="box result"></div>
+    </div>
+    <div id="progress"></div>
+</div>
+
+<script>
+$(function() {
+    const combinations = {
+        '🔥💧': '🌫️',  // Steam
+        '🔥🌍': '🌋',   // Lava
+        '💨🌍': '🌀',   // Dust
+        '💧🌍': '🌱',   // Mud
+        '🔥💨': '⚡',   // Energy
+        '💧⚡': '🌿'    // Life
+    };
+    let discovered = new Set();
+
+    $(".element").draggable({
+        revert: "invalid",
+        helper: "clone"
+    });
+
+    $(".box").droppable({
+        drop: function(event, ui) {
+            let element = ui.draggable.attr("data-element");
+            $(this).html(element);
+            if ($("#box1").html() && $("#box2").html()) {
+                let combo = $("#box1").html() + $("#box2").html();
+                let result = combinations[combo] || '❓';
+                $("#box3").html(result);
+                if (combinations[combo]) discovered.add(combo);
+                updateProgress();
+            }
+        }
+    });
+
+    function updateProgress() {
+        let total = Object.keys(combinations).length;
+        $("#progress").html(`Discovered ${discovered.size} out of ${total} elements`);
+        if (discovered.size === total) {
+            alert("Congratulations! You've discovered all combinations!");
+        }
+    }
+});
+</script>
+
+</body>
+</html>

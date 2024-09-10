@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alchemy Game</title>
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: #f0f0f0;
+        margin: 0;
+    }
+    .container {
+        text-align: center;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .element {
+        font-size: 2em;
+        cursor: move;
+        margin: 10px;
+        padding: 10px;
+        background: #e9e9e9;
+        border-radius: 5px;
+    }
+    .box {
+        width: 80px;
+        height: 80px;
+        border: 2px solid black;
+        margin: 20px auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 2em;
+    }
+    .result-box {
+        background: #d1ffd1;
+    }
+    #progress {
+        margin-top: 20px;
+        font-weight: bold;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div id="elements">
+        <span class="element" draggable="true" data-element="Fire">🔥</span>
+        <span class="element" draggable="true" data-element="Water">💧</span>
+        <span class="element" draggable="true" data-element="Earth">🌍</span>
+        <span class="element" draggable="true" data-element="Air">🌬️</span>
+    </div>
+    <div class="combination">
+        <div class="box" id="box1"></div>
+        <div>+</div>
+        <div class="box" id="box2"></div>
+        <div>=</div>
+        <div class="box result-box" id="box3"></div>
+    </div>
+    <div id="progress">Discovered: 0/7</div>
+</div>
+
+<script>
+    const elements = {
+        Fire: '🔥', Water: '💧', Earth: '🌍', Air: '🌬️',
+        Steam: '💨', Lava: '🌋', Dust: '🌫️', Mud: '🟫', Energy: '⚡', Life: '🌿'
+    };
+
+    const combinations = {
+        'Fire,Water': 'Steam',
+        'Fire,Earth': 'Lava',
+        'Air,Earth': 'Dust',
+        'Water,Earth': 'Mud',
+        'Fire,Air': 'Energy',
+        'Water,Energy': 'Life'
+    };
+
+    let discovered = new Set();
+    const boxes = document.querySelectorAll('.box');
+
+    // Drag and Drop functionality
+    document.querySelectorAll('.element').forEach(elem => {
+        elem.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', e.target.getAttribute('data-element'));
+        });
+    });
+
+    boxes.forEach(box => {
+        box.addEventListener('dragover', (e) => e.preventDefault());
+        box.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const data = e.dataTransfer.getData('text');
+            if (!box.textContent) {
+                box.textContent = elements[data];
+                box.setAttribute('data-element', data);
+                checkCombination();
+            }
+        });
+    });
+
+    function checkCombination() {
+        const box1 = document.getElementById('box1').getAttribute('data-element');
+        const box2 = document.getElementById('box2').getAttribute('data-element');
+        if (box1 && box2) {
+            const combo = [box1, box2].sort().join(',');
+            if (combinations[combo] && !discovered.has(combinations[combo])) {
+                document.getElementById('box3').textContent = elements[combinations[combo]];
+                discovered.add(combinations[combo]);
+                updateProgress();
+            } else {
+                document.getElementById('box3').textContent = '❓'; // Unknown or already discovered
+            }
+        }
+    }
+
+    function updateProgress() {
+        const progress = document.getElementById('progress');
+        progress.textContent = `Discovered: ${discovered.size}/7`;
+        if (discovered.size === 6) { // 6 because we count only the derived elements
+            alert("Congratulations! You've discovered all combinations!");
+        }
+    }
+</script>
+
+</body>
+</html>
