@@ -247,7 +247,9 @@
         const rect = canvas.getBoundingClientRect();
         const x = Math.floor((e.clientX - rect.left) / cellSize);
         const y = Math.floor((e.clientY - rect.top) / cellSize);
-        grid[y][x] = selectedColor;
+        if (grid[y][x]) {
+            grid[y][x] = selectedColor;
+        }
         drawGrid();
     });
 
