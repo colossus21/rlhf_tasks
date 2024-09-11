@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Infinite Scroller Game</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            background-color: #333; 
+        }
+        #gameContainer {
+            position: relative;
+            overflow: hidden;
+        }
+        #score, #restart {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-family: Arial, sans-serif;
+            z-index: 10;
+        }
+        #restart {
+            display: none;
+            top: 50%;
+            color: red;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div id="gameContainer"></div>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+<script>
+    const config = {
+        type: Phaser.AUTO,
+        width: 600,
+        height: 800,
+        parent: 'gameContainer',
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        },
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 0 },
+                debug: false
+            }
+        }
+    };
+
+    const game = new Phaser.Game(config);
+    let player;
+    let tiles;
+    let cursors;
+    let score = 0;
+    let scoreText;
+    let speed = 200;
+    let gameOver = false;
+
+    function preload() {
+        // Preloading is not necessary for shapes, but left here for future expansion
+    }
+
+    function create() {
+        // Setup tiles
+        tiles = this.physics.add.staticGroup();
+        for(let i = 0; i < 15; i++) {  // More rows for smooth scrolling
+            createRow(i);
+        }
+
+        // Player setup
+        player = this.physics.add.sprite(300, 700, 'player').setScale(0.5);
+        player.setCollideWorldBounds(true);
+
+        // Controls
+        cursors = this.input.keyboard.createCursorKeys();
+
+        // Score
+        scoreText = this.add.text(300, 20, 'Score: 0', { fontSize: '32px', fill: '#FFF' }).setOrigin(0.5, 0);
+
+        // Game Over and Restart
+        let restartButton = this.add.text(300, 400, 'Restart', { fontSize: '32px', fill: '#F00' }).setOrigin(0.5).setInteractive();
+        restartButton.on('pointerdown', () => {
+            this.scene.restart();
+            gameOver = false;
+            score = 0;
+            speed = 200;
+            restartButton.setVisible(false);
+        });
+        restartButton.setVisible(false);
+    }
+
+    function update() {
+        if (gameOver) return;
+
+        // Player movement
+        if (cursors.left.isDown && player.x > 100) {
+            player.setVelocityX(-300);
+        } else if (cursors.right.isDown && player.x < 500) {
+            player.setVelocityX(300);
+        } else {
+            player.setVelocityX(0);
+        }
+
+        // Scroll tiles
+        tiles.children.iterate(function (child) {
+            child.y += speed * game.time.physicsElapsed;
+            if (child.y > config.height + 50) {
+                child.y = -50;
+                updateRow(child);
+                score++;
+                scoreText.setText('Score: ' + score);
+
+                // Increase difficulty
+                if (speed < 500) speed += 5;
+            }
+        });
+
+        // Collision detection
+        this.physics.add.collider(player, tiles, function(player, tile) {
+            if (tile.texture.key === 'black') {
+                gameOver = true;
+                this.physics.pause();
+                player.setTint(0xff0000);
+                document.getElementById('restart').style.display = 'block';
+            }
+        }, null, this);
+    }
+
+    function createRow(rowIndex) {
+        let y = rowIndex * 100 - 100; // Positioning rows above the screen initially
+        let pattern = rowIndex < 5 ? [0,0,0] : [rowIndex % 2, rowIndex % 2, rowIndex % 2]; // Safe rows for start
+        for(let col = 0; col < 3; col++) {
+            let tile = tiles.create(col * 200 + 100, y, pattern[col] === 0 ? 'blue' : 'black');
+            tile.setScale(0.5).refreshBody();
+        }
+    }
+
+    function updateRow(tile) {
+        let newPattern = Math.random() > 0.5 ? [0, 0, 1] : [1, 0, 0];
+        tile.setTexture(newPattern[tile.x / 200 - 0.5] === 0 ? 'blue' : 'black');
+    }
+
+    // This will create the shapes in Phaser
+    this.textures.generate('blue', { width: 100, height: 100, color: 0x0000ff });
+    this.textures.generate('black', { width: 100, height: 100, color: 0x000000 });
+    this.textures.generate('player', { width: 50, height: 50, color: 0xffa500 });
+</script>
+
+</body>
+</html>

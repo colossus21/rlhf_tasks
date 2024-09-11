@@ -1,0 +1,193 @@
+### Code Plan:
+
+1. UI:
+   1. Create a game container with sky blue background. 
+   2. Create a tile group for scrolling tiles.
+   3. Add the player rectangle to the second-last row.
+   4. Display score text at the top center.
+   5. Create restart button after game over.
+
+2. Gameplay Logic:
+   1. Set up player with movement with arrow keys.
+   2. Implement row spawning and collision detection functions.
+   3. Add game over and restart functionality.
+
+### Code:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Scroller Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
+    <style>
+        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f0f0; }
+    </style>
+</head>
+<body>
+<script>
+    const config = {
+        type: Phaser.AUTO,
+        width: 400,
+        height: 600,
+        scene: {
+            create: create,
+            update: update
+        },
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 0 },
+                debug: false
+            }
+        }
+    };
+
+    const game = new Phaser.Game(config);
+    let player, tiles, cursors, gameState, restartButton, scoreText, background;
+    let score = 0;
+    let speed = 200;
+    let gameTime = 0;
+    const cellSize = 100;
+    const tileScale = 0.7;
+    const scaledCellSize = cellSize * tileScale;
+    const colors = {
+        background: 0x87CEEB, // Sky Blue
+        tile: 0x3498db,
+        player: 0xe74c3c,
+        obstacle: 0x2c3e50,
+        text: 0xffffff
+    };
+    let playerColumn = 1; // 0: left, 1: center, 2: right
+    let lastRowTime = 0;
+    let rowCounter = 0;
+    const initialSafeRows = 5;
+
+    function create() {
+        background = this.add.rectangle(config.width / 2, config.height / 2, config.width, config.height, colors.background);
+        tiles = this.physics.add.group();
+
+        const playerSize = scaledCellSize / 2;
+        player = this.add.rectangle(config.width / 2, config.height - scaledCellSize * 1.5, playerSize, playerSize, colors.player);
+        this.physics.add.existing(player);
+        player.setDepth(1); // Ensure player is rendered on top of tiles
+
+        cursors = this.input.keyboard.createCursorKeys();
+
+        scoreText = this.add.text(config.width / 2, 30, 'Score: 0', { fontSize: '24px', fill: '#fff' }).setOrigin(0.5);
+        scoreText.setDepth(2);
+
+        restartButton = this.add.text(config.width / 2, config.height - 40, 'Restart', { fontSize: '24px', fill: '#fff', backgroundColor: '#e74c3c', padding: 10 })
+            .setInteractive()
+            .setOrigin(0.5)
+            .on('pointerdown', restartGame.bind(this));
+        restartButton.setDepth(2);
+        restartButton.setVisible(false);
+
+        gameState = 'playing';
+        gameTime = 0;
+        lastRowTime = 0;
+        rowCounter = 0;
+
+        // Create initial rows with all good cells
+        for (let i = 0; i < 8; i++) {
+            createRow.call(this, (7 - i) * scaledCellSize, i < initialSafeRows);
+        }
+
+        this.physics.add.overlap(player, tiles, hitObstacle, null, this);
+    }
+
+    function update(time, delta) {
+        if (gameState !== 'playing') return;
+
+        gameTime += delta;
+
+        handlePlayerMovement();
+
+        updateTiles(delta);
+
+        // Create new row when needed
+        if (time - lastRowTime > 1000 * scaledCellSize / speed) {
+            createRow.call(this, -scaledCellSize, false);
+            lastRowTime = time;
+        }
+
+        score += speed * delta / 10000;
+        scoreText.setText('Score: ' + Math.floor(score));
+
+        // Increase speed over time
+        speed = 200 + Math.floor(gameTime / 1000) * 10; // Increase by 10 every second
+    }
+
+    function handlePlayerMovement() {
+        if (Phaser.Input.Keyboard.JustDown(cursors.left) && playerColumn > 0) {
+            playerColumn--;
+        } else if (Phaser.Input.Keyboard.JustDown(cursors.right) && playerColumn < 2) {
+            playerColumn++;
+        }
+
+        const targetX = (playerColumn * scaledCellSize) + scaledCellSize / 2 + (config.width - 3 * scaledCellSize) / 2;
+        player.x = Phaser.Math.Linear(player.x, targetX, 0.2);
+    }
+
+    function updateTiles(delta) {
+        tiles.children.entries.forEach((tile) => {
+            tile.y += speed * delta / 1000;
+            if (tile.y > config.height + scaledCellSize) {
+                tile.destroy();
+            }
+        });
+    }
+
+    function createRow(yPosition, forceSafe = false) {
+        const isRandomRow = !forceSafe && rowCounter % 2 === 1;
+        const obstacleColumn = isRandomRow ? Phaser.Math.Between(0, 2) : -1;
+
+        for (let i = 0; i < 3; i++) {
+            const x = i * scaledCellSize + scaledCellSize / 2 + (config.width - 3 * scaledCellSize) / 2;
+            const tile = this.add.rectangle(x, yPosition, cellSize - 2, cellSize - 2, i === obstacleColumn ? colors.obstacle : colors.tile);
+            tile.setScale(tileScale);
+            this.physics.add.existing(tile);
+            tile.body.setImmovable(true);
+            if (i === obstacleColumn) {
+                tile.setData('isObstacle', true);
+            }
+            tiles.add(tile);
+        }
+
+        rowCounter++;
+    }
+
+    function hitObstacle(player, tile) {
+        if (tile.getData('isObstacle')) {
+            this.physics.pause();
+            player.setFillStyle(0xff0000);
+            gameState = 'ended';
+            restartButton.setVisible(true);
+        }
+    }
+
+    function restartGame() {
+        this.scene.restart();
+    }
+</script>
+</body>
+</html>
+```
+
+### Explanation:
+
+1. UI:
+   - Use Phaser's rectangle shapes for tiles and players.
+   - Use Phaser's text object for score display.
+
+2. Gameplay:
+   - Use Phaser's physics system for movement and collisions.
+   - Implement a row counter to alternate between safe and obstacle rows.
+   - Use Phaser's input system for player controls.
+   - Use Phaser's time events for increasing game speed.
+   - Implement overlap checking for collision detection.
+
+This approach provides an infinite scrolling game experience that gets challenging over time.

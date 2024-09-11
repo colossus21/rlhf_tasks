@@ -1,0 +1,8 @@
+Can you create an infinite scroller game in PhaserJS with the following:
+i) The game consists of infinite scrolling tiles. Tiles with width 3 cells scroll from top to bottom.
+ii) Player is a small rectangle at the second-last row from the bottom
+ii) Three columns for player movement (left, center, right). Player uses arrow keys to move left and right.
+iii) Start with 5 rows of all safe (blue) tiles. Then alternate the rows between 3 blue (safe) cells per row a row with 2 blue cells and 1 black cell at random column.
+iv) If the player touches the black cell, game is over. Increase the game difficulty over time.
+v) Display the score at the top center (based on rows survived). Show a restart button after game over (red colored).
+vi) Use shapes only, no external images. Player movement should be smooth centered to tile (left, right or center).

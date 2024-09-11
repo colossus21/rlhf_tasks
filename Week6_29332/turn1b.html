@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Infinite Scroller</title>
+<style>
+    body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+    #gameCanvas { display: block; margin: 0 auto; }
+    #score, #restartButton { position: absolute; color: white; font-family: Arial, sans-serif; }
+    #score { top: 10px; left: 50%; transform: translateX(-50%); }
+    #restartButton { top: 50%; left: 50%; transform: translate(-50%, -50%); background: red; border: none; padding: 10px 20px; display: none; cursor: pointer; }
+</style>
+</head>
+<body>
+<div id="gameContainer"></div>
+<!--<script src="//cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
+<script>
+const config = {
+    type: Phaser.AUTO,
+    width: 600,
+    height: 800,
+    parent: 'gameContainer',
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    },
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 0 },
+            debug: false
+        }
+    }
+};
+
+const game = new Phaser.Game(config);
+let player;
+let tiles;
+let cursors;
+let score = 0;
+let scoreText;
+let restartButton;
+let speed = 150;
+let gameOver = false;
+
+function preload() {
+    // Preload isn't necessary here since we're using shapes
+}
+
+function create() {
+    // Create tiles group
+    tiles = this.physics.add.group();
+
+    // Initial tiles setup
+    for(let i = 0; i < 5; i++) {
+        createRow(true);
+    }
+
+    // Player
+    player = this.physics.add.rectangle(300, 750, 20, 40, 0x0000ff);
+    player.setCollideWorldBounds(true);
+    
+    // Input
+    cursors = this.input.keyboard.createCursorKeys();
+
+    // Score text
+    scoreText = this.add.text(300, 16, 'Score: 0', { fontSize: '32px', fill: '#FFF' }).setOrigin(0.5, 0);
+
+    // Restart button
+    restartButton = this.add.dom(300, 400, 'button', 'display:none', 'Restart').addListener('click').on('click', restartGame, this);
+}
+
+function update() {
+    if (gameOver) return;
+
+    // Player movement
+    if (cursors.left.isDown && player.x > 200) {
+        player.setVelocityX(-160);
+    } else if (cursors.right.isDown && player.x < 400) {
+        player.setVelocityX(160);
+    } else {
+        player.setVelocityX(0);
+    }
+
+    // Scroll tiles
+    tiles.getChildren().forEach(tile => {
+        tile.y += speed * 0.016; // Assuming 60 fps for simplicity
+        if (tile.y > 800) {
+            tile.destroy();
+            score++;
+            scoreText.setText('Score: ' + score);
+            if (score % 5 === 0) speed += 10; // Increase difficulty
+            createRow();
+        }
+    });
+
+    // Collision check
+    this.physics.add.collider(player, tiles, hitTile, null, this);
+}
+
+function createRow(allSafe = false) {
+    let safeCount = allSafe ? 3 : 2;
+    let positions = [100, 300, 500];
+    if (!allSafe) {
+        let unsafePos = Phaser.Math.Between(0, 2);
+        positions.splice(unsafePos, 1);
+    }
+    
+    positions.forEach(pos => {
+        let tile = tiles.create(pos, -20, 180, 60, 0x0000ff);
+        tile.setOrigin(0.5);
+    });
+
+    if (!allSafe) {
+        let unsafeTile = tiles.create(positions[Phaser.Math.Between(0, 2)], -20, 180, 60, 0x000000);
+        unsafeTile.setOrigin(0.5);
+    }
+}
+
+function hitTile(player, tile) {
+    if (tile.fillColor === 0x000000) {
+        gameOver = true;
+        player.setTint(0xff0000);
+        restartButton.setDisplay('block');
+    }
+}
+
+function restartGame() {
+    this.scene.restart();
+    score = 0;
+    speed = 150;
+    gameOver = false;
+    restartButton.setDisplay('none');
+}
+</script>
+</body>
+</html>
