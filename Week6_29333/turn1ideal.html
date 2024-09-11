@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fruit Ninja</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.18.0/matter.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #e0e0e0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        #gameContainer {
+            position: relative;
+            width: 800px;
+            height: 600px;
+        }
+        canvas {
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+        #score, #timer, #highScore {
+            position: absolute;
+            font-size: 24px;
+            color: #ffffff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+        #score { top: 10px; left: 10px; }
+        #timer {
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: bold;
+        }
+        #highScore { top: 10px; right: 10px; }
+        #timeUp {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            color: #ff6b6b;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            display: none;
+            text-align: center;
+            z-index: 20;
+        }
+        #restart {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 24px;
+            background-color: #4ecdc4;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #restart:hover {
+            background-color: #45b7aa;
+        }
+    </style>
+</head>
+<body>
+<div id="gameContainer">
+    <div id="score">Score: 0</div>
+    <div id="timer">30</div>
+    <div id="highScore">High Score: 0</div>
+    <div id="timeUp">
+        Time's Up!<br>
+        <span id="finalScore"></span><br>
+        <button id="restart">Restart</button>
+    </div>
+</div>
+<script>
+    // Matter.js module aliases
+    const Engine = Matter.Engine,
+        Render = Matter.Render,
+        World = Matter.World,
+        Bodies = Matter.Bodies,
+        Body = Matter.Body,
+        Events = Matter.Events,
+        Composite = Matter.Composite;
+
+    // Create engine and renderer
+    const engine = Engine.create({ gravity: { x: 0, y: 0.2 } });
+    const render = Render.create({
+        element: document.getElementById('gameContainer'),
+        engine: engine,
+        options: {
+            width: 800,
+            height: 600,
+            wireframes: false,
+            background: '#16213e'
+        }
+    });
+
+    Engine.run(engine);
+    Render.run(render);
+
+    // Game variables
+    let score = 0;
+    let highScore = 0;
+    let timeLeft = 30;
+    const scoreElement = document.getElementById('score');
+    const timerElement = document.getElementById('timer');
+    const highScoreElement = document.getElementById('highScore');
+    const timeUpElement = document.getElementById('timeUp');
+    const finalScoreElement = document.getElementById('finalScore');
+    const restartButton = document.getElementById('restart');
+
+    // Fruit types
+    const fruitTypes = [
+        { name: 'apple', color: '#ff6b6b', minRadius: 20, maxRadius: 30, points: 1 },
+        { name: 'orange', color: '#feca57', minRadius: 25, maxRadius: 35, points: 2 },
+        { name: 'watermelon', color: '#ff9ff3', minRadius: 35, maxRadius: 45, points: 3 },
+        { name: 'banana', color: '#fffa65', minRadius: 15, maxRadius: 25, points: 4 },
+        { name: 'pineapple', color: '#54a0ff', minRadius: 20, maxRadius: 25, points: 5 }
+    ];
+
+    // Create fruits
+    function createFruit() {
+        const fruitCount = Math.floor(Math.random() * 3) + 1; // Spawn 1 to 3 fruits
+        for (let i = 0; i < fruitCount; i++) {
+            const x = Math.random() * (render.canvas.width - 100) + 50;
+            const y = render.canvas.height;
+            const fruitType = fruitTypes[Math.floor(Math.random() * fruitTypes.length)];
+            const radius = Math.random() * (fruitType.maxRadius - fruitType.minRadius) + fruitType.minRadius;
+            const fruit = Bodies.circle(x, y, radius, {
+                restitution: 0.8,
+                frictionAir: 0.001,
+                render: {
+                    fillStyle: fruitType.color,
+                    strokeStyle: '#ffffff',
+                    lineWidth: 2
+                },
+                fruitType: fruitType,
+                isSliced: false,
+                label: 'fruit'
+            });
+
+            const forceMagnitude = 0.04 + Math.random() * 0.02;
+            const angle = -Math.PI / 2 + (Math.random() - 0.5) * 0.8;
+            Body.applyForce(fruit, fruit.position, {
+                x: forceMagnitude * Math.cos(angle),
+                y: forceMagnitude * Math.sin(angle)
+            });
+
+            World.add(engine.world, fruit);
+        }
+    }
+
+    // Create slice effect
+    function createSliceEffect(x, y, color, size) {
+        const particleCount = Math.floor(size / 3);
+        const particles = [];
+        for (let i = 0; i < particleCount; i++) {
+            const particle = Bodies.circle(x, y, 2, {
+                restitution: 0.8,
+                friction: 0.005,
+                render: { fillStyle: color }
+            });
+            const angle = Math.random() * Math.PI * 2;
+            const magnitude = Math.random() * size / 8;
+            Body.setVelocity(particle, {
+                x: Math.cos(angle) * magnitude,
+                y: Math.sin(angle) * magnitude
+            });
+            particles.push(particle);
+        }
+        World.add(engine.world, particles);
+        setTimeout(() => {
+            World.remove(engine.world, particles);
+        }, 800);
+    }
+
+    // Mouse constraint for slicing
+    let mouseConstraint = Matter.MouseConstraint.create(engine, {
+        element: render.canvas
+    });
+    World.add(engine.world, mouseConstraint);
+
+    // Slicing logic
+    Events.on(mouseConstraint, 'mousemove', function(event) {
+        const mouse = event.mouse;
+        const bodies = Composite.allBodies(engine.world);
+        for (let i = 0; i < bodies.length; i++) {
+            const body = bodies[i];
+            if (body.label === 'fruit' && Matter.Bounds.contains(body.bounds, mouse.position) && !body.isSliced) {
+                body.isSliced = true;
+                createSliceEffect(body.position.x, body.position.y, body.render.fillStyle, body.circleRadius * 2);
+                World.remove(engine.world, body);
+                score += body.fruitType.points;
+                updateScore();
+            }
+        }
+    });
+
+    // Remove fruits that fall off screen
+    Events.on(engine, 'afterUpdate', function() {
+        const bodies = Composite.allBodies(engine.world);
+        for (let i = 0; i < bodies.length; i++) {
+            const body = bodies[i];
+            if (body.position.y > render.canvas.height + 100) {
+                World.remove(engine.world, body);
+            }
+        }
+    });
+
+    // Update score display
+    function updateScore() {
+        scoreElement.textContent = `Score: ${score}`;
+        if (score > highScore) {
+            highScore = score;
+            highScoreElement.textContent = `High Score: ${highScore}`;
+        }
+    }
+
+    // Update timer
+    function updateTimer() {
+        timerElement.textContent = timeLeft;
+        if (timeLeft <= 0) {
+            endGame();
+        } else {
+            timeLeft--;
+        }
+    }
+
+    // End game
+    function endGame() {
+        clearInterval(fruitInterval);
+        clearInterval(timerInterval);
+        timeUpElement.style.display = 'block';
+        finalScoreElement.textContent = `Score: ${score}`;
+    }
+
+    // Restart game
+    function restartGame() {
+        score = 0;
+        timeLeft = 30;
+        updateScore();
+        updateTimer();
+        timeUpElement.style.display = 'none';
+        clearInterval(fruitInterval);
+        clearInterval(timerInterval);
+        startGame();
+        const bodies = Composite.allBodies(engine.world);
+        for (let i = 0; i < bodies.length; i++) {
+            if (bodies[i].label === 'fruit') {
+                World.remove(engine.world, bodies[i]);
+            }
+        }
+    }
+
+    // Start game
+    function startGame() {
+        fruitInterval = setInterval(createFruit, 500); // Spawn fruits every 500ms
+        timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    restartButton.addEventListener('click', restartGame);
+
+    let fruitInterval, timerInterval;
+    startGame();
+</script>
+</body>
+</html>

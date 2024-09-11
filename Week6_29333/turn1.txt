@@ -1,0 +1,8 @@
+I want to test how MatterJS create splashes. Create a Fruit Ninja-inspired game using Matter.js, can you implement:
+i) Fruits of different types and point values that are thrown from the bottom at different angles that can reach top.
+ii) Player can slice those fruits by moving the mouse over them.
+iii) Add a slicing effect with particles when a fruit is cut.
+iv) Multiple fruits (1 to 3) spawning every half-second.
+v) Show a 'Time's Up!' screen that appears when the timer reaches zero, showing the final score. Show the current score in the top-left, timer of 30 seconds.
+vi) Show the high score in the top-right. Add a restart button to begin a new game after the game ends.
+No external images, use shapes only.

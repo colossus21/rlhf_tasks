@@ -1,0 +1,193 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fruit Ninja with Matter.js</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #gameCanvas { background: #f0f0f0; }
+        #score, #timer, #highScore { 
+            position: absolute; 
+            font-family: Arial, sans-serif; 
+            color: #333; 
+        }
+        #score { top: 10px; left: 10px; }
+        #timer { top: 10px; left: 50%; transform: translateX(-50%); }
+        #highScore { top: 10px; right: 10px; }
+        #endScreen {
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; right: 0; bottom: 0; 
+            background-color: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 5rem;
+            flex-direction: column;
+        }
+        #restartButton {
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">Score: 0</div>
+    <div id="timer">Time: 30</div>
+    <div id="highScore">High Score: 0</div>
+    <canvas id="gameCanvas"></canvas>
+    <div id="endScreen">
+        <div>Time's Up!</div>
+        <div id="finalScore"></div>
+        <button id="restartButton">Restart</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.14.2/matter.min.js"></script>
+    <script>
+    // Setup Matter JS
+    const { Engine, Render, Runner, Bodies, Composite, Mouse, MouseConstraint } = Matter;
+
+    const engine = Engine.create();
+    const world = engine.world;
+    const render = Render.create({
+        element: document.body,
+        canvas: document.getElementById('gameCanvas'),
+        engine: engine,
+        options: {
+            width: 800,
+            height: 600,
+            wireframes: false,
+            background: 'transparent'
+        }
+    });
+    
+    // Walls
+    const wallOptions = { isStatic: true };
+    Composite.add(world, [
+        Bodies.rectangle(400, 0, 800, 50, wallOptions), // Top
+        Bodies.rectangle(400, 600, 800, 50, wallOptions), // Bottom
+        Bodies.rectangle(800, 300, 50, 600, wallOptions), // Right
+        Bodies.rectangle(0, 300, 50, 600, wallOptions) // Left
+    ]);
+
+    // Game variables
+    let score = 0;
+    let timer = 30;
+    let highScore = 0;
+    let fruits = [];
+    let spawnInterval;
+
+    // Add mouse control
+    const mouse = Mouse.create(render.canvas);
+    const mouseConstraint = MouseConstraint.create(engine, {
+        mouse: mouse,
+        constraint: {
+            stiffness: 0.2,
+            render: { visible: false }
+        }
+    });
+    Composite.add(world, mouseConstraint);
+
+    // Fruit slicing
+    function sliceFruit(fruit) {
+        // Simple particle effect
+        for(let i = 0; i < 5; i++) {
+            let particle = Bodies.circle(fruit.position.x, fruit.position.y, 5, {
+                frictionAir: 0.05,
+                render: { fillStyle: fruit.render.fillStyle }
+            });
+            let forceMagnitude = 0.02 * fruit.mass;
+            Matter.Body.applyForce(particle, fruit.position, {
+                x: (forceMagnitude + Matter.Common.random() * forceMagnitude) * Matter.Common.choose([-1, 1]),
+                y: -forceMagnitude * 1.5
+            });
+            Composite.add(world, particle);
+        }
+        Composite.remove(world, fruit);
+        score += fruit.pointValue;
+        updateScore();
+    }
+
+    // Spawn fruits
+    function spawnFruit() {
+        const types = [
+            {type: 'circle', size: 30, value: 1},
+            {type: 'rectangle', size: [40, 40], value: 2},
+            {type: 'polygon', sides: 5, size: 25, value: 3}
+        ];
+        let fruitType = types[Math.floor(Math.random() * types.length)];
+        let fruit = Bodies[fruitType.type](
+            Math.random() * 800, 650, 
+            ...(fruitType.type === 'rectangle' ? fruitType.size : [fruitType.size]), 
+            { restitution: 0.5, friction: 0.1, pointValue: fruitType.value }
+        );
+        let angle = Math.PI * (0.5 + Math.random() * 0.2 - 0.1);
+        Matter.Body.applyForce(fruit, {x: fruit.position.x, y: fruit.position.y}, 
+            {x: Math.cos(angle) * 0.1, y: Math.sin(angle) * 0.1});
+
+        fruits.push(fruit);
+        Composite.add(world, fruit);
+    }
+
+    // Game loop
+    function gameLoop() {
+        timer -= 1/60; // Assuming 60 fps
+        if (timer <= 0) {
+            gameOver();
+            return;
+        }
+        document.getElementById('timer').textContent = `Time: ${Math.ceil(timer)}`;
+    }
+
+    // Game over
+    function gameOver() {
+        clearInterval(spawnInterval);
+        document.getElementById('endScreen').style.display = 'flex';
+        document.getElementById('finalScore').textContent = `Your Score: ${score}`;
+        if (score > highScore) {
+            highScore = score;
+            document.getElementById('highScore').textContent = `High Score: ${highScore}`;
+        }
+        Runner.stop(runner);
+    }
+
+    // Update score
+    function updateScore() {
+        document.getElementById('score').textContent = `Score: ${score}`;
+    }
+
+    // Restart game
+    document.getElementById('restartButton').onclick = function() {
+        score = 0;
+        timer = 30;
+        fruits.forEach(f => Composite.remove(world, f));
+        fruits = [];
+        document.getElementById('endScreen').style.display = 'none';
+        spawnInterval = setInterval(spawnFruit, 500);
+        Runner.run(runner);
+        updateScore();
+    };
+
+    // Detect slicing
+    world.bodies.forEach(body => {
+        body.collisionActive = function(collision) {
+            if (collision.bodyA === this || collision.bodyB === this) {
+                if (mouseConstraint.body === collision.bodyB || mouseConstraint.body === collision.bodyA) {
+                    sliceFruit(this);
+                }
+            }
+        };
+    });
+
+    const runner = Runner.create();
+    Runner.run(runner, engine);
+    Render.run(render);
+
+    // Start spawning fruits
+    spawnInterval = setInterval(spawnFruit, 500);
+    setInterval(gameLoop, 1000/60);
+    </script>
+</body>
+</html>
