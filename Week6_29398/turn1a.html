@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Power Memory Game</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #f0f0f0;
+            margin: 0;
+        }
+        .game-container {
+            text-align: center;
+        }
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            width: 600px;
+            margin: 20px auto;
+        }
+        .card {
+            width: 90px;
+            height: 90px;
+            background: #2c3e50;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            cursor: pointer;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            position: relative;
+        }
+        .card .front, .card .back {
+            position: absolute;
+            backface-visibility: hidden;
+        }
+        .card .back {
+            transform: rotateY(180deg);
+        }
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+        .power-ups button {
+            margin: 5px;
+            padding: 10px 15px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        #timer, #score {
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 1.5em;
+            color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div id="timer">Time: 300 seconds</div>
+    <div id="score">Score: 0</div>
+    <div id="game-board"></div>
+    <div class="power-ups">
+        <button onclick="showAllCards()">Show All (3)</button>
+        <button onclick="showMatchingPairs()">Show Pairs (3)</button>
+        <button onclick="showThreeCards()">Show 3 Cards (3)</button>
+        <button onclick="autoMatch()">Auto Match (1)</button>
+    </div>
+    <div id="result"></div>
+</div>
+
+<script>
+    const symbols = ['🍏', '🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🍈', '🍒', '🍑', '🍍', '🥥', '🥝', '🍅', '🍆', '🥑', '🥦', '🥒', '🌽', '🥕', '🥔', '🍠', '🍯'];
+    let board = document.getElementById('game-board');
+    let cards = [];
+    let flippedCards = [];
+    let score = 0;
+    let timer = 300;
+    let gameTimer;
+    let powerUps = { showAll: 3, showPairs: 3, showThree: 3, autoMatch: 1 };
+
+    function initGame() {
+        // Double symbols for pairs, shuffle, and create cards
+        let gameSymbols = [...symbols, ...symbols].sort(() => Math.random() - 0.5);
+        gameSymbols.forEach(symbol => {
+            let card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `<div class="front">?</div><div class="back">${symbol}</div>`;
+            card.addEventListener('click', () => flipCard(card));
+            board.appendChild(card);
+            cards.push(card);
+        });
+        startTimer();
+    }
+
+    function flipCard(card) {
+        if (flippedCards.length < 2 && !card.classList.contains('flipped')) {
+            card.classList.add('flipped');
+            flippedCards.push(card);
+            if (flippedCards.length === 2) {
+                setTimeout(checkMatch, 1000);
+            }
+        }
+    }
+
+    function checkMatch() {
+        let isMatch = flippedCards[0].innerHTML === flippedCards[1].innerHTML;
+        if (isMatch) {
+            score += 10;
+            flippedCards.forEach(card => card.onclick = null);
+        } else {
+            score -= 4;
+            flippedCards.forEach(card => card.classList.remove('flipped'));
+        }
+        flippedCards = [];
+        document.getElementById('score').textContent = `Score: ${score}`;
+        checkGameEnd();
+    }
+
+    function startTimer() {
+        gameTimer = setInterval(() => {
+            timer--;
+            document.getElementById('timer').textContent = `Time: ${timer} seconds`;
+            if (timer <= 0) endGame();
+        }, 1000);
+    }
+
+    function showAllCards() {
+        if (powerUps.showAll > 0) {
+            cards.forEach(card => card.classList.add('flipped'));
+            setTimeout(() => cards.forEach(card => card.classList.remove('flipped')), 2000);
+            powerUps.showAll--;
+        }
+    }
+
+    function showMatchingPairs() {
+        if (powerUps.showPairs > 0) {
+            let unflipped = cards.filter(c => !c.classList.contains('flipped'));
+            for (let i = 0; i < 4; i += 2) {  // Show 2 pairs
+                if (unflipped[i] && unflipped[i + 1] && unflipped[i].innerHTML === unflipped[i + 1].innerHTML) {
+                    [unflipped[i], unflipped[i + 1]].forEach(card => card.classList.add('flipped'));
+                }
+            }
+            powerUps.showPairs--;
+        }
+    }
+
+    function showThreeCards() {
+        if (powerUps.showThree > 0) {
+            let unflipped = cards.filter(c => !c.classList.contains('flipped'));
+            for (let i = 0; i < 3 && i < unflipped.length; i++) {
+                unflipped[i].classList.add('flipped');
+            }
+            setTimeout(() => unflipped.slice(0, 3).forEach(card => card.classList.remove('flipped')), 2000);
+            powerUps.showThree--;
+        }
+    }
+
+    function autoMatch() {
+        if (powerUps.autoMatch > 0) {
+            let unflipped = cards.filter(c => !c.classList.contains('flipped'));
+            for (let i = 0; i < unflipped.length - 1; i++) {
+                if (unflipped[i].innerHTML === unflipped[i + 1].innerHTML) {
+                    [unflipped[i], unflipped[i + 1]].forEach(card => {
+                        card.classList.add('flipped');
+                        card.onclick = null;
+                    });
+                    score += 10;
+                    break;
+                }
+            }
+            powerUps.autoMatch--;
+            checkGameEnd();
+        }
+    }
+
+    function checkGameEnd() {
+        if (cards.every(card => !card.onclick)) endGame();
+    }
+
+    function endGame() {
+        clearInterval(gameTimer);
+        score += timer;  // Add remaining seconds to score
+        document.getElementById('result').textContent = `You won! Your score is ${score}`;
+    }
+
+    initGame();
+</script>
+
+</body>
+</html>

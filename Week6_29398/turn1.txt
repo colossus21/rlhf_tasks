@@ -1,0 +1,6 @@
+Can you create an interesting version of the memory game - "Power Memory Game":
+1. Create a 6x6 board of cards with emojis or symbols, the game has 5 minute time limit. User has to match pairs in this game.
+2. For scoring: add 10 points for matches, -4 points for mismatches.
+3. Add Four power-ups: Show all cards for 2 seconds (3 uses), show 2 random matching pairs (3 uses), Show 3 random cards (3 uses), automatically match 1 pair (1 use).
+4. Add 1 point to the final score for each second left when the game ends.
+5. Make it a visually appealing design with a centered grid and various colored power-up buttons. Also, show a winning message and score below the game after game ends.

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Power Memory Game</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f4f8;
+        }
+        #game-container {
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin: 20px auto;
+            background-color: #e2e8f0;
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 400px;
+        }
+        .cell {
+            aspect-ratio: 1;
+            border: none;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+            background-color: #f8fafc;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .matched {
+            background-color: #c6f6d5;
+        }
+        #message {
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            min-height: 1.5em;
+            color: #2d3748;
+        }
+        #game-timer, #score {
+            margin-top: 10px;
+            font-size: 18px;
+            color: #4a5568;
+        }
+        .power-up-button {
+            margin: 8px;
+            padding: 12px;
+            font-size: 14px;
+            cursor: pointer;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .power-up-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .power-up-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        #show-all { background-color: #4299e1; }
+        #show-pairs { background-color: #48bb78; }
+        #show-random { background-color: #ed8936; }
+        #match-pair { background-color: #ed64a6; }
+    </style>
+</head>
+<body>
+<div id="game-container">
+    <h1>Power Memory Game</h1>
+    <div id="score">Score: <span id="score-value">0</span></div>
+    <div id="game-timer">Time left: <span id="game-time-left">5:00</span></div>
+    <div id="board"></div>
+    <div id="message"></div>
+    <div id="power-ups">
+        <button id="show-all" class="power-up-button">Show All Cards (3)</button>
+        <button id="show-pairs" class="power-up-button">Show 2 Matching Pairs (3)</button>
+        <button id="show-random" class="power-up-button">Show 3 Random Cards (3)</button>
+        <button id="match-pair" class="power-up-button">Match 1 Pair (1)</button>
+    </div>
+</div>
+
+<script>
+    const BOARD_SIZE = 6;
+    const TOTAL_PAIRS = 18;
+    const GAME_DURATION = 5 * 60; // 5 minutes
+    let board = [];
+    let flippedCards = [];
+    let matchedPairs = 0;
+    let score = 0;
+    let gameTimer;
+    let gameTimeLeft = GAME_DURATION;
+
+    const emojis = ['🍎', '🍌', '🍒', '🍓', '🍊', '🍋', '🍍', '🍉', '🍇', '🍐', '🥝', '🥥', '🍅', '🥑', '🥕', '🌽', '🥔', '🍄'];
+    const powerUps = {
+        'show-all': 3,
+        'show-pairs': 3,
+        'show-random': 3,
+        'match-pair': 1
+    };
+
+    function createBoard() {
+        const boardElement = document.getElementById('board');
+        const shuffledEmojis = shuffleArray([...emojis, ...emojis]).slice(0, BOARD_SIZE * BOARD_SIZE);
+
+        for (let i = 0; i < BOARD_SIZE * BOARD_SIZE; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.dataset.index = i;
+            cell.onclick = () => handleCardClick(i);
+            boardElement.appendChild(cell);
+            board.push({ emoji: shuffledEmojis[i], flipped: false, matched: false });
+        }
+    }
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function handleCardClick(index) {
+        if (flippedCards.length === 2 || board[index].flipped || board[index].matched) return;
+
+        board[index].flipped = true;
+        flippedCards.push(index);
+        updateBoard();
+
+        if (flippedCards.length === 2) {
+            checkMatch();
+        }
+    }
+
+    function checkMatch() {
+        const [index1, index2] = flippedCards;
+        if (board[index1].emoji === board[index2].emoji) {
+            board[index1].matched = true;
+            board[index2].matched = true;
+            matchedPairs++;
+            score += 10;
+            updateScore();
+            updateBoard(); // Update board immediately to show matched pairs
+            showMessage("Match found! +10 points");
+            if (matchedPairs === TOTAL_PAIRS) {
+                endGame(true);
+            }
+        } else {
+            setTimeout(() => {
+                board[index1].flipped = false;
+                board[index2].flipped = false;
+                updateBoard();
+            }, 1000);
+            score = Math.max(0, score - 4);
+            updateScore();
+            showMessage("No match. -4 points");
+        }
+        flippedCards = [];
+    }
+
+    function updateBoard() {
+        const cells = document.querySelectorAll('.cell');
+        board.forEach((card, index) => {
+            cells[index].textContent = card.flipped || card.matched ? card.emoji : '';
+            cells[index].className = `cell ${card.matched ? 'matched' : ''}`;
+        });
+    }
+
+    function updateScore() {
+        document.getElementById('score-value').textContent = score;
+    }
+
+    function startGameTimer() {
+        gameTimer = setInterval(() => {
+            gameTimeLeft--;
+            const minutes = Math.floor(gameTimeLeft / 60);
+            const seconds = gameTimeLeft % 60;
+            document.getElementById('game-time-left').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            if (gameTimeLeft === 0) {
+                endGame(false);
+            }
+        }, 1000);
+    }
+
+    function endGame(won) {
+        clearInterval(gameTimer);
+        score += gameTimeLeft; // Add 1 point for each second left
+        const message = won ?
+            `Congratulations! You've completed the game!` :
+            `Time's up!`;
+        showMessage(`${message} Final score: ${score} (including ${gameTimeLeft} bonus points for remaining time)`);
+        disableAllPowerUps();
+    }
+
+    function showMessage(msg) {
+        document.getElementById('message').textContent = msg;
+    }
+
+    function usePowerUp(type) {
+        if (powerUps[type] > 0) {
+            powerUps[type]--;
+            document.getElementById(type).textContent = `${getPowerUpName(type)} (${powerUps[type]})`;
+            if (powerUps[type] === 0) {
+                document.getElementById(type).disabled = true;
+            }
+
+            switch(type) {
+                case 'show-all':
+                    showAllCards();
+                    break;
+                case 'show-pairs':
+                    showMatchingPairs();
+                    break;
+                case 'show-random':
+                    showRandomCards();
+                    break;
+                case 'match-pair':
+                    matchOnePair();
+                    break;
+            }
+        }
+    }
+
+    function showAllCards() {
+        board.forEach(card => card.flipped = true);
+        updateBoard();
+        setTimeout(() => {
+            board.forEach(card => {
+                if (!card.matched) card.flipped = false;
+            });
+            updateBoard();
+        }, 2000);
+        showMessage("All cards revealed for 2 seconds!");
+    }
+
+    function showMatchingPairs() {
+        const unmatched = board.filter(card => !card.matched);
+        const pairs = [];
+        const usedIndices = new Set();
+
+        while (pairs.length < 2 && usedIndices.size < unmatched.length) {
+            const randomIndex = Math.floor(Math.random() * unmatched.length);
+            if (!usedIndices.has(randomIndex)) {
+                const card = unmatched[randomIndex];
+                const matchingCard = unmatched.find((c, index) => c.emoji === card.emoji && index !== randomIndex && !usedIndices.has(index));
+                if (matchingCard) {
+                    pairs.push([card, matchingCard]);
+                    usedIndices.add(randomIndex);
+                    usedIndices.add(unmatched.indexOf(matchingCard));
+                }
+            }
+        }
+
+        if (pairs.length === 2) {
+            pairs.flat().forEach(card => card.flipped = true);
+            updateBoard();
+            setTimeout(() => {
+                pairs.flat().forEach(card => {
+                    if (!card.matched) card.flipped = false;
+                });
+                updateBoard();
+            }, 2000);
+            showMessage("Two matching pairs revealed for 2 seconds!");
+        } else {
+            showMessage("Not enough matching pairs available!");
+        }
+    }
+
+    function showRandomCards() {
+        const unrevealedCards = board.filter(card => !card.matched && !card.flipped);
+        const toReveal = shuffleArray(unrevealedCards).slice(0, 3);
+        toReveal.forEach(card => card.flipped = true);
+        updateBoard();
+        setTimeout(() => {
+            toReveal.forEach(card => {
+                if (!card.matched) card.flipped = false;
+            });
+            updateBoard();
+        }, 2000);
+        showMessage("Three random cards revealed for 2 seconds!");
+    }
+
+    function matchOnePair() {
+        const unmatched = board.filter(card => !card.matched);
+        for (let i = 0; i < unmatched.length; i++) {
+            for (let j = i + 1; j < unmatched.length; j++) {
+                if (unmatched[i].emoji === unmatched[j].emoji) {
+                    unmatched[i].matched = unmatched[j].matched = true;
+                    matchedPairs++;
+                    score += 10;
+                    updateScore();
+                    updateBoard();
+                    showMessage("One pair matched for you! +10 points");
+                    if (matchedPairs === TOTAL_PAIRS) {
+                        endGame(true);
+                    }
+                    return;
+                }
+            }
+        }
+        showMessage("No pairs left to match!");
+    }
+
+    function getPowerUpName(type) {
+        switch(type) {
+            case 'show-all': return 'Show All Cards';
+            case 'show-pairs': return 'Show 2 Matching Pairs';
+            case 'show-random': return 'Show 3 Random Cards';
+            case 'match-pair': return 'Match 1 Pair';
+        }
+    }
+
+    function resetPowerUps() {
+        for (let type in powerUps) {
+            powerUps[type] = type === 'match-pair' ? 1 : 3;
+            const button = document.getElementById(type);
+            button.textContent = `${getPowerUpName(type)} (${powerUps[type]})`;
+            button.disabled = false;
+        }
+    }
+
+    function disableAllPowerUps() {
+        for (let type in powerUps) {
+            document.getElementById(type).disabled = true;
+        }
+    }
+
+    createBoard();
+    startGameTimer();
+    resetPowerUps();
+
+    document.getElementById('show-all').addEventListener('click', () => usePowerUp('show-all'));
+    document.getElementById('show-pairs').addEventListener('click', () => usePowerUp('show-pairs'));
+    document.getElementById('show-random').addEventListener('click', () => usePowerUp('show-random'));
+    document.getElementById('match-pair').addEventListener('click', () => usePowerUp('match-pair'));
+</script>
+</body>
+</html>
