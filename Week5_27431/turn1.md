@@ -30,7 +30,6 @@
          justify-content: center;
          align-items: center;
          flex-direction: column;
-         height: 100vh;
          background-color: #1e1e1e;
          font-family: 'Arial', sans-serif;
          color: white;
@@ -42,7 +41,6 @@
       #board-container {
          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
          border-radius: 8px;
-         overflow: hidden;
       }
       .dice-container {
          display: flex;
