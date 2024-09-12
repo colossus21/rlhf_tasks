@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dot Reaction Game</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #gameBoard {
+            display: grid;
+            grid-template-columns: repeat(6, 50px);
+            grid-gap: 5px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            border: 1px solid #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 24px;
+        }
+        .red { background-color: #ff4d4d; }
+        .blue { background-color: #4da6ff; }
+        #turnIndicator {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="text-center">Dot Reaction</h1>
+    <div id="turnIndicator">Player Red's Turn</div>
+    <div id="gameBoard"></div>
+    <button id="playAgain" class="btn btn-primary d-none">Play Again?</button>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script>
+    (function() {
+        const board = [];
+        const size = 6;
+        let currentPlayer = 'red';
+        let gameOver = false;
+
+        function createBoard() {
+            const gameBoard = document.getElementById('gameBoard');
+            for (let i = 0; i < size * size; i++) {
+                let cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.row = Math.floor(i / size);
+                cell.dataset.col = i % size;
+                cell.onclick = cellClicked;
+                gameBoard.appendChild(cell);
+                board.push({element: cell, dots: 0, player: null});
+            }
+        }
+
+        function cellClicked() {
+            if (gameOver) return;
+            const row = this.dataset.row;
+            const col = this.dataset.col;
+            const index = size * row + parseInt(col);
+
+            if ((board[index].dots === 0 && currentPlayer === 'red') || (board[index].dots === 0 && currentPlayer === 'blue')) {
+                // First move for each player
+                if ((currentPlayer === 'red' && board.filter(cell => cell.player === 'red').length === 0) ||
+                    (currentPlayer === 'blue' && board.filter(cell => cell.player === 'blue').length === 0)) {
+                    updateCell(index, 3);
+                    switchPlayer();
+                    return;
+                }
+            }
+
+            if (board[index].player === currentPlayer) {
+                updateCell(index, board[index].dots + 1);
+                if (board[index].dots + 1 === 3) {
+                    explode(index);
+                } else {
+                    switchPlayer();
+                }
+            }
+        }
+
+        function updateCell(index, dots) {
+            board[index].dots = dots > 3 ? 3 : dots;
+            board[index].player = currentPlayer;
+            board[index].element.textContent = dots;
+            board[index].element.className = 'cell ' + currentPlayer;
+        }
+
+        function explode(index) {
+            const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+            for (let dir of directions) {
+                const newIndex = index + dir[0] * size + dir[1];
+                if (newIndex >= 0 && newIndex < size * size) {
+                    if (board[newIndex].player) {
+                        let newDots = board[newIndex].dots + 1;
+                        if (newDots > 3) {
+                            explode(newIndex);
+                        } else {
+                            updateCell(newIndex, newDots);
+                        }
+                    } else {
+                        updateCell(newIndex, 1);
+                    }
+                }
+            }
+            // Reset the exploded cell
+            updateCell(index, 0);
+            checkGameOver();
+            if (!gameOver) switchPlayer();
+        }
+
+        function switchPlayer() {
+            currentPlayer = currentPlayer === 'red' ? 'blue' : 'red';
+            document.getElementById('turnIndicator').textContent = `Player ${currentPlayer.charAt(0).toUpperCase() + currentPlayer.slice(1)}'s Turn`;
+        }
+
+        function checkGameOver() {
+            const redDots = board.filter(cell => cell.player === 'red').length;
+            const blueDots = board.filter(cell => cell.player === 'blue').length;
+            if (redDots === 0 || blueDots === 0) {
+                gameOver = true;
+                document.getElementById('turnIndicator').textContent = `${currentPlayer === 'red' ? 'Blue' : 'Red'} Wins!`;
+                document.getElementById('playAgain').classList.remove('d-none');
+            }
+        }
+
+        document.getElementById('playAgain').onclick = function() {
+            board.forEach(cell => {
+                cell.dots = 0;
+                cell.player = null;
+                cell.element.textContent = '';
+                cell.element.className = 'cell';
+            });
+            gameOver = false;
+            currentPlayer = 'red';
+            this.classList.add('d-none');
+            document.getElementById('turnIndicator').textContent = "Player Red's Turn";
+        };
+
+        createBoard();
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+Create a game called "Dot Reaction" in JavaScript in which:
+i) The game has a 6x6 board.
+ii) There would be 2 players - Red (P1) and Blue (P2). A player can click their pieces only. The pieces can be 1-dotted, 2-dotted and 3-dotted.
+iii) However, in the first turn for each player they can place a 3-dotted piece in any cell of the board.
+iv) When 1-dotted piece is clicked it becomes 2-dotted, when 2-dotted is clicked becomes 3-dotted.
+When 3-dotted is clicked, pieces explodes creating 4 1-dotted pieces at top-bottom-left-right relative to that dot, if there are existing pieces on those spaces, the dots add to it rather than replacing it.
+For example, a piece exploded and there's a 1-dotted piece on the left, it becomes a 2-dotted piece, if there's a 3-dotted that, that 3-dotted piece explodes.
+v) After the game ends, declare the winner and ask the players if they want to play again.
+vi) Make the layout nice and centered, add turn indicator above the game and add animations if required.

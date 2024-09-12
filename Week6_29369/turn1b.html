@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dot Reaction</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(6, 50px);
+            grid-gap: 5px;
+            margin-top: 20px;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            background-color: #ddd;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .cell.red { background-color: #ff6b6b; }
+        .cell.blue { background-color: #4ecdc4; }
+        .dot { background: white; border-radius: 50%; width: 10px; height: 10px; margin: 2px; }
+        #turnIndicator {
+            margin: 20px 0;
+            font-size: 1.5em;
+        }
+        #restart {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1em;
+        }
+        .explode {
+            animation: explode 0.5s ease-out;
+        }
+        @keyframes explode {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="turnIndicator">Player Red's Turn</div>
+<div id="board"></div>
+<button id="restart" style="display:none;">Play Again</button>
+
+<script>
+    const boardElement = document.getElementById('board');
+    const turnIndicator = document.getElementById('turnIndicator');
+    const restartButton = document.getElementById('restart');
+    let board = Array(6).fill().map(() => Array(6).fill(0));
+    let currentPlayer = 'red';
+    let gameActive = true;
+
+    function createBoard() {
+        boardElement.innerHTML = '';
+        board.forEach((row, i) => {
+            row.forEach((cell, j) => {
+                const cellElement = document.createElement('div');
+                cellElement.className = `cell ${cell > 0 ? currentPlayer : ''}`;
+                cellElement.onclick = () => handleCellClick(i, j);
+                for(let d = 0; d < cell % 3; d++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'dot';
+                    cellElement.appendChild(dot);
+                }
+                boardElement.appendChild(cellElement);
+            });
+        });
+        updateTurnIndicator();
+    }
+
+    function handleCellClick(row, col) {
+        if (!gameActive || board[row][col] === 0 || board[row][col] >= 3) return;
+        if((board[row][col] === 0 && (currentPlayer === 'red' || currentPlayer === 'blue')) ||
+            (board[row][col] > 0 && board[row][col] < 3 && board[row][col] % 3 === (currentPlayer === 'red' ? 1 : 2))) {
+            if(board[row][col] === 0) {
+                board[row][col] = currentPlayer === 'red' ? 3 : 4; // 3 or 4 for initial placement
+            } else {
+                board[row][col]++;
+            }
+            if(board[row][col] === 3 || board[row][col] === 4) explode(row, col);
+            checkGameEnd();
+            currentPlayer = currentPlayer === 'red' ? 'blue' : 'red';
+            createBoard();
+        }
+    }
+
+    function explode(row, col) {
+        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+        directions.forEach(([dx, dy]) => {
+            const newRow = row + dx, newCol = col + dy;
+            if(newRow >= 0 && newRow < 6 && newCol >= 0 && newCol < 6) {
+                if(board[newRow][newCol] === 3 || board[newRow][newCol] === 4) {
+                    explode(newRow, newCol);
+                }
+                board[newRow][newCol] = (board[newRow][newCol] + 1) % 6;
+            }
+        });
+        document.querySelector(`#board > div:nth-child(${row * 6 + col + 1})`).classList.add('explode');
+        setTimeout(() => {
+            document.querySelector(`#board > div:nth-child(${row * 6 + col + 1})`).classList.remove('explode');
+        }, 500);
+    }
+
+    function checkGameEnd() {
+        if(!board.flat().some(cell => cell === 1 || cell === 2)) {
+            gameActive = false;
+            const redCount = board.flat().filter(cell => cell === 3).length;
+            const blueCount = board.flat().filter(cell => cell === 4).length;
+            turnIndicator.textContent = redCount > blueCount ? 'Red Wins!' : (blueCount > redCount ? 'Blue Wins!' : 'It\'s a Tie!');
+            restartButton.style.display = 'block';
+        }
+    }
+
+    function updateTurnIndicator() {
+        turnIndicator.textContent = `Player ${currentPlayer.charAt(0).toUpperCase() + currentPlayer.slice(1)}'s Turn`;
+    }
+
+    restartButton.onclick = () => {
+        board = Array(6).fill().map(() => Array(6).fill(0));
+        currentPlayer = 'red';
+        gameActive = true;
+        restartButton.style.display = 'none';
+        createBoard();
+    };
+
+    createBoard();
+</script>
+
+</body>
+</html>
