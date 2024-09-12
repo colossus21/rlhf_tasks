@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Micro Civ</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        #gameBoard {
+            display: grid;
+            grid-template-columns: repeat(6, 50px);
+            grid-gap: 2px;
+            margin: 20px auto;
+            width: 312px;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        .player1 { background-color: #ffcccc; }
+        .player2 { background-color: #cceeff; }
+        .tooltip {
+            visibility: hidden;
+            background-color: black;
+            color: #fff;
+            text-align: center;
+            padding: 5px 0;
+            border-radius: 6px;
+            position: absolute;
+            z-index: 1;
+        }
+        button:hover .tooltip {
+            visibility: visible;
+        }
+        #status, #resources, #controls { margin: 10px 0; text-align: center; }
+        #currentPlayer, #turnCount { font-weight: bold; }
+        button { margin: 5px; position: relative; }
+    </style>
+</head>
+<body>
+
+<div id="gameBoard"></div>
+<div id="controls">
+    <button data-type="farm" title="Farm (🌾): Cost 1 Food">🌾</button>
+    <button data-type="mine" title="Mine (⛏️): Cost 1 Food">⛏️</button>
+    <button data-type="military" title="Military (⚔️): Cost 2 Food, 2 Gold">⚔️</button>
+    <button id="skipTurn">Skip Turn</button>
+</div>
+<div id="status">
+    <span id="currentPlayer"></span>'s Turn | Turn: <span id="turnCount">1</span>
+</div>
+<div id="resources"></div>
+<div id="message"></div>
+<div id="restart" style="display:none;"><button>Restart Game</button></div>
+
+<script>
+    let currentPlayer = 1;
+    let turnCount = 1;
+    let resources = {1: {food: 2, gold: 0}, 2: {food: 2, gold: 0}};
+    let board = Array(6).fill().map(() => Array(6).fill(null));
+    const players = {1: 'Player 1', 2: 'Player 2'};
+
+    function updateDisplay() {
+        $('#currentPlayer').text(players[currentPlayer]);
+        $('#turnCount').text(turnCount);
+        $('#resources').html(`Player 1: Food: ${resources[1].food}, Gold: ${resources[1].gold} | Player 2: Food: ${resources[2].food}, Gold: ${resources[2].gold}`);
+        $('#gameBoard .cell').each(function(i) {
+            const row = Math.floor(i / 6);
+            const col = i % 6;
+            if (board[row][col]) {
+                $(this).html(board[row][col].emoji).addClass('player' + board[row][col].player);
+            } else {
+                $(this).html('').removeClass('player1 player2');
+            }
+        });
+        checkButtonAvailability();
+    }
+
+    function placeBuilding(type, row, col) {
+        if (board[row][col] || !canAfford(currentPlayer, type)) return;
+        const cost = {farm: {food: 1}, mine: {food: 1}, military: {food: 2, gold: 2}}[type];
+        resources[currentPlayer].food -= cost.food;
+        if (cost.gold) resources[currentPlayer].gold -= cost.gold;
+
+        board[row][col] = {type, player: currentPlayer, emoji: {farm: '🌾', mine: '⛏️', military: '⚔️'}[type]};
+        if (type === 'military') {
+            for (let r = Math.max(0, row-1); r <= Math.min(5, row+1); r++) {
+                for (let c = Math.max(0, col-1); c <= Math.min(5, col+1); c++) {
+                    if (!board[r][c]) board[r][c] = {type: 'controlled', player: currentPlayer, emoji: ''};
+                }
+            }
+        }
+        endTurn();
+    }
+
+    function canAfford(player, type) {
+        const cost = {farm: 1, mine: 1, military: 2}[type];
+        return resources[player].food >= cost && (type !== 'military' || resources[player].gold >= 2);
+    }
+
+    function checkButtonAvailability() {
+        ['farm', 'mine', 'military'].forEach(type => {
+            $(`button[data-type="${type}"]`).prop('disabled', !canAfford(currentPlayer, type));
+        });
+    }
+
+    function endTurn() {
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+        turnCount++;
+        if (turnCount > 36) {
+            endGame();
+        } else {
+            updateDisplay();
+        }
+    }
+
+    function endGame() {
+        let foodCount = {1: 0, 2: 0};
+        board.forEach(row => row.forEach(cell => {
+            if (cell && cell.type === 'farm') foodCount[cell.player]++;
+        }));
+        let winner = foodCount[1] > foodCount[2] ? 'Player 1' : (foodCount[1] < foodCount[2] ? 'Player 2' : 'Tie');
+        $('#message').text(`Game Over! ${winner} wins with most food!`);
+        $('#restart').show();
+    }
+
+    $('#gameBoard').on('click', '.cell', function() {
+        const index = $(this).index();
+        const row = Math.floor(index / 6), col = index % 6;
+        if (!board[row][col]) {
+            placeBuilding('farm', row, col); // Default to farm if no building selected
+        }
+    });
+
+    $('#controls').on('click', 'button', function() {
+        const type = $(this).data('type');
+        if (type === 'skipTurn') {
+            endTurn();
+        } else {
+            $('.cell').on('click', function() {
+                const index = $(this).index();
+                placeBuilding(type, Math.floor(index / 6), index % 6);
+                $('.cell').off('click'); // Remove the click handler after one use
+            });
+        }
+    });
+
+    $('#restart button').on('click', function() {
+        currentPlayer = 1;
+        turnCount = 1;
+        resources = {1: {food: 2, gold: 0}, 2: {food: 2, gold: 0}};
+        board = Array(6).fill().map(() => Array(6).fill(null));
+        $('#message').text('');
+        $('#restart').hide();
+        updateDisplay();
+    });
+
+    updateDisplay();
+</script>
+
+</body>
+</html>

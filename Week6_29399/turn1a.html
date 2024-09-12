@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Micro Civ</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f0f0f0; }
+        #gameBoard { display: grid; grid-template-columns: repeat(6, 50px); gap: 2px; margin: 20px auto; }
+        .cell { width: 50px; height: 50px; background: #e0e0e0; display: flex; justify-content: center; align-items: center; font-size: 24px; cursor: pointer; }
+        .cell.red { background: rgba(255, 0, 0, 0.3); }
+        .cell.blue { background: rgba(0, 0, 255, 0.3); }
+        .button { padding: 10px; margin: 5px; cursor: pointer; border: none; background: #4CAF50; color: white; }
+        .button:disabled { background: #ddd; cursor: not-allowed; }
+        .info { text-align: center; margin-top: 20px; }
+        .tooltip { position: relative; display: inline-block; }
+        .tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: black; color: #fff; text-align: center; border-radius: 6px; padding: 5px 0; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -60px; opacity: 0; transition: opacity 0.3s; }
+        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+    </style>
+</head>
+<body>
+
+<div id="gameContainer">
+    <div id="playerInfo" class="info"></div>
+    <div id="gameBoard"></div>
+    <div id="controls" class="info">
+        <button class="button tooltip" id="buildFarm">🌾<span class="tooltiptext">Cost: 1 Food</span></button>
+        <button class="button tooltip" id="buildMining">⛏️<span class="tooltiptext">Cost: 1 Food, 1 Gold</span></button>
+        <button class="button tooltip" id="buildMilitary">⚔️<span class="tooltiptext">Cost: 2 Food, 2 Gold</span></button>
+        <button class="button" id="skipTurn">Skip Turn</button>
+    </div>
+    <div id="resourceDisplay" class="info"></div>
+    <div id="messageDisplay" class="info"></div>
+</div>
+
+<script>
+    const board = document.getElementById('gameBoard');
+    const playerInfo = document.getElementById('playerInfo');
+    const resourceDisplay = document.getElementById('resourceDisplay');
+    const messageDisplay = document.getElementById('messageDisplay');
+    const buildButtons = {
+        farm: document.getElementById('buildFarm'),
+        mining: document.getElementById('buildMining'),
+        military: document.getElementById('buildMilitary'),
+        skip: document.getElementById('skipTurn')
+    };
+
+    let state = {
+        grid: Array(36).fill(null),
+        currentPlayer: 'red',
+        players: {
+            red: { food: 5, gold: 0 },
+            blue: { food: 5, gold: 0 }
+        },
+        turn: 1
+    };
+
+    function initializeGame() {
+        renderBoard();
+        updateDisplay();
+        bindEvents();
+    }
+
+    function renderBoard() {
+        board.innerHTML = '';
+        state.grid.forEach((cell, index) => {
+            const div = document.createElement('div');
+            div.className = `cell ${cell || ''}`;
+            div.textContent = cell === 'red' ? '🔴' : cell === 'blue' ? '🔵' : cell;
+            div.onclick = () => placeBuilding(index);
+            board.appendChild(div);
+        });
+    }
+
+    function placeBuilding(index) {
+        const buildingType = document.activeElement.id.replace('build', '').toLowerCase();
+        if (canBuild(buildingType)) {
+            const cost = { farm: { food: 1 }, mining: { food: 1, gold: 1 }, military: { food: 2, gold: 2 } }[buildingType];
+            state.players[state.currentPlayer].food -= cost.food;
+            state.players[state.currentPlayer].gold -= cost.gold || 0;
+            state.grid[index] = buildingType === 'military' ? state.currentPlayer : buildingSymbols[buildingType];
+            if (buildingType === 'farm') state.players[state.currentPlayer].food++;
+            if (buildingType === 'mining') state.players[state.currentPlayer].gold++;
+            updateMilitaryInfluence();
+            nextTurn();
+        } else {
+            messageDisplay.textContent = "Not enough resources!";
+        }
+    }
+
+    function canBuild(building) {
+        const costs = { farm: 1, mining: 1, military: 2 };
+        const player = state.players[state.currentPlayer];
+        return player.food >= costs[building] && (building !== 'military' || player.gold >= 2);
+    }
+
+    function updateMilitaryInfluence() {
+        const militaryIndices = state.grid.map((cell, idx) => cell === state.currentPlayer ? idx : null).filter(i => i !== null);
+        militaryIndices.forEach(idx => {
+            for (let i = -1; i <= 1; i++) {
+                for (let j = -1; j <= 1; j++) {
+                    const neighborIdx = idx + i + j * 6;
+                    if (neighborIdx >= 0 && neighborIdx < 36 && state.grid[neighborIdx] === null) {
+                        state.grid[neighborIdx] = state.currentPlayer === 'red' ? 'red' : 'blue';
+                    }
+                }
+            }
+        });
+    }
+
+    function nextTurn() {
+        state.currentPlayer = state.currentPlayer === 'red' ? 'blue' : 'red';
+        state.turn++;
+        if (state.grid.every(cell => cell)) {
+            endGame();
+        } else {
+            updateDisplay();
+        }
+    }
+
+    function endGame() {
+        const redFood = state.players.red.food;
+        const blueFood = state.players.blue.food;
+        messageDisplay.textContent = redFood > blueFood ? "Red Wins!" : blueFood > redFood ? "Blue Wins!" : "It's a Tie!";
+        const restartButton = document.createElement('button');
+        restartButton.textContent = 'Restart Game';
+        restartButton.onclick = initializeGame;
+        restartButton.className = 'button';
+        messageDisplay.appendChild(restartButton);
+    }
+
+    function updateDisplay() {
+        playerInfo.textContent = `Current Player: ${state.currentPlayer === 'red' ? '🔴 Red' : '🔵 Blue'} | Turn: ${state.turn}`;
+        resourceDisplay.textContent = `Red: 🌾${state.players.red.food} 💰${state.players.red.gold} | Blue: 🌾${state.players.blue.food} 💰${state.players.blue.gold}`;
+        ['farm', 'mining', 'military'].forEach(type => {
+            buildButtons[type].disabled = !canBuild(type);
+        });
+        renderBoard();
+    }
+
+    function bindEvents() {
+        for (let btn in buildButtons) {
+            buildButtons[btn].onclick = () => document.activeElement.blur();
+        }
+    }
+
+    const buildingSymbols = { farm: '🌾', mining: '⛏️', military: '⚔️' };
+    initializeGame();
+</script>
+
+</body>
+</html>
