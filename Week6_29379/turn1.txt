@@ -1,0 +1,6 @@
+I want to create a game similar to Candy Crush but with colors. Can you create the following:
+1. A 6x6 grid of colored cells, drag and drop functionality to swap adjacent cells. The player has to match colors.
+2. Match and remove groups of 3 or more cells of the same color, either horizontally or vertically.
+3. New cells should drop after cells are removed, also, chain reaction possible.
+4. Add score tracking, 10 points per removed cell. Add a shuffle button below the game that shuffles colors, shuffle takes a move.
+5. The player can score as much as he/she can within 20 moves. Game is over when moves run out.

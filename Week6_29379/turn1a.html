@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Crush</title>
+    <style>
+        #gameBoard {
+            display: grid;
+            grid-template-columns: repeat(6, 50px);
+            grid-gap: 5px;
+            width: fit-content;
+            margin: 20px auto;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            border: 1px solid #000;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #score, #moves, #shuffle {
+            text-align: center;
+            margin: 10px 0;
+        }
+        #shuffle {
+            cursor: pointer;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+<div id="game">
+    <div id="gameBoard"></div>
+    <div id="score">Score: <span id="scoreValue">0</span></div>
+    <div id="moves">Moves Left: <span id="moveCount">20</span></div>
+    <button id="shuffle">Shuffle</button>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const board = document.getElementById('gameBoard');
+        const scoreValue = document.getElementById('scoreValue');
+        const moveCount = document.getElementById('moveCount');
+        const shuffleBtn = document.getElementById('shuffle');
+        let movesLeft = 20;
+        let score = 0;
+        const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
+        let selectedCell = null;
+        let cells = [];
+
+        function createBoard() {
+            for(let i = 0; i < 36; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                cell.addEventListener('click', () => selectCell(cell));
+                board.appendChild(cell);
+            }
+            cells = Array.from(board.children);
+        }
+
+        function selectCell(cell) {
+            if (selectedCell === null) {
+                selectedCell = cell;
+            } else if (selectedCell === cell) {
+                selectedCell = null;
+            } else {
+                if (areAdjacent(selectedCell, cell)) {
+                    swapCells(selectedCell, cell);
+                    checkMatches();
+                    selectedCell = null;
+                    updateMoves();
+                } else {
+                    selectedCell = cell;
+                }
+            }
+        }
+
+        function areAdjacent(cell1, cell2) {
+            const index1 = cells.indexOf(cell1);
+            const index2 = cells.indexOf(cell2);
+            return Math.abs(index1 - index2) === 1 || Math.abs(index1 - index2) === 6;
+        }
+
+        function swapCells(cell1, cell2) {
+            const tempColor = cell1.style.backgroundColor;
+            cell1.style.backgroundColor = cell2.style.backgroundColor;
+            cell2.style.backgroundColor = tempColor;
+        }
+
+        function checkMatches() {
+            let toRemove = new Set();
+            for(let i = 0; i < cells.length; i++) {
+                checkDirection(i, 1, 0, toRemove); // Horizontal
+                checkDirection(i, 0, 1, toRemove); // Vertical
+            }
+            if(toRemove.size > 0) {
+                removeCells(Array.from(toRemove));
+            }
+        }
+
+        function checkDirection(start, dx, dy, toRemove) {
+            let line = [cells[start]];
+            for(let i = 1; start + i * (dx + dy * 6) < 36; i++) {
+                let nextIndex = start + i * (dx + dy * 6);
+                if(dx === 1 && nextIndex % 6 === 0) break; // Check for wrap in horizontal
+                if(cells[start].style.backgroundColor === cells[nextIndex].style.backgroundColor) {
+                    line.push(cells[nextIndex]);
+                } else {
+                    break;
+                }
+            }
+            if(line.length >= 3) line.forEach(cell => toRemove.add(cell));
+        }
+
+        function removeCells(matchedCells) {
+            score += matchedCells.length * 10;
+            scoreValue.textContent = score;
+            matchedCells.forEach(cell => {
+                setTimeout(() => {
+                    cell.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    dropCells();
+                }, 300);
+            });
+        }
+
+        function dropCells() {
+            for(let col = 0; col < 6; col++) {
+                for(let row = 5; row > 0; row--) {
+                    if(!cells[row * 6 + col].style.backgroundColor) {
+                        let r = row;
+                        while(r > 0 && !cells[r * 6 + col].style.backgroundColor) r--;
+                        if(r >= 0) {
+                            cells[row * 6 + col].style.backgroundColor = cells[r * 6 + col].style.backgroundColor;
+                            cells[r * 6 + col].style.backgroundColor = '';
+                        }
+                    }
+                }
+            }
+            setTimeout(checkMatches, 300); // Check for chain reactions
+        }
+
+        function updateMoves() {
+            movesLeft--;
+            moveCount.textContent = movesLeft;
+            if(movesLeft === 0) {
+                alert('Game Over! Your score: ' + score);
+            }
+        }
+
+        shuffleBtn.onclick = function() {
+            if(movesLeft > 0) {
+                cells.forEach(cell => {
+                    cell.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                });
+                updateMoves();
+                checkMatches();
+            }
+        };
+
+        createBoard();
+    });
+</script>
+</body>
+</html>

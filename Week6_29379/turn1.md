@@ -1,0 +1,523 @@
+### Code Plan:
+
+1. Initialize the 6x6 game board and variables.
+2. Implement drag and drop functionality.
+3. Create matching and removal logic.
+4. Implement cell dropping and chain reactions.
+5. Add score tracking.
+6. Create a shuffle button.
+7. Implement move limit and game over condition.
+
+### Code:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chroma Crush</title>
+    <style>
+        /* Game container and board styles */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #game-container {
+            text-align: center;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(6, 60px);
+            gap: 4px;
+            margin-top: 20px;
+            background-color: #ddd;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        /* Individual cell styles */
+        .cell {
+            width: 60px;
+            height: 60px;
+            border: 1px solid #aaa;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: grab;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .cell.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+        /* Score and moves display styles */
+        #score {
+            margin-top: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        #moves {
+            margin-top: 10px;
+            font-size: 18px;
+        }
+        /* Particle effect styles for explosions */
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        #shuffle-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #shuffle-button:hover {
+            background-color: #45a049;
+        }
+        /* Game Over screen */
+        #game-over {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            font-size: 32px;
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 100;
+        }
+        #restart-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #restart-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+<div id="game-container">
+    <h1>Chroma Crush</h1>
+    <div id="game-over">Game Over! Your score: <span id="final-score"></span> <button id="restart-button">Restart</button></div>
+    <div id="score">Score: 0</div>
+    <div id="moves">Moves: 20</div>
+    <div id="board"></div>
+    <button id="shuffle-button">Shuffle</button>
+</div>
+
+<script>
+    // Game constants and variables
+    const BOARD_SIZE = 6;
+    const COLORS = ['#ff4136', '#0074d9', '#2ecc40', '#ffdc00', '#ff851b', '#f012be'];
+    let board = [];
+    let score = 0;
+    let moves = 20;
+    let draggedCell = null;
+    let draggedOverCell = null;
+
+    // Initialize the game board
+    function createBoard() {
+        const boardElement = document.getElementById('board');
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            board[i] = [];
+            for (let j = 0; j < BOARD_SIZE; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.draggable = true;
+                // Add drag and drop event listeners
+                cell.addEventListener('dragstart', dragStart);
+                cell.addEventListener('dragover', dragOver);
+                cell.addEventListener('dragenter', dragEnter);
+                cell.addEventListener('dragleave', dragLeave);
+                cell.addEventListener('drop', drop);
+                cell.addEventListener('dragend', dragEnd);
+                document.getElementById('shuffle-button').addEventListener('click', shuffleBoard);
+                document.getElementById('restart-button').addEventListener('click', () => window.location.reload())
+                boardElement.appendChild(cell);
+                board[i][j] = getRandomColor();
+            }
+        }
+        updateBoard();
+    }
+
+    // Update the visual representation of the board
+    function updateBoard() {
+        const cells = document.querySelectorAll('.cell');
+        board.flat().forEach((color, index) => {
+            cells[index].style.backgroundColor = color;
+        });
+        document.getElementById('score').textContent = `Score: ${score}`;
+        document.getElementById('moves').textContent = `Moves: ${moves}`;
+    }
+
+    function shuffleBoard() {
+        let hasMatches = true;
+
+        while (hasMatches) {
+            // Randomize the board
+            for (let i = 0; i < BOARD_SIZE; i++) {
+                for (let j = 0; j < BOARD_SIZE; j++) {
+                    board[i][j] = getRandomColor();
+                }
+            }
+
+            updateBoard();
+
+            // Check for any matches after shuffling
+            hasMatches = checkMatches();
+
+            // If there are matches, we reshuffle again
+            // If there are no matches, the board is good and breaks the loop
+        }
+
+        if (moves <= 0) {
+            endGame()
+        }
+
+        moves--
+        // Finally, update the board without removing matches
+        updateBoard();
+    }
+
+    // Get a random color from the COLORS array
+    function getRandomColor() {
+        return COLORS[Math.floor(Math.random() * COLORS.length)];
+    }
+
+    // Drag and drop event handlers
+    function dragStart(e) {
+        draggedCell = e.target;
+        setTimeout(() => e.target.classList.add('dragging'), 0);
+    }
+
+    function dragOver(e) {
+        e.preventDefault();
+    }
+
+    function dragEnter(e) {
+        e.preventDefault();
+        if (e.target !== draggedCell) {
+            e.target.style.transform = 'scale(1.1)';
+        }
+    }
+
+    function dragLeave(e) {
+        e.target.style.transform = '';
+    }
+
+    function drop(e) {
+        e.preventDefault();
+        draggedOverCell = e.target;
+    }
+
+    function dragEnd() {
+        this.classList.remove('dragging');
+        if (draggedOverCell && draggedCell !== draggedOverCell) {
+            const cells = Array.from(document.querySelectorAll('.cell'));
+            const fromIndex = cells.indexOf(draggedCell);
+            const toIndex = cells.indexOf(draggedOverCell);
+            const [fromRow, fromCol] = [Math.floor(fromIndex / BOARD_SIZE), fromIndex % BOARD_SIZE];
+            const [toRow, toCol] = [Math.floor(toIndex / BOARD_SIZE), toIndex % BOARD_SIZE];
+
+            if (isAdjacent(fromRow, fromCol, toRow, toCol)) {
+                swapCells(fromRow, fromCol, toRow, toCol);
+                if (checkMatches()) {
+                    moves--;
+                    removeMatches();
+                } else {
+                    swapCells(fromRow, fromCol, toRow, toCol);
+                }
+            }
+        }
+        draggedOverCell = null;
+        updateBoard();
+    }
+
+    // Check if two cells are adjacent
+    function isAdjacent(row1, col1, row2, col2) {
+        const rowDiff = Math.abs(row1 - row2);
+        const colDiff = Math.abs(col1 - col2);
+        return (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1);
+    }
+
+    // Swap two cells on the board
+    function swapCells(row1, col1, row2, col2) {
+        const temp = board[row1][col1];
+        board[row1][col1] = board[row2][col2];
+        board[row2][col2] = temp;
+        animateSwap(row1, col1, row2, col2);
+    }
+
+    // Animate the swapping of two cells
+    function animateSwap(row1, col1, row2, col2) {
+        const cells = document.querySelectorAll('.cell');
+        const cell1 = cells[row1 * BOARD_SIZE + col1];
+        const cell2 = cells[row2 * BOARD_SIZE + col2];
+        const rect1 = cell1.getBoundingClientRect();
+        const rect2 = cell2.getBoundingClientRect();
+
+        const dx = rect2.left - rect1.left;
+        const dy = rect2.top - rect1.top;
+
+        cell1.style.transition = 'transform 0.3s';
+        cell2.style.transition = 'transform 0.3s';
+        cell1.style.transform = `translate(${dx}px, ${dy}px)`;
+        cell2.style.transform = `translate(${-dx}px, ${-dy}px)`;
+
+        setTimeout(() => {
+            cell1.style.transition = '';
+            cell2.style.transition = '';
+            cell1.style.transform = '';
+            cell2.style.transform = '';
+            updateBoard();
+        }, 300);
+    }
+
+    // Check for matches on the board
+    function checkMatches() {
+        let matched = false;
+        let matchedCells = new Set();
+
+        // Check horizontal matches
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            let consecutiveCount = 1;
+            let startJ = 0;
+            for (let j = 1; j < BOARD_SIZE; j++) {
+                if (board[i][j] === board[i][j-1]) {
+                    consecutiveCount++;
+                } else {
+                    if (consecutiveCount >= 3) {
+                        for (let k = startJ; k < j; k++) {
+                            matchedCells.add(`${i},${k}`);
+                        }
+                        matched = true;
+                    }
+                    consecutiveCount = 1;
+                    startJ = j;
+                }
+            }
+            if (consecutiveCount >= 3) {
+                for (let k = startJ; k < BOARD_SIZE; k++) {
+                    matchedCells.add(`${i},${k}`);
+                }
+                matched = true;
+            }
+        }
+
+        // Check vertical matches
+        for (let j = 0; j < BOARD_SIZE; j++) {
+            let consecutiveCount = 1;
+            let startI = 0;
+            for (let i = 1; i < BOARD_SIZE; i++) {
+                if (board[i][j] === board[i-1][j]) {
+                    consecutiveCount++;
+                } else {
+                    if (consecutiveCount >= 3) {
+                        for (let k = startI; k < i; k++) {
+                            matchedCells.add(`${k},${j}`);
+                        }
+                        matched = true;
+                    }
+                    consecutiveCount = 1;
+                    startI = i;
+                }
+            }
+            if (consecutiveCount >= 3) {
+                for (let k = startI; k < BOARD_SIZE; k++) {
+                    matchedCells.add(`${k},${j}`);
+                }
+                matched = true;
+            }
+        }
+
+        // Remove matched cells and update score
+        matchedCells.forEach(coord => {
+            const [i, j] = coord.split(',').map(Number);
+            if (board[i][j] !== null) {
+                createExplosion(i, j);
+                board[i][j] = null;
+                score += 10; // 10 points per cell
+            }
+        });
+
+        return matched;
+    }
+
+    // Create explosion effect for matched cells
+    function createExplosion(row, col) {
+        const cell = document.querySelectorAll('.cell')[row * BOARD_SIZE + col];
+        const rect = cell.getBoundingClientRect();
+        const color = cell.style.backgroundColor;
+
+        for (let i = 0; i < 10; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.backgroundColor = color;
+            particle.style.left = rect.left + rect.width / 2 + 'px';
+            particle.style.top = rect.top + rect.height / 2 + 'px';
+
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 50 + 50;
+            const vx = Math.cos(angle) * speed;
+            const vy = Math.sin(angle) * speed;
+
+            document.body.appendChild(particle);
+
+            let startTime = performance.now();
+            function animateParticle(time) {
+                const elapsed = time - startTime;
+                const x = vx * elapsed / 1000;
+                const y = vy * elapsed / 1000 + 0.5 * 980 * Math.pow(elapsed / 1000, 2);
+                particle.style.transform = `translate(${x}px, ${y}px)`;
+                particle.style.opacity = 1 - elapsed / 1000;
+
+                if (elapsed < 1000) {
+                    requestAnimationFrame(animateParticle);
+                } else {
+                    particle.remove();
+                }
+            }
+            requestAnimationFrame(animateParticle);
+        }
+    }
+
+    // Drop cells to fill empty spaces
+    function dropCells() {
+        let dropped = false;
+
+        for (let col = 0; col < BOARD_SIZE; col++) {
+            let emptyRow = BOARD_SIZE - 1;
+            for (let row = BOARD_SIZE - 1; row >= 0; row--) {
+                if (board[row][col] !== null) {
+                    if (emptyRow !== row) {
+                        board[emptyRow][col] = board[row][col];
+                        board[row][col] = null;
+                        animateDrop(row, col, emptyRow);
+                        dropped = true;
+                    }
+                    emptyRow--;
+                }
+            }
+            for (let row = emptyRow; row >= 0; row--) {
+                board[row][col] = getRandomColor();
+                animateDrop(-1, col, row);
+                dropped = true;
+            }
+        }
+
+        if (dropped) {
+            setTimeout(() => {
+                updateBoard();
+                if (checkMatches()) {
+                    removeMatches();
+                } else if (moves <= 0) {
+                    endGame();
+                }
+            }, 500);
+        }
+    }
+
+    // Animate the dropping of cells
+    function animateDrop(fromRow, col, toRow) {
+        const cells = document.querySelectorAll('.cell');
+        const toCell = cells[toRow * BOARD_SIZE + col];
+        const color = board[toRow][col];
+
+        const dropCell = document.createElement('div');
+        dropCell.className = 'cell';
+        dropCell.style.backgroundColor = color;
+        dropCell.style.position = 'absolute';
+        dropCell.style.zIndex = '1000';
+
+        const rect = toCell.getBoundingClientRect();
+        dropCell.style.width = rect.width + 'px';
+        dropCell.style.height = rect.height + 'px';
+        dropCell.style.left = rect.left + 'px';
+        dropCell.style.top = (fromRow === -1 ? rect.top - rect.height : rect.top - (toRow - fromRow) * rect.height) + 'px';
+
+        document.body.appendChild(dropCell);
+
+        setTimeout(() => {
+            dropCell.style.transition = 'top 0.5s ease-in';
+            dropCell.style.top = rect.top + 'px';
+        }, 0);
+
+        setTimeout(() => {
+            dropCell.remove();
+        }, 500);
+    }
+
+    // Remove matched cells and trigger cell dropping
+    function removeMatches() {
+        updateBoard();
+        setTimeout(() => {
+            dropCells();
+            setTimeout(() => {
+                if (checkMatches()) {
+                    removeMatches();
+                } else if (moves <= 0) {
+                    endGame();
+                }
+            }, 500);
+        }, 500);
+    }
+
+    // End the game and display the final score
+    function endGame() {
+        document.getElementById('final-score').textContent = score;
+        document.getElementById('game-over').style.display = 'block';
+        document.getElementById("moves").style.display = 'none';
+        document.getElementById("shuffle-button").style.display = 'none';
+    }
+
+    // Start the game
+    createBoard();
+</script>
+</body>
+</html>
+```
+
+### Explanation:
+
+1. UI:
+   - The board is created using a 6x6 grid of colored cells.
+   - The game title "Chroma Crush", moves and score are shown at the top.
+   - A shuffle button is added below the grid.
+
+2. Gameplay Elements:
+    - The game uses a 6x6 grid (`BOARD_SIZE = 6`).
+    - Drag-and-drop functionality is implemented using HTML5 drag and drop API.
+    - Players can swap adjacent cells by dragging one cell onto another.
+    - The `checkMatches()` function checks for horizontal and vertical matches of 3 or more cells, matched cells are removed.
+    - The `dropCells()` function handles the dropping of cells to fill empty spaces.
+    - Score is tracked in the `score` variable, incremented by 10 for each removed cell.
+    - The game starts with 20 moves (`moves = 20`) and ends when moves run out, calling the `endGame()` function.
+
+The plan provides an engaging and visually appealing color-matching game called "Chroma Crush".
