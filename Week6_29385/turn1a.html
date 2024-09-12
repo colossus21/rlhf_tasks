@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hexad Game</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            background-color: #f0f0f0;
+        }
+        #gameBoard {
+            display: grid;
+            grid-template-columns: repeat(6, 40px);
+            gap: 2px;
+            margin: 20px 0;
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            background-color: #e0e0e0;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+        .red { background-color: red; }
+        .blue { background-color: blue; }
+        #scoreBoard {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        #endMessage {
+            font-weight: bold;
+            margin: 10px 0;
+            display: none;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div id="scoreBoard">P1 (Red): <span id="scoreP1">0</span> | P2 (Blue): <span id="scoreP2">0</span></div>
+<div id="gameBoard"></div>
+<div id="endMessage"></div>
+<button onclick="restartGame()">Restart Game</button>
+
+<script>
+    const board = document.getElementById('gameBoard');
+    const scoreP1 = document.getElementById('scoreP1');
+    const scoreP2 = document.getElementById('scoreP2');
+    const endMessage = document.getElementById('endMessage');
+    let currentPlayer = 'red';
+    let gameActive = true;
+    let cells = [];
+    let p1Score = 0, p2Score = 0;
+
+    // Initialize the game board
+    for(let i = 0; i < 36; i++) {
+        let cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.addEventListener('click', () => placePiece(i));
+        board.appendChild(cell);
+        cells.push(cell);
+    }
+
+    function placePiece(index) {
+        if (!gameActive || cells[index].classList.contains('red') || cells[index].classList.contains('blue')) return;
+
+        cells[index].classList.add(currentPlayer);
+        updateScores(index);
+        checkGameEnd();
+        currentPlayer = currentPlayer === 'red' ? 'blue' : 'red';
+    }
+
+    function updateScores(index) {
+        const directions = [-6, -5, -1, 1, 5, 6, -7, 7]; // Adjusted for 6x6 grid
+        directions.forEach(dir => {
+            const newIndex = index + dir;
+            if(newIndex >= 0 && newIndex < 36 && cells[newIndex].classList.contains(currentPlayer === 'red' ? 'blue' : 'red')) {
+                cells[newIndex].classList.remove(currentPlayer === 'red' ? 'blue' : 'red');
+                cells[newIndex].classList.add(currentPlayer);
+                currentPlayer === 'red' ? p1Score++ : p2Score++;
+                currentPlayer === 'red' ? p2Score-- : p1Score--;
+            }
+        });
+        scoreP1.textContent = p1Score;
+        scoreP2.textContent = p2Score;
+    }
+
+    function checkGameEnd() {
+        if ([...cells].every(cell => cell.classList.length > 1)) {
+            gameActive = false;
+            endMessage.style.display = 'block';
+            if (p1Score > p2Score) endMessage.textContent = "Red Wins!";
+            else if (p2Score > p1Score) endMessage.textContent = "Blue Wins!";
+            else endMessage.textContent = "It's a Tie!";
+        }
+    }
+
+    function restartGame() {
+        cells.forEach(cell => {
+            cell.className = 'cell';
+        });
+        currentPlayer = 'red';
+        gameActive = true;
+        p1Score = p2Score = 0;
+        scoreP1.textContent = scoreP2.textContent = '0';
+        endMessage.style.display = 'none';
+    }
+</script>
+</body>
+</html>

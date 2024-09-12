@@ -1,0 +1,6 @@
+Can you create a 6x6 grid game called 'Hexad' with the following:
+1. 2 players take turns to play this game, P1 (Red), P2 (Blue). Use a 6x6 grid as the game board.
+2. A player can place a piece on any empty cell. When a piece is placed, it captures all opponent pieces from 8 surrounding spaces, not empty cells.
+3. The game ends when there are no empty cells. The player with the most pieces at the end wins the game.
+4. UI: Show current scores for both players below the game. Show the final scores and declare the winner (or a tie) below the score. No alert please. Add a restart button as well.
+5. Make the interface visually appealing with different colors for each player.

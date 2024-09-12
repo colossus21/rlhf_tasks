@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hexad Game</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #f4f4f4; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .game-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .board { display: grid; grid-template-columns: repeat(6, 50px); gap: 2px; margin-bottom: 20px; }
+        .cell { width: 50px; height: 50px; background: #e0e0e0; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+        .cell:hover { background: #d0d0d0; }
+        .player1 { background: red; }
+        .player2 { background: blue; }
+        .info, .scores, .result { text-align: center; margin-bottom: 10px; }
+        .scores { font-size: 1.2em; }
+        .button { background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer; border-radius: 4px; }
+        .button:hover { background-color: #45a049; }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div class="board" id="board"></div>
+    <div class="info">Current Player: <span id="currentPlayer">Red</span></div>
+    <div class="scores">
+        <span style="color: red;">Red: <span id="scoreP1">0</span></span> |
+        <span style="color: blue;">Blue: <span id="scoreP2">0</span></span>
+    </div>
+    <div class="result" id="result"></div>
+    <button class="button" onclick="restartGame()">Restart Game</button>
+</div>
+
+<script>
+    const boardElement = document.getElementById('board');
+    const currentPlayerElement = document.getElementById('currentPlayer');
+    const scoreP1Element = document.getElementById('scoreP1');
+    const scoreP2Element = document.getElementById('scoreP2');
+    const resultElement = document.getElementById('result');
+
+    let board = Array(36).fill(0); // 0 for empty, 1 for P1, 2 for P2
+    let currentPlayer = 1;
+    let gameOver = false;
+
+    function createBoard() {
+        board.forEach((_, index) => {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.onclick = () => handleCellClick(index);
+            boardElement.appendChild(cell);
+        });
+    }
+
+    function handleCellClick(index) {
+        if (gameOver || board[index] !== 0) return;
+
+        board[index] = currentPlayer;
+        updateBoard();
+        capturePieces(index);
+        if (checkGameOver()) {
+            endGame();
+        } else {
+            switchPlayer();
+        }
+    }
+
+    function capturePieces(index) {
+        const directions = [-7, -6, -5, -1, 1, 5, 6, 7]; // Adjacent cells including diagonals
+        directions.forEach(dir => {
+            const targetIndex = index + dir;
+            if (targetIndex >= 0 && targetIndex < 36 && Math.abs((index % 6) - (targetIndex % 6)) <= 1) {
+                if (board[targetIndex] && board[targetIndex] !== currentPlayer) {
+                    board[targetIndex] = currentPlayer;
+                }
+            }
+        });
+        updateBoard();
+    }
+
+    function switchPlayer() {
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+        currentPlayerElement.textContent = currentPlayer === 1 ? 'Red' : 'Blue';
+        currentPlayerElement.style.color = currentPlayer === 1 ? 'red' : 'blue';
+    }
+
+    function updateBoard() {
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach((cell, i) => {
+            cell.className = 'cell';
+            if (board[i] === 1) cell.classList.add('player1');
+            else if (board[i] === 2) cell.classList.add('player2');
+        });
+        updateScores();
+    }
+
+    function updateScores() {
+        const counts = board.reduce((acc, player) => {
+            acc[player] = (acc[player] || 0) + 1;
+            return acc;
+        }, {0: 0, 1: 0, 2: 0});
+        scoreP1Element.textContent = counts[1] || 0;
+        scoreP2Element.textContent = counts[2] || 0;
+    }
+
+    function checkGameOver() {
+        return !board.includes(0);
+    }
+
+    function endGame() {
+        gameOver = true;
+        let winner = 'Tie';
+        if (scoreP1Element.textContent > scoreP2Element.textContent) winner = 'Red Wins!';
+        else if (scoreP2Element.textContent > scoreP1Element.textContent) winner = 'Blue Wins!';
+        resultElement.textContent = winner;
+    }
+
+    function restartGame() {
+        board = Array(36).fill(0);
+        currentPlayer = 1;
+        gameOver = false;
+        updateBoard();
+        currentPlayerElement.textContent = 'Red';
+        currentPlayerElement.style.color = 'red';
+        resultElement.textContent = '';
+    }
+
+    createBoard();
+</script>
+
+</body>
+</html>
