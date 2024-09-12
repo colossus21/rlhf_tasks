@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Oni Tactics</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #board { display: grid; grid-template-columns: repeat(5, 60px); grid-gap: 2px; margin: 20px auto; }
+        .cell { width: 60px; height: 60px; background: #f0d9b5; border: 1px solid #b58863; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; }
+        .cell:hover { background: #e0c9a6; }
+        .blue { color: blue; }
+        .red { color: red; }
+        .valid-move { background: #a8d8ea; }
+        #status, #winner { text-align: center; font-size: 20px; }
+        button { display: block; margin: 20px auto; padding: 10px; font-size: 16px; }
+    </style>
+</head>
+<body>
+<div id="game">
+    <div id="status">Current Player: <span id="currentPlayer"></span></div>
+    <div id="board"></div>
+    <div id="winner"></div>
+    <button onclick="restartGame()">Restart Game</button>
+</div>
+
+<script>
+    const board = [
+        ['🤺', '⚔️', '👹', '⚔️', '🤺'],
+        ['🥷', '🥷', '🥷', '🥷', '🥷'],
+        ['', '', '', '', ''],
+        ['🥷', '🥷', '🥷', '🥷', '🥷'],
+        ['🤺', '⚔️', '👹', '⚔️', '🤺']
+    ];
+    let currentPlayer = 'red';
+    const gameBoard = document.getElementById('board');
+    const status = document.getElementById('status');
+    const winnerDisplay = document.getElementById('winner');
+
+    function createBoard() {
+        board.forEach((row, y) => {
+            row.forEach((cell, x) => {
+                const cellDiv = document.createElement('div');
+                cellDiv.className = 'cell ' + (cell ? (y < 2 ? 'red' : 'blue') : '');
+                cellDiv.textContent = cell;
+                cellDiv.dataset.x = x;
+                cellDiv.dataset.y = y;
+                cellDiv.onclick = () => selectPiece(x, y);
+                gameBoard.appendChild(cellDiv);
+            });
+        });
+        updateCurrentPlayerDisplay();
+    }
+
+    function selectPiece(x, y) {
+        if (board[y][x] && (currentPlayer === 'red' ? y < 2 : y > 2)) {
+            clearValidMoves();
+            showValidMoves(x, y);
+        } else if (document.querySelector('.valid-move')) {
+            movePiece(x, y);
+        }
+    }
+
+    function showValidMoves(x, y) {
+        const piece = board[y][x];
+        let moves = [];
+        switch(piece) {
+            case '🤺': // Samurai
+                moves = [[1,1], [-1,-1], [1,-1], [-1,1]];
+                break;
+            case '⚔️': // Ronin
+                moves = [[0,1], [1,0], [0,-1], [-1,0]];
+                break;
+            case '🥷': // Ninja
+                for(let i = -2; i <= 2; i++)
+                    for(let j = -2; j <= 2; j++)
+                        if(Math.abs(i) + Math.abs(j) === 2) moves.push([i,j]);
+                break;
+            case '👹': // Daimyo
+                moves = [[0,1], [1,1], [1,0], [0,-1], [-1,-1], [-1,1], [-1,0], [1,-1]];
+                break;
+        }
+        moves.forEach(([dx, dy]) => {
+            let newX = x + dx, newY = y + dy;
+            while(newX >= 0 && newX < 5 && newY >= 0 && newY < 5) {
+                if (board[newY][newX] === '') {
+                    document.querySelector(`[data-x="${newX}"][data-y="${newY}"]`).classList.add('valid-move');
+                }
+                if (piece === '🤺' || piece === '⚔️') {
+                    if (board[newY][newX]) break;
+                    newX += dx; newY += dy;
+                } else break;
+            }
+        });
+    }
+
+    function movePiece(x, y) {
+        const fromCell = document.querySelector('.cell:not(.valid-move)');
+        const piece = fromCell.textContent;
+        if (board[y][x] === '👹') {
+            winnerDisplay.textContent = `Player ${currentPlayer === 'red' ? 'Red' : 'Blue'} wins!`;
+        }
+        board[y][x] = piece;
+        board[fromCell.dataset.y][fromCell.dataset.x] = '';
+        fromCell.textContent = '';
+        document.querySelector(`[data-x="${x}"][data-y="${y}"]`).textContent = piece;
+        clearValidMoves();
+        switchPlayer();
+    }
+
+    function clearValidMoves() {
+        document.querySelectorAll('.valid-move').forEach(cell => cell.classList.remove('valid-move'));
+    }
+
+    function switchPlayer() {
+        currentPlayer = currentPlayer === 'red' ? 'blue' : 'red';
+        updateCurrentPlayerDisplay();
+    }
+
+    function updateCurrentPlayerDisplay() {
+        document.getElementById('currentPlayer').textContent = currentPlayer === 'red' ? 'Red' : 'Blue';
+    }
+
+    function restartGame() {
+        board.forEach((row, y) => row.forEach((_, x) => board[y][x] = y < 2 || y > 2 ? '' : board[y][x]));
+        currentPlayer = 'red';
+        winnerDisplay.textContent = '';
+        gameBoard.innerHTML = '';
+        createBoard();
+    }
+
+    createBoard();
+</script>
+</body>
+</html>

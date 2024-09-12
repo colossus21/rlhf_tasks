@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Oni Tactics</title>
+    <style>
+        #board {
+            display: grid;
+            grid-template-columns: repeat(5, 50px);
+            grid-template-rows: repeat(5, 50px);
+            width: 250px;
+            margin: 20px auto;
+            border: 2px solid #000;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .red { color: red; }
+        .blue { color: blue; }
+        .highlight { background-color: rgba(255, 255, 0, 0.3); }
+        .playerTurn, .winner { text-align: center; }
+        #restart { display: block; margin: 10px auto; }
+    </style>
+</head>
+<body>
+
+<div id="game">
+    <div class="playerTurn">Red's Turn</div>
+    <div id="board"></div>
+    <button id="restart" style="display:none;">Restart Game</button>
+    <div class="winner"></div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const board = document.getElementById('board');
+        const playerTurn = document.querySelector('.playerTurn');
+        const winnerDisplay = document.querySelector('.winner');
+        const restartButton = document.getElementById('restart');
+        let currentPlayer = 'red';
+        let gameState = [
+            ['🤺', '⚔️', '👹', '⚔️', '🤺'],
+            ['🥷', '🥷', '🥷', '🥷', '🥷'],
+            ['', '', '', '', ''],
+            ['🥷', '🥷', '🥷', '🥷', '🥷'],
+            ['🤺', '⚔️', '👹', '⚔️', '🤺']
+        ];
+
+        function createBoard() {
+            board.innerHTML = '';
+            gameState.forEach((row, y) => {
+                row.forEach((cell, x) => {
+                    const cellDiv = document.createElement('div');
+                    cellDiv.className = 'cell ' + (cell ? (y < 2 ? 'red' : 'blue') : '');
+                    cellDiv.textContent = cell;
+                    cellDiv.dataset.x = x;
+                    cellDiv.dataset.y = y;
+                    cellDiv.addEventListener('click', handleCellClick);
+                    board.appendChild(cellDiv);
+                });
+            });
+        }
+
+        function handleCellClick(e) {
+            const x = parseInt(e.target.dataset.x);
+            const y = parseInt(e.target.dataset.y);
+            const piece = gameState[y][x];
+
+            if (!piece) {
+                // Move piece if this cell was highlighted as a valid move
+                if (e.target.classList.contains('highlight')) {
+                    movePiece(x, y);
+                }
+            } else if ((currentPlayer === 'red' && y < 2) || (currentPlayer === 'blue' && y > 2)) {
+                // Select piece
+                highlightMoves(x, y, piece);
+            }
+        }
+
+        function highlightMoves(x, y, piece) {
+            // Remove previous highlights
+            document.querySelectorAll('.highlight').forEach(cell => cell.classList.remove('highlight'));
+
+            // Logic for highlighting moves would go here based on piece type
+            // This is a placeholder for brevity
+            const moves = getPossibleMoves(x, y, piece);
+            moves.forEach(move => {
+                const cell = document.querySelector(`[data-x="${move.x}"][data-y="${move.y}"]`);
+                if (cell) cell.classList.add('highlight');
+            });
+        }
+
+        function getPossibleMoves(x, y, piece) {
+            // Implement move logic for each piece type
+            // This function would return an array of {x, y} objects
+            // Example for Samurai:
+            let moves = [];
+            for(let dx = -4; dx <= 4; dx++) {
+                for(let dy = -4; dy <= 4; dy++) {
+                    if(Math.abs(dx) === Math.abs(dy) && dx !== 0) moves.push({x: x + dx, y: y + dy});
+                }
+            }
+            return moves.filter(move => move.x >= 0 && move.x < 5 && move.y >= 0 && move.y < 5);
+        }
+
+        function movePiece(x, y) {
+            // Implement move logic, capture, turn switching, win condition check
+            // After move, call createBoard() and checkForWin()
+        }
+
+        function checkForWin() {
+            let redDaimyo = false, blueDaimyo = false;
+            gameState.forEach(row => {
+                if (row.includes('👹')) {
+                    if (row.indexOf('👹') < 2) blueDaimyo = true;
+                    else redDaimyo = true;
+                }
+            });
+            if (!redDaimyo || !blueDaimyo) {
+                winnerDisplay.textContent = `${!redDaimyo ? 'Blue' : 'Red'} Wins!`;
+                restartButton.style.display = 'block';
+                currentPlayer = null;
+            }
+        }
+
+        function switchPlayer() {
+            currentPlayer = currentPlayer === 'red' ? 'blue' : 'red';
+            playerTurn.textContent = `${currentPlayer.charAt(0).toUpperCase() + currentPlayer.slice(1)}'s Turn`;
+        }
+
+        restartButton.onclick = () => {
+            currentPlayer = 'red';
+            gameState = [
+                ['🤺', '⚔️', '👹', '⚔️', '🤺'],
+                ['🥷', '🥷', '🥷', '🥷', '🥷'],
+                ['', '', '', '', ''],
+                ['🥷', '🥷', '🥷', '🥷', '🥷'],
+                ['🤺', '⚔️', '👹', '⚔️', '🤺']
+            ];
+            winnerDisplay.textContent = '';
+            restartButton.style.display = 'none';
+            createBoard();
+            switchPlayer();
+        };
+
+        createBoard();
+        switchPlayer();
+    });
+</script>
+</body>
+</html>

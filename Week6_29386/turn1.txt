@@ -1,0 +1,8 @@
+Create a 2 player game using MatterJS called 'Gravity Battle'. Can you implement the following:
+1. There would be 2 players - Player 1 a blue square (W right, A left, W jump, S gravity change), Player 2 a red square (Arrow Left and right, arrow up to jump, arrow down to switch gravity).
+2. Gravity change is a special ability for each player to flip gravity can be used when special meter is full. Jump should not work when gravity is flipped, also, player can jump in the air as many times player wants.
+3. There would be a series of triangular spikes in the center of the play area that damage players on contact. Make the spikes green.
+4. Randomly spawn power-ups: that would heal players and charge their special meters. Could be small pink circles.
+5. Show health bars and special meter displays for both players. Top left for P1, top right for P2. Green bar should represent health, yellow for special.
+6. If one player dies the other wins. Show a restart button after that.
+7. The game can be enclosed in a bluish border with a drop shadow. The background can be dark-themed.

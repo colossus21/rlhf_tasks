@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gravity Battle</title>
+    <style>
+        body { background: #1a1a1a; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        #gameArea { border: 3px solid #0099ff; box-shadow: 0 0 20px #0099ff; width: 800px; height: 600px; position: relative; }
+        .playerUI { position: absolute; width: 150px; height: 20px; }
+        #player1UI { top: 10px; left: 10px; }
+        #player2UI { top: 10px; right: 10px; }
+        .bar { height: 10px; margin-top: 5px; }
+        #gameOver { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; }
+    </style>
+</head>
+<body>
+<div id="gameArea">
+    <div id="player1UI" class="playerUI">
+        <div style="background: green; width: 100%;" class="bar" id="p1Health"></div>
+        <div style="background: yellow; width: 0%;" class="bar" id="p1Special"></div>
+    </div>
+    <div id="player2UI" class="playerUI">
+        <div style="background: green; width: 100%;" class="bar" id="p2Health"></div>
+        <div style="background: yellow; width: 0%;" class="bar" id="p2Special"></div>
+    </div>
+    <div id="gameOver">
+        <h2 id="winnerText"></h2>
+        <button onclick="restartGame()">Restart</button>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.14.2/matter.min.js"></script>
+<script>
+    // Setup Matter JS
+    var Engine = Matter.Engine,
+        Render = Matter.Render,
+        World = Matter.World,
+        Bodies = Matter.Bodies,
+        Events = Matter.Events;
+
+    var engine = Engine.create();
+    var render = Render.create({
+        element: document.getElementById('gameArea'),
+        engine: engine,
+        options: {
+            width: 800,
+            height: 600,
+            wireframes: false,
+            background: '#333'
+        }
+    });
+
+    // Players and Game objects
+    var player1 = Bodies.rectangle(200, 300, 30, 30, { restitution: 0, friction: 0.1, label: 'player1', render: { fillStyle: 'blue' } });
+    var player2 = Bodies.rectangle(600, 300, 30, 30, { restitution: 0, friction: 0.1, label: 'player2', render: { fillStyle: 'red' } });
+    var ground = Bodies.rectangle(400, 610, 810, 60, { isStatic: true, render: { fillStyle: '#222' } });
+    var spikes = Bodies.fromVertices(400, 300, [
+        {x: -20, y: 0}, {x: 0, y: -20}, {x: 20, y: 0}
+    ], { isStatic: true, render: { fillStyle: 'green' } });
+
+    // Power-ups
+    var powerUps = [];
+
+    // Game state
+    var keys = {};
+    var gravity = 1;
+    var specialMeter = {1: 0, 2: 0};
+    var health = {1: 100, 2: 100};
+
+    // Add to world
+    World.add(engine.world, [player1, player2, ground, spikes]);
+
+    // Key events
+    document.addEventListener('keydown', function(e) { keys[e.code] = true; });
+    document.addEventListener('keyup', function(e) { keys[e.code] = false; });
+
+    // Game loop
+    Engine.run(engine);
+    Render.run(render);
+
+    function gameLoop() {
+        if (keys['KeyW']) applyForce(player1, 0, -0.01);
+        if (keys['KeyS'] && specialMeter[1] >= 100) { changeGravity(); specialMeter[1] = 0; }
+        if (keys['KeyA']) applyForce(player1, -0.005, 0);
+        if (keys['KeyD']) applyForce(player1, 0.005, 0);
+
+        if (keys['ArrowUp']) applyForce(player2, 0, -0.01);
+        if (keys['ArrowDown'] && specialMeter[2] >= 100) { changeGravity(); specialMeter[2] = 0; }
+        if (keys['ArrowLeft']) applyForce(player2, -0.005, 0);
+        if (keys['ArrowRight']) applyForce(player2, 0.005, 0);
+
+        // Update UI
+        document.getElementById('p1Health').style.width = health[1] + '%';
+        document.getElementById('p1Special').style.width = specialMeter[1] + '%';
+        document.getElementById('p2Health').style.width = health[2] + '%';
+        document.getElementById('p2Special').style.width = specialMeter[2] + '%';
+
+        // Spawn power-ups
+        if (Math.random() < 0.005) spawnPowerUp();
+
+        // Collision checks, gravity update, etc.
+        checkCollisions();
+        updateGravity();
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    function applyForce(body, x, y) {
+        Matter.Body.applyForce(body, body.position, {x: x, y: y * gravity});
+    }
+
+    function changeGravity() {
+        gravity *= -1;
+        engine.world.gravity.y *= -1;
+    }
+
+    function spawnPowerUp() {
+        var powerUp = Bodies.circle(Math.random() * 750 + 25, Math.random() * 550 + 25, 10, {isStatic: true, render: {fillStyle: 'pink'}});
+        World.add(engine.world, powerUp);
+        powerUps.push(powerUp);
+    }
+
+    function checkCollisions() {
+        powerUps.forEach((pu, index) => {
+            if (Matter.Bounds.overlaps(pu.bounds, player1.bounds)) {
+                World.remove(engine.world, pu);
+                powerUps.splice(index, 1);
+                specialMeter[1] = Math.min(specialMeter[1] + 20, 100);
+                health[1] = Math.min(health[1] + 10, 100);
+            }
+            if (Matter.Bounds.overlaps(pu.bounds, player2.bounds)) {
+                // Similar logic for player 2
+            }
+        });
+
+        // Check for spike collision and game end
+        if (Matter.Bounds.overlaps(spikes.bounds, player1.bounds)) health[1] -= 0.1;
+        if (Matter.Bounds.overlaps(spikes.bounds, player2.bounds)) health[2] -= 0.1;
+
+        if (health[1] <= 0 || health[2] <= 0) endGame();
+    }
+
+    function endGame() {
+        document.getElementById('winnerText').innerText = health[1] > 0 ? "Player 1 Wins!" : "Player 2 Wins!";
+        document.getElementById('gameOver').style.display = 'block';
+    }
+
+    function restartGame() {
+        // Reset positions, health, special meters, remove power-ups, etc.
+        location.reload(); // Simple reload for this example
+    }
+
+    function updateGravity() {
+        // Adjust player's velocity for gravity changes
+        if (gravity < 0) {
+            player1.position.y = Math.min(player1.position.y, 570); // Ceiling
+            player2.position.y = Math.min(player2.position.y, 570);
+        } else {
+            player1.position.y = Math.max(player1.position.y, 30); // Ground
+            player2.position.y = Math.max(player2.position.y, 30);
+        }
+    }
+
+    gameLoop();
+</script>
+</body>
+</html>

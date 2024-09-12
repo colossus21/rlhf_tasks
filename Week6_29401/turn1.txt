@@ -1,0 +1,10 @@
+Can you create a chess-like strategy game called 'Oni Tactics' with the following:
+1. Create a 5x5 grid board with the four types of units:
+a) Samurai: Moves diagonally any number of spaces,
+b) Ronin: Moves horizontally or vertically any number of spaces,
+c) Ninja: Moves exactly 2 spaces in any direction (including diagonally),
+d) Daimyo: Moves one space in any direction.
+Use these symbols - 🤺 Samurai, ⚔️ Ronin, 🥷 Ninja, 👹 Daimyo, make red and blue pieces are distinguishable.
+2. First row for each player is Samurai, Ronin, Daimyo, Ronin, Samurai. Second row is five Ninjas. Two players: Red (top) and Blue (bottom) play this game in turns.
+3. Just like chess pieces capture by moving to an opponent's square. A player wins by capturing other player's Daimyo.
+4. UI: highlight valid moves when a piece is selected or hovered. Display current player and winner announcement. Add a restart button after the game.
