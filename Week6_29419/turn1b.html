@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Maze Gem</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+            color: #fff;
+        }
+        #game {
+            text-align: center;
+        }
+        #maze {
+            line-height: 1;
+            letter-spacing: 2px;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .cell {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+        }
+        .hidden {
+            color: #333;
+        }
+        #stats {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+<div id="game">
+    <h1>Maze Gem</h1>
+    <div id="stats">Energy: <span id="energy">100</span> | Gems: <span id="gems">0</span>/3 | Moves: <span id="moves">0</span></div>
+    <div id="maze"></div>
+</div>
+<script>
+    // Game setup
+    const size = 12;
+    let maze, playerPos, gemsCollected, energy, moves;
+    const directions = {ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1]};
+
+    function createMaze() {
+        maze = Array(size).fill().map(() => Array(size).fill(1)); // 1 for wall, 0 for path
+        function carve(x, y) {
+            const directions = [[0, 1], [1, 0], [0, -1], [-1, 0]].sort(() => Math.random() - 0.5);
+            for(let [dx, dy] of directions) {
+                const nx = x + dx * 2, ny = y + dy * 2;
+                if(nx >= 0 && ny >= 0 && nx < size && ny < size && maze[ny][nx] === 1) {
+                    maze[y + dy][x + dx] = maze[ny][nx] = 0;
+                    carve(nx, ny);
+                }
+            }
+        }
+        carve(1, 1); // Start from an odd number to ensure walls and paths alternate
+        return maze;
+    }
+
+    function placeItems(item, count) {
+        let placed = 0;
+        while(placed < count) {
+            const x = Math.floor(Math.random() * size);
+            const y = Math.floor(Math.random() * size);
+            if(maze[y][x] === 0 && (x !== 1 || y !== 1)) {
+                maze[y][x] = item;
+                placed++;
+            }
+        }
+    }
+
+    function initGame() {
+        maze = createMaze();
+        playerPos = [1, 1];
+        gemsCollected = 0;
+        energy = 100;
+        moves = 0;
+        placeItems('💎', 3);
+        placeItems('⚠️', 5);
+        maze[1][1] = '👤';
+        document.getElementById('maze').innerHTML = renderMaze();
+        updateStats();
+    }
+
+    function renderMaze() {
+        let output = '';
+        for(let y = 0; y < size; y++) {
+            for(let x = 0; x < size; x++) {
+                const isPlayer = playerPos[0] === y && playerPos[1] === x;
+                const inRange = Math.abs(playerPos[0] - y) <= 2 && Math.abs(playerPos[1] - x) <= 2;
+                const lightRange = Math.abs(playerPos[0] - y) <= 3 && Math.abs(playerPos[1] - x) <= 3;
+                if(inRange || (lightRange && Math.random() > 0.5)) {
+                    output += `<span class="${isPlayer ? 'player' : (maze[y][x] === 1 ? 'wall' : '')}">${isPlayer ? '👤' : maze[y][x] || ' '}</span>`;
+                } else {
+                    output += '<span class="hidden">█</span>';
+                }
+            }
+            output += '<br>';
+        }
+        return output;
+    }
+
+    function movePlayer(dx, dy) {
+        const newX = playerPos[1] + dx, newY = playerPos[0] + dy;
+        if(newY >= 0 && newY < size && newX >= 0 && newX < size && maze[newY][newX] !== 1) {
+            energy -= 1;
+            moves++;
+            const item = maze[newY][newX];
+            maze[playerPos[0]][playerPos[1]] = ' ';
+            playerPos = [newY, newX];
+            maze[newY][newX] = '👤';
+            if(item === '💎') {
+                gemsCollected++;
+                maze[newY][newX] = ' ';
+            } else if(item === '⚠️') {
+                energy -= 20;
+            }
+            document.getElementById('maze').innerHTML = renderMaze();
+            updateStats();
+            checkGameState();
+        }
+    }
+
+    function updateStats() {
+        document.getElementById('energy').textContent = energy;
+        document.getElementById('gems').textContent = gemsCollected;
+        document.getElementById('moves').textContent = moves;
+    }
+
+    function checkGameState() {
+        if(energy <= 0) {
+            alert('Game Over! You ran out of energy.');
+            initGame();
+        } else if(gemsCollected === 3) {
+            alert('Congratulations! You collected all the gems!');
+            initGame();
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if(directions[e.key]) {
+            movePlayer(...directions[e.key]);
+        }
+    });
+
+    initGame();
+</script>
+</body>
+</html>

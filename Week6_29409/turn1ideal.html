@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Battleship</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #game-container {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+        }
+        #board {
+            display: inline-grid;
+            grid-template-columns: repeat(6, 60px);
+            grid-template-rows: repeat(6, 60px);
+            gap: 2px;
+            margin: 20px;
+            background-color: #ddd;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .cell {
+            width: 60px;
+            height: 60px;
+            border: 1px solid #aaa;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .player-area {
+            background-color: rgba(255, 0, 0, 0.1);
+        }
+        .cpu-area {
+            background-color: rgba(0, 0, 255, 0.1);
+        }
+        .ship {
+            font-size: 40px;
+            transition: transform 0.3s ease;
+        }
+        .miss {
+            color: gray;
+        }
+        .hit-player {
+            background-color: rgba(255, 0, 0, 0.3);
+        }
+        .hit-cpu {
+            background-color: rgba(0, 0, 255, 0.3);
+        }
+        #message {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            min-height: 1.5em;
+        }
+        #restart-button {
+            margin-top: 20px;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #1685bf;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            max-width: 200px;
+            transition: background-color 0.3s ease;
+        }
+        #restart-button:hover {
+            background-color: #27ae60;
+        }
+        @keyframes hit-animation {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .hit-animation {
+            animation: hit-animation 0.5s ease;
+        }
+        @keyframes miss-animation {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(5deg); }
+            75% { transform: rotate(-5deg); }
+            100% { transform: rotate(0deg); }
+        }
+        .miss-animation {
+            animation: miss-animation 0.5s ease;
+        }
+        .placement-guide {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<div id="game-container">
+    <h1>Mini Battleship</h1>
+    <div id="message"></div>
+    <div id="board"></div>
+    <button id="restart-button" onclick="restartGame()">Restart Game</button>
+</div>
+
+<script>
+    const BOARD_SIZE = 6;
+    const PLAYER_ROWS = 3;
+    const SHIPS = ['▲', '■', '●', '★'];
+    let board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
+    let playerShipsPlaced = 0;
+    let cpuShipsPlaced = 0;
+    let gamePhase = 'placement';
+    let currentShip = 0;
+
+    function createBoard() {
+        const boardElement = document.getElementById('board');
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            for (let j = 0; j < BOARD_SIZE; j++) {
+                const cell = document.createElement('div');
+                cell.className = `cell ${i < PLAYER_ROWS ? 'player-area' : 'cpu-area'}`;
+                cell.onclick = () => handleCellClick(i, j);
+                boardElement.appendChild(cell);
+            }
+        }
+        // Add placement guide
+        const guide = document.createElement('div');
+        guide.className = 'placement-guide';
+        guide.textContent = 'Place ships: ▲ ■ ● ★';
+        boardElement.appendChild(guide);
+    }
+
+    function updateBoard() {
+        const cells = document.getElementById('board').children;
+        board.flat().forEach((cell, index) => {
+            const cellElement = cells[index];
+            cellElement.innerHTML = '';
+            if (cell === 'X') {
+                cellElement.innerHTML = '❌';
+                cellElement.classList.add('miss');
+            } else if (typeof cell === 'string' && SHIPS.includes(cell)) {
+                if (index < PLAYER_ROWS * BOARD_SIZE || gamePhase === 'gameover') {
+                    cellElement.innerHTML = `<span class="ship">${cell}</span>`;
+                }
+                if (cellElement.classList.contains('hit-player') || cellElement.classList.contains('hit-cpu')) {
+                    cellElement.innerHTML = `<span class="ship">${cell}</span>`;
+                }
+            }
+        });
+        // Update placement guide
+        const guide = document.querySelector('.placement-guide');
+        if (gamePhase === 'placement') {
+            guide.textContent = `Place ship: ${SHIPS.slice(currentShip).join(' ')}`;
+        } else {
+            guide.style.display = 'none';
+        }
+    }
+
+    function handleCellClick(row, col) {
+        if (gamePhase === 'placement' && row < PLAYER_ROWS) {
+            placePlayerShip(row, col);
+        } else if (gamePhase === 'attack' && row >= PLAYER_ROWS) {
+            attackCPU(row, col);
+        }
+    }
+
+    function placePlayerShip(row, col) {
+        if (board[row][col] === null) {
+            board[row][col] = SHIPS[currentShip];
+            playerShipsPlaced++;
+            currentShip++;
+            updateBoard();
+
+            const cellElement = document.getElementById('board').children[row * BOARD_SIZE + col];
+            cellElement.querySelector('.ship').style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                cellElement.querySelector('.ship').style.transform = 'scale(1)';
+            }, 300);
+
+            if (playerShipsPlaced === SHIPS.length) {
+                placeCPUShips();
+                gamePhase = 'attack';
+                showMessage("All ships placed. Start attacking the CPU's area!");
+            } else {
+                showMessage(`Place your ${SHIPS[currentShip]} ship.`);
+            }
+        }
+    }
+
+    function placeCPUShips() {
+        for (let ship of SHIPS) {
+            let placed = false;
+            while (!placed) {
+                const row = Math.floor(Math.random() * PLAYER_ROWS) + PLAYER_ROWS;
+                const col = Math.floor(Math.random() * BOARD_SIZE);
+                if (board[row][col] === null) {
+                    board[row][col] = ship;
+                    placed = true;
+                    cpuShipsPlaced++;
+                }
+            }
+        }
+        updateBoard();
+    }
+
+    function attackCPU(row, col) {
+        if (gamePhase !== 'attack' || board[row][col] === 'X') return;
+
+        const cellElement = document.getElementById('board').children[row * BOARD_SIZE + col];
+
+        if (board[row][col] === null) {
+            board[row][col] = 'X';
+            showMessage("You missed!");
+            cellElement.classList.add('miss-animation');
+        } else {
+            showMessage(`You hit a ${board[row][col]}!`);
+            cellElement.classList.add('hit-cpu', 'hit-animation');
+            cpuShipsPlaced--;
+        }
+
+        updateBoard();
+
+        if (cpuShipsPlaced === 0) {
+            endGame('player');
+        } else {
+            setTimeout(cpuAttack, 1000);
+        }
+
+        setTimeout(() => {
+            cellElement.classList.remove('hit-animation', 'miss-animation');
+        }, 500);
+    }
+
+    function cpuAttack() {
+        let row, col;
+        do {
+            row = Math.floor(Math.random() * PLAYER_ROWS);
+            col = Math.floor(Math.random() * BOARD_SIZE);
+        } while (board[row][col] === 'X' ||
+        document.getElementById('board').children[row * BOARD_SIZE + col].classList.contains('hit-player'));
+
+        const cellElement = document.getElementById('board').children[row * BOARD_SIZE + col];
+
+        if (board[row][col] === null) {
+            board[row][col] = 'X';
+            showMessage("CPU missed!");
+            cellElement.classList.add('miss-animation');
+        } else {
+            showMessage(`CPU hit your ${board[row][col]}!`);
+            cellElement.classList.add('hit-player', 'hit-animation');
+            playerShipsPlaced--;
+        }
+
+        updateBoard();
+
+        if (playerShipsPlaced === 0) {
+            endGame('cpu');
+        }
+
+        setTimeout(() => {
+            cellElement.classList.remove('hit-animation', 'miss-animation');
+        }, 500);
+    }
+
+    function endGame(winner) {
+        gamePhase = 'gameover';
+        showMessage(winner === 'player' ? "Congratulations! You won!" : "CPU won. Better luck next time!");
+        updateBoard();
+    }
+
+    function showMessage(msg) {
+        const messageElement = document.getElementById('message');
+        messageElement.textContent = msg;
+        messageElement.style.opacity = '0';
+        setTimeout(() => {
+            messageElement.style.transition = 'opacity 0.5s ease';
+            messageElement.style.opacity = '1';
+        }, 50);
+    }
+
+    function restartGame() {
+        board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
+        playerShipsPlaced = 0;
+        cpuShipsPlaced = 0;
+        gamePhase = 'placement';
+        currentShip = 0;
+        updateBoard();
+        showMessage(`Place your ${SHIPS[currentShip]} ship.`);
+
+        // Reset hit classes
+        const cells = document.getElementById('board').children;
+        for (let cell of cells) {
+            cell.classList.remove('hit-player', 'hit-cpu', 'miss');
+        }
+
+        // Show placement guide
+        document.querySelector('.placement-guide').style.display = 'block';
+    }
+
+    createBoard();
+    showMessage(`Place your ${SHIPS[currentShip]} ship.`);
+</script>
+</body>
+</html>

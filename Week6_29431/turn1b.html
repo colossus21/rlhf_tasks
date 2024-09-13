@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Battle of the Squares</title>
+    <style>
+        body { margin: 0; background: skyblue; overflow: hidden; }
+        canvas { display: block; }
+        #gameTitle { position: absolute; top: 10px; width: 100%; text-align: center; font-family: 'Arial', sans-serif; font-size: 2em; color: white; text-shadow: 2px 2px 4px #000000; }
+        #gameOver { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.7); color: white; padding: 20px; border-radius: 10px; }
+    </style>
+</head>
+<body>
+<div id="gameTitle">Battle of the Squares</div>
+<canvas id="gameCanvas"></canvas>
+<div id="gameOver">
+    <h2>Game Over</h2>
+    <p id="winner"></p>
+    <button onclick="restartGame()">Restart</button>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Game variables
+    let player1 = {x: 50, y: canvas.height - 50, width: 40, height: 40, color: 'red', hp: 100, special: 0, direction: 1, speed: 5, jump: -15};
+    let player2 = {x: canvas.width - 90, y: canvas.height - 50, width: 40, height: 40, color: 'blue', hp: 100, special: 0, direction: -1, speed: 5, jump: -15};
+    let platforms = [];
+    let bullets = [];
+    let clouds = [{x: 0, y: 50, speed: 0.5}, {x: 200, y: 70, speed: 0.3}];
+
+    // Controls
+    const keys = {};
+
+    // Setup event listeners for controls
+    document.addEventListener('keydown', (e) => keys[e.key] = true);
+    document.addEventListener('keyup', (e) => keys[e.key] = false);
+
+    // Function to spawn platforms
+    function spawnPlatforms() {
+        for (let i = 0; i < 10; i++) {
+            let x = Math.random() * canvas.width;
+            let y = Math.random() * (canvas.height - 150) + 50;
+            let w = Math.random() * 100 + 50;
+            let h = 20;
+            platforms.push({x, y, width: w, height: h});
+        }
+    }
+
+    // Game loop
+    function gameLoop() {
+        update();
+        render();
+        requestAnimationFrame(gameLoop);
+    }
+
+    function update() {
+        // Player movement, shooting, and special ability logic here
+        [player1, player2].forEach(player => {
+            if (keys[player === player1 ? 'a' : 'j']) player.x -= player.speed;
+            if (keys[player === player1 ? 'd' : 'l']) player.x += player.speed;
+            // Shooting and special ability would be implemented here
+            // Gravity and platform collision
+            if (!isOnPlatform(player)) player.y += 5;
+            player.special += 0.1; // Slowly increase special bar
+        });
+
+        // Bullet update
+        bullets.forEach((bullet, index) => {
+            bullet.x += bullet.speed * bullet.direction;
+            if (bullet.x < 0 || bullet.x > canvas.width) bullets.splice(index, 1);
+        });
+
+        // Cloud movement for parallax effect
+        clouds.forEach(cloud => {
+            cloud.x += cloud.speed;
+            if (cloud.x > canvas.width) cloud.x = -200;
+        });
+
+        // Collision detection, game over check, etc.
+    }
+
+    function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw clouds
+        clouds.forEach(cloud => {
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(cloud.x, cloud.y, 30, 0, Math.PI * 2);
+            ctx.arc(cloud.x + 20, cloud.y - 10, 25, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // Draw platforms
+        platforms.forEach(p => {
+            ctx.fillStyle = 'darkgray';
+            ctx.fillRect(p.x, p.y, p.width, p.height);
+        });
+
+        // Draw players
+        [player1, player2].forEach(player => {
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            // HP and Special bars
+            ctx.fillStyle = 'green';
+            ctx.fillRect(player === player1 ? 10 : canvas.width - 110, 10, player.hp, 10);
+            ctx.fillStyle = 'yellow';
+            ctx.fillRect(player === player1 ? 10 : canvas.width - 110, 25, player.special, 10);
+        });
+
+        // Draw bullets
+        bullets.forEach(bullet => {
+            ctx.fillStyle = 'black';
+            ctx.fillRect(bullet.x, bullet.y, 5, 2);
+        });
+    }
+
+    function restartGame() {
+        document.getElementById('gameOver').style.display = 'none';
+        // Reset game state here
+        gameLoop();
+    }
+
+    spawnPlatforms();
+    gameLoop();
+</script>
+</body>
+</html>

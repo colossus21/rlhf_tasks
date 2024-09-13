@@ -1,0 +1,7 @@
+ I want to create a maze game called "Maze Gem" where the player collects gems while avoiding traps (reduce energy). The game should have the following features:
+- The game is created on a 12x12 randomly generated maze. Player moves using arrow keys and has energy starting from 100%.
+- The player has to find 3 hidden gems to win and getting on one of the 5 hidden traps reduces energy. The energy also reduces with each move.
+- Player should only be able to see 8 cells around him. However, create a fog of war effect and simulate light around the player that can show a few more cells if required.
+- Player loses if he runs out of energy, wins after getting all gems.
+- Show gems collected, moves, and energy above the game. Add a game title above these as well.
+- No shapes please, use unicode symbols for player, gems and traps. Also, no alerts.

@@ -1,0 +1,7 @@
+Can you create a 6x6 grid Mini Battleship game with the following features, twist is it's played in the same grid:
+1. A board with 6x6 grid, divided into a 3x6 player area and a 3x6 CPU area.
+2. There would be four ships for each player: triangle, square, circle, and star.
+3. Game has 2 phases: a) Place ships and b) attacking.
+4. After placement, player and CPU play in turns to destroy each others ship.
+5. This game must be visually appealing and have animations to make the game more engaging: add animations for hits and misses, visual feedback for ship placement, a placement guide for the player. Center the grid as well.
+6. Add game title, mention messages such as turn indication below the title.

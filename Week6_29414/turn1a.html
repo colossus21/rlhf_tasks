@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Lights Out</title>
+    <style>
+        body {
+            background: #00001a url('data:image/svg+xml;utf8,<svg width="100" height="100" transform="rotate(25)" opacity="0.3" version="1.1" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><polygon points="50 15,100 35,70 100,30 100,0 35" fill="white"/></svg>') repeat;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            animation: scrollBg 150s linear infinite;
+        }
+
+        @keyframes scrollBg {
+            from { background-position: 0 0; }
+            to { background-position: -10000px 5000px; }
+        }
+
+        .game-container {
+            text-align: center;
+        }
+
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(6, 50px);
+            gap: 4px;
+            margin: 20px auto;
+        }
+
+        .light {
+            width: 50px;
+            height: 50px;
+            background-color: #00ff00;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00, inset 0 0 5px #00ff00;
+        }
+
+        .light.off {
+            background-color: #003300;
+            box-shadow: none;
+        }
+
+        #move-counter, #reset-btn {
+            font-family: 'Arial', sans-serif;
+            color: white;
+            margin-top: 10px;
+        }
+
+        #reset-btn {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #reset-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div id="game-board"></div>
+    <div id="move-counter">Moves: 0</div>
+    <button id="reset-btn">Reset Game</button>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const board = document.getElementById('game-board');
+        const moveCounter = document.getElementById('move-counter');
+        const resetBtn = document.getElementById('reset-btn');
+        let moves = 0;
+        let lights = [];
+
+        // Initialize game
+        function initGame() {
+            lights = Array(36).fill(true); // All lights on
+            moves = 0;
+            updateBoard();
+            moveCounter.textContent = `Moves: ${moves}`;
+        }
+
+        // Update the board display
+        function updateBoard() {
+            board.innerHTML = '';
+            lights.forEach((state, index) => {
+                const light = document.createElement('div');
+                light.className = `light ${state ? '' : 'off'}`;
+                light.onclick = () => toggleLight(index);
+                board.appendChild(light);
+            });
+        }
+
+        // Toggle light and neighbors
+        function toggleLight(index) {
+            const toggle = [index,
+                index - 6, // above
+                index + 6, // below
+                index - 1, // left, careful not to go out of bounds
+                index + 1]; // right
+
+            toggle.forEach(i => {
+                if (i >= 0 && i < 36 && !(i == index - 1 && i % 6 == 5) && !(i == index + 1 && i % 6 == 0)) {
+                    lights[i] = !lights[i];
+                }
+            });
+
+            moves++;
+            moveCounter.textContent = `Moves: ${moves}`;
+            updateBoard();
+            checkWin();
+        }
+
+        // Check if all lights are off
+        function checkWin() {
+            if (lights.every(light => !light)) {
+                setTimeout(() => alert('Congratulations! You have turned off all the cosmic lights!'), 10);
+            }
+        }
+
+        // Reset button functionality
+        resetBtn.onclick = initGame;
+
+        // Start game
+        initGame();
+    });
+</script>
+
+</body>
+</html>

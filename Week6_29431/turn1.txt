@@ -1,0 +1,9 @@
+Can you create a 2 player platformer battle game in JavaScript in which two players - red square for P1 and blue square for P2 battles until one is defeated:
+i) Player 1 moves using WASD, shoots using R and shoots special power using E. Player 2 moves using IKJL, shoots using P and special power using O. Special is like Goku's Kamehameha.
+ii) Spawn platforms of random sizes around the player so that player can jump onto it, but falls down too. Platforms should have equal distribution over two sides.
+iii) Players shoots bullet in the direction they are facing. Each player should have a HP bar and a Special bar on top-left for P1, top-right for P2.
+iv) Player's HP reduces on bullet impact. Special bar fills when players move.
+v) Upon hitting an opponent, display particle effects and random words like "Hit!", "Kaboom!" and more near the player. Text should be cartoonish.
+vi) When player's health reaches 0 show a "Game Over" message with winner's name, provide restart button as well.
+vii) Add animated cloud at the top, parallax maybe. Background should be blue. Show game title at the top center "Battle of the Squares". Platforms should be dark in color, players can have black border and rounded edges.
+viii) Use no external shapes, also movement should be smooth. Use any library you want to achieve the goal.

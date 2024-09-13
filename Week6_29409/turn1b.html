@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Battleship</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #f4f4f4; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .game-container { text-align: center; }
+        .title { margin-bottom: 20px; color: #333; }
+        .turn-indicator { margin: 10px 0; color: #007BFF; }
+        .grid { display: grid; grid-template-columns: repeat(3, 40px); gap: 1px; background-color: #000; }
+        .cell { width: 40px; height: 40px; background: #87CEEB; border: 1px solid #000; cursor: pointer; transition: background 0.3s; }
+        .cell.cpu:hover { background: #ADD8E6; }
+        .ship { background: #4CAF50; }
+        .hit { background: #FF4136 !important; animation: hit 0.5s; }
+        .miss { background: #D3D3D3 !important; animation: miss 0.5s; }
+        @keyframes hit { 0%, 100% { background: #FF4136; } 50% { background: #FFDC00; } }
+        @keyframes miss { 0%, 100% { background: #D3D3D3; } 50% { background: #FFFFFF; } }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <h1 class="title">Mini Battleship</h1>
+    <div id="turnIndicator" class="turn-indicator">Place your ships!</div>
+    <div style="display: flex; justify-content: center;">
+        <div id="playerGrid" class="grid"></div>
+        <div id="cpuGrid" class="grid" style="margin-left: 20px;"></div>
+    </div>
+</div>
+<script>
+    const ships = ['triangle', 'square', 'circle', 'star'];
+    let currentPlayer = 'player';
+    const grids = { player: [], cpu: [] };
+
+    // Setup grids
+    ['player', 'cpu'].forEach(player => {
+        for(let i = 0; i < 18; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.dataset.index = i;
+            document.getElementById(`${player}Grid`).appendChild(cell);
+            grids[player].push({ element: cell, hasShip: false, hit: false });
+        }
+    });
+
+    // Place ships randomly for CPU
+    placeShips('cpu');
+
+    // Player places ships (simplified click to place)
+    grids.player.forEach((cell, index) => {
+        cell.element.onclick = function() {
+            if(currentPlayer === 'player' && !cell.hasShip) {
+                const shipType = ships.shift();
+                if(shipType) {
+                    cell.hasShip = shipType;
+                    cell.element.classList.add('ship', shipType);
+                    if(ships.length === 0) {
+                        currentPlayer = 'cpu';
+                        document.getElementById('turnIndicator').textContent = "CPU's turn";
+                        setTimeout(cpuTurn, 1000);
+                    }
+                }
+            }
+        };
+    });
+
+    function placeShips(player) {
+        const directions = ['horizontal', 'vertical'];
+        ships.forEach(ship => {
+            let placed = false;
+            while(!placed) {
+                const index = Math.floor(Math.random() * 18);
+                const direction = directions[Math.floor(Math.random() * 2)];
+                if(checkIfShipFits(player, index, direction, ship)) {
+                    placeShip(player, index, direction, ship);
+                    placed = true;
+                }
+            }
+        });
+    }
+
+    function checkIfShipFits(player, index, direction, ship) {
+        // Simplified logic for space checking
+        return true; // This needs actual logic to check if the ship fits
+    }
+
+    function placeShip(player, index, direction, ship) {
+        grids[player][index].hasShip = ship;
+        if(player === 'player') {
+            grids[player][index].element.classList.add('ship', ship);
+        }
+    }
+
+    function cpuTurn() {
+        const randomIndex = Math.floor(Math.random() * grids.player.length);
+        if(!grids.player[randomIndex].hit) {
+            attack('player', randomIndex);
+            currentPlayer = 'player';
+            document.getElementById('turnIndicator').textContent = "Your turn";
+        } else {
+            cpuTurn(); // Try again if this cell was already hit
+        }
+    }
+
+    document.getElementById('cpuGrid').addEventListener('click', function(e) {
+        if(currentPlayer === 'player') {
+            const index = e.target.dataset.index;
+            if(index && !grids.cpu[index].hit) {
+                attack('cpu', index);
+                currentPlayer = 'cpu';
+                document.getElementById('turnIndicator').textContent = "CPU's turn";
+                setTimeout(cpuTurn, 1000);
+            }
+        }
+    });
+
+    function attack(player, index) {
+        const cell = grids[player][index];
+        cell.hit = true;
+        if(cell.hasShip) {
+            cell.element.classList.add('hit');
+        } else {
+            cell.element.classList.add('miss');
+        }
+        // Check for win condition here
+    }
+</script>
+</body>
+</html>

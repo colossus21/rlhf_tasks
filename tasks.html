@@ -1,0 +1,695 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Tasks List</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <style>
+    .card {
+        margin-bottom: 20px;
+    }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="my-4">Tasks List</h1>
+
+    <div class="form-group">
+        <label for="weekFilter">Filter by Week:</label>
+        <select id="weekFilter" class="form-control" onchange="filterTasks()">
+            <option value="">All Weeks</option>
+            
+            <option value="3">Week 3</option>
+            
+            <option value="4">Week 4</option>
+            
+            <option value="5">Week 5</option>
+            
+            <option value="6">Week 6</option>
+            
+        </select>
+    </div>
+
+    <div id="tasksContainer">
+    
+        <div class="card task-card" data-week="3">
+            <div class="card-body">
+                <h5 class="card-title">Radioactive Decay Simulation</h5>
+                <p class="card-text">Week: 3, Task ID: 20000</p>
+                <a href="Week3_20000/turn3ideal.html" class="btn btn-primary">Task Link</a>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="3">
+            <div class="card-body">
+                <h5 class="card-title">Hotel Murder Mystery</h5>
+                <p class="card-text">Week: 3, Task ID: 23660</p>
+                <a href="Week3_23660/turn2ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week3_23660/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="3">
+            <div class="card-body">
+                <h5 class="card-title">Cricket Card Game</h5>
+                <p class="card-text">Week: 3, Task ID: 23663</p>
+                <a href="Week3_23663/turn2ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week3_23663/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="3">
+            <div class="card-body">
+                <h5 class="card-title">Wild Tic-Tac-Toe (9x9)</h5>
+                <p class="card-text">Week: 3, Task ID: 23688</p>
+                <a href="Week3_23688/turn3ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week3_23688/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="3">
+            <div class="card-body">
+                <h5 class="card-title">Row a Boat</h5>
+                <p class="card-text">Week: 3, Task ID: 23700</p>
+                <a href="Week3_23700/turn3ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week3_23700/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="3">
+            <div class="card-body">
+                <h5 class="card-title">Connect 4 with a Twist</h5>
+                <p class="card-text">Week: 3, Task ID: 23706</p>
+                <a href="Week3_23706/turn2ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week3_23706/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="3">
+            <div class="card-body">
+                <h5 class="card-title">Football Game</h5>
+                <p class="card-text">Week: 3, Task ID: 23736</p>
+                <a href="Week3_23736/turn2ideal.html" class="btn btn-primary">Task Link</a>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="4">
+            <div class="card-body">
+                <h5 class="card-title">Flavor Fusion Game</h5>
+                <p class="card-text">Week: 4, Task ID: 27151</p>
+                <a href="Week4_27151/turn2ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week4_27151/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="4">
+            <div class="card-body">
+                <h5 class="card-title">Breakout Evasion</h5>
+                <p class="card-text">Week: 4, Task ID: 27158</p>
+                <a href="Week4_27158/turn2ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week4_27158/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="4">
+            <div class="card-body">
+                <h5 class="card-title">Platformer Game</h5>
+                <p class="card-text">Week: 4, Task ID: 27170</p>
+                <a href="Week4_27170/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week4_27170/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="4">
+            <div class="card-body">
+                <h5 class="card-title">Event Tracker</h5>
+                <p class="card-text">Week: 4, Task ID: 27185</p>
+                <a href="Week4_27185/turn2ideal.html" class="btn btn-primary">Task Link</a>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="4">
+            <div class="card-body">
+                <h5 class="card-title">Projectile Motion Simulator</h5>
+                <p class="card-text">Week: 4, Task ID: 27199</p>
+                <a href="Week4_27199/turn2ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week4_27199/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="4">
+            <div class="card-body">
+                <h5 class="card-title">Phaser Top-Down Game</h5>
+                <p class="card-text">Week: 4, Task ID: 27217</p>
+                <a href="Week4_27217/turn2ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week4_27217/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="4">
+            <div class="card-body">
+                <h5 class="card-title">Stickman Avatar Generator</h5>
+                <p class="card-text">Week: 4, Task ID: 27230</p>
+                <a href="Week4_27230/turn2ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week4_27230/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="4">
+            <div class="card-body">
+                <h5 class="card-title">Coffee Mix</h5>
+                <p class="card-text">Week: 4, Task ID: 27255</p>
+                <a href="Week4_27255/turn2ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week4_27255/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="4">
+            <div class="card-body">
+                <h5 class="card-title">Sorting Algorithm Visualizer</h5>
+                <p class="card-text">Week: 4, Task ID: 27260</p>
+                <a href="Week4_27260/turn2ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week4_27260/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="5">
+            <div class="card-body">
+                <h5 class="card-title">Medicine Tracker</h5>
+                <p class="card-text">Week: 5, Task ID: 27293</p>
+                <a href="Week5_27293/turn3ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week5_27293/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="5">
+            <div class="card-body">
+                <h5 class="card-title">Rainbow Capture Game</h5>
+                <p class="card-text">Week: 5, Task ID: 27302</p>
+                <a href="Week5_27302/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week5_27302/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="5">
+            <div class="card-body">
+                <h5 class="card-title">Top-Down Soccer Game</h5>
+                <p class="card-text">Week: 5, Task ID: 27309</p>
+                <a href="Week5_27309/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week5_27309/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="5">
+            <div class="card-body">
+                <h5 class="card-title">Ghost and Chalices</h5>
+                <p class="card-text">Week: 5, Task ID: 27327</p>
+                <a href="Week5_27327/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week5_27327/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="5">
+            <div class="card-body">
+                <h5 class="card-title">Side-Scroller Game</h5>
+                <p class="card-text">Week: 5, Task ID: 27364</p>
+                <a href="Week5_27364/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week5_27364/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="5">
+            <div class="card-body">
+                <h5 class="card-title">Bluff Game - Rock, Paper, Scissors</h5>
+                <p class="card-text">Week: 5, Task ID: 27379</p>
+                <a href="Week5_27379/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week5_27379/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="5">
+            <div class="card-body">
+                <h5 class="card-title">Poco and the Sheep</h5>
+                <p class="card-text">Week: 5, Task ID: 27419</p>
+                <a href="Week5_27419/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week5_27419/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="5">
+            <div class="card-body">
+                <h5 class="card-title">Flappy Bird Game with PixiJS - Triangles</h5>
+                <p class="card-text">Week: 5, Task ID: 27428</p>
+                <a href="Week5_27428/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week5_27428/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="5">
+            <div class="card-body">
+                <h5 class="card-title">Snakes and Ladders Game</h5>
+                <p class="card-text">Week: 5, Task ID: 27431</p>
+                <a href="Week5_27431/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week5_27431/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="5">
+            <div class="card-body">
+                <h5 class="card-title">Card Game</h5>
+                <p class="card-text">Week: 5, Task ID: 27433</p>
+                <a href="Week5_27433/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week5_27433/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="5">
+            <div class="card-body">
+                <h5 class="card-title">JavaScript Roulette Wheel</h5>
+                <p class="card-text">Week: 5, Task ID: 29208</p>
+                <a href="Week5_29208/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week5_29208/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="5">
+            <div class="card-body">
+                <h5 class="card-title">Color Tao</h5>
+                <p class="card-text">Week: 5, Task ID: 29210</p>
+                <a href="Week5_29210/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week5_29210/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="5">
+            <div class="card-body">
+                <h5 class="card-title">Mystery Detective Game</h5>
+                <p class="card-text">Week: 5, Task ID: 29214</p>
+                <a href="Week5_29214/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week5_29214/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="5">
+            <div class="card-body">
+                <h5 class="card-title">PhaserJS Top-Down Two-Player Game</h5>
+                <p class="card-text">Week: 5, Task ID: 29216</p>
+                <a href="Week5_29216/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week5_29216/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="5">
+            <div class="card-body">
+                <h5 class="card-title">Colors of Life</h5>
+                <p class="card-text">Week: 5, Task ID: 29219</p>
+                <a href="Week5_29219/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week5_29219/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="5">
+            <div class="card-body">
+                <h5 class="card-title">IELTS Vocabulary Matching Game</h5>
+                <p class="card-text">Week: 5, Task ID: 29260</p>
+                <a href="Week5_29260/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week5_29260/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="5">
+            <div class="card-body">
+                <h5 class="card-title">Grid World Game</h5>
+                <p class="card-text">Week: 5, Task ID: 29261</p>
+                <a href="Week5_29261/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week5_29261/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="5">
+            <div class="card-body">
+                <h5 class="card-title">Pearl Guessing Game</h5>
+                <p class="card-text">Week: 5, Task ID: 29262</p>
+                <a href="Week5_29262/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week5_29262/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="5">
+            <div class="card-body">
+                <h5 class="card-title">1-20 Counting Game</h5>
+                <p class="card-text">Week: 5, Task ID: 29265</p>
+                <a href="Week5_29265/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week5_29265/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="5">
+            <div class="card-body">
+                <h5 class="card-title">Throw the Suitcase: Streamlined Cruise Edition</h5>
+                <p class="card-text">Week: 5, Task ID: 29266</p>
+                <a href="Week5_29266/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week5_29266/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="6">
+            <div class="card-body">
+                <h5 class="card-title">Enchanted Maze Hunters</h5>
+                <p class="card-text">Week: 6, Task ID: 29278</p>
+                <a href="Week6_29278/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week6_29278/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="6">
+            <div class="card-body">
+                <h5 class="card-title">Typing Racer Game</h5>
+                <p class="card-text">Week: 6, Task ID: 29287</p>
+                <a href="Week6_29287/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week6_29287/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="6">
+            <div class="card-body">
+                <h5 class="card-title">Mythical Item Collector</h5>
+                <p class="card-text">Week: 6, Task ID: 29295</p>
+                <a href="Week6_29295/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week6_29295/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="6">
+            <div class="card-body">
+                <h5 class="card-title">Alchemy Combination Game</h5>
+                <p class="card-text">Week: 6, Task ID: 29306</p>
+                <a href="Week6_29306/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week6_29306/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="6">
+            <div class="card-body">
+                <h5 class="card-title">Road Rush</h5>
+                <p class="card-text">Week: 6, Task ID: 29319</p>
+                <a href="Week6_29319/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week6_29319/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="6">
+            <div class="card-body">
+                <h5 class="card-title">Infinite Scroller Game</h5>
+                <p class="card-text">Week: 6, Task ID: 29332</p>
+                <a href="Week6_29332/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week6_29332/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="6">
+            <div class="card-body">
+                <h5 class="card-title">Fruit Ninja</h5>
+                <p class="card-text">Week: 6, Task ID: 29333</p>
+                <a href="Week6_29333/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week6_29333/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="6">
+            <div class="card-body">
+                <h5 class="card-title">Dot Reaction Game</h5>
+                <p class="card-text">Week: 6, Task ID: 29369</p>
+                <a href="Week6_29369/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week6_29369/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="6">
+            <div class="card-body">
+                <h5 class="card-title">Chroma Crush</h5>
+                <p class="card-text">Week: 6, Task ID: 29379</p>
+                <a href="Week6_29379/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week6_29379/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="6">
+            <div class="card-body">
+                <h5 class="card-title">Hexad</h5>
+                <p class="card-text">Week: 6, Task ID: 29385</p>
+                <a href="Week6_29385/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week6_29385/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="6">
+            <div class="card-body">
+                <h5 class="card-title">Gravity Battle Evolved</h5>
+                <p class="card-text">Week: 6, Task ID: 29386</p>
+                <a href="Week6_29386/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week6_29386/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="6">
+            <div class="card-body">
+                <h5 class="card-title">Power Memory Game</h5>
+                <p class="card-text">Week: 6, Task ID: 29398</p>
+                <a href="Week6_29398/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week6_29398/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="6">
+            <div class="card-body">
+                <h5 class="card-title">Micro Civ</h5>
+                <p class="card-text">Week: 6, Task ID: 29399</p>
+                <a href="Week6_29399/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week6_29399/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="6">
+            <div class="card-body">
+                <h5 class="card-title">Oni Tactics</h5>
+                <p class="card-text">Week: 6, Task ID: 29401</p>
+                <a href="Week6_29401/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week6_29401/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="6">
+            <div class="card-body">
+                <h5 class="card-title">Mini Battleship</h5>
+                <p class="card-text">Week: 6, Task ID: 29409</p>
+                <a href="Week6_29409/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week6_29409/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="6">
+            <div class="card-body">
+                <h5 class="card-title">Cosmic Lights Out</h5>
+                <p class="card-text">Week: 6, Task ID: 29414</p>
+                <a href="Week6_29414/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week6_29414/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="6">
+            <div class="card-body">
+                <h5 class="card-title">Maze Gem Game</h5>
+                <p class="card-text">Week: 6, Task ID: 29419</p>
+                <a href="Week6_29419/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week6_29419/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+        <div class="card task-card" data-week="6">
+            <div class="card-body">
+                <h5 class="card-title">Battle of the Squares</h5>
+                <p class="card-text">Week: 6, Task ID: 29431</p>
+                <a href="Week6_29431/turn1ideal.html" class="btn btn-primary">Task Link</a>
+                
+                <button type="button" class="btn btn-secondary" data-toggle="modal" data-target="#videoModal" data-videopath="Week6_29431/io/final.mp4">Video Link</button>
+                
+            </div>
+        </div>
+    
+    </div>
+</div>
+
+
+<div class="modal fade" id="videoModal" tabindex="-1" role="dialog" aria-labelledby="videoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-body">
+        <video id="videoPlayer" width="100%" controls>
+          <source src="" type="video/mp4">
+          Your browser does not support HTML5 video.
+        </video>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+<script>
+$('#videoModal').on('show.bs.modal', function (event) {
+  var button = $(event.relatedTarget)
+  var videoPath = button.data('videopath')
+  var modal = $(this)
+  modal.find('#videoPlayer source').attr('src', videoPath)
+  modal.find('#videoPlayer')[0].load()
+})
+
+$('#videoModal').on('hidden.bs.modal', function (e) {
+  var modal = $(this)
+  modal.find('#videoPlayer')[0].pause()
+})
+
+
+function filterTasks() {
+    var selectedWeek = $('#weekFilter').val()
+    $('.task-card').each(function() {
+        var taskWeek = $(this).data('week')
+        if (selectedWeek === '' || selectedWeek === taskWeek.toString()) {
+            $(this).show()
+        } else {
+            $(this).hide()
+        }
+    })
+
+    
+    if (selectedWeek !== '') {
+        const url = new URL(window.location);
+        url.searchParams.set('week', selectedWeek);
+        window.history.pushState({}, '', url);
+    } else {
+        const url = new URL(window.location);
+        url.searchParams.delete('week');
+        window.history.pushState({}, '', url);
+    }
+}
+
+
+$(document).ready(function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const selectedWeek = urlParams.get('week');
+    
+    if (selectedWeek) {
+        $('#weekFilter').val(selectedWeek);
+        filterTasks();
+    }
+});
+</script>
+</body>
+</html>

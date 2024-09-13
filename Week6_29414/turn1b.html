@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cosmic Lights Out</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #00001a;
+            overflow: hidden;
+        }
+
+        @keyframes starMove {
+            from {background-position: 0 0;}
+            to {background-position: -10000px 5000px;}
+        }
+
+        .star-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><circle cx="50" cy="50" r="1" fill="white"/></svg>');
+            animation: starMove 1000s linear infinite;
+            z-index: -1;
+        }
+
+        #game-container {
+            text-align: center;
+            background: rgba(0, 0, 26, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        #lights-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 50px);
+            gap: 5px;
+            margin: 20px 0;
+        }
+
+        .light {
+            width: 50px;
+            height: 50px;
+            background: #00ff00;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+
+        .light.off {
+            background: #003300;
+        }
+
+        #move-counter, #reset-button {
+            font-family: 'Arial', sans-serif;
+            color: #fff;
+        }
+
+        #reset-button {
+            margin-top: 10px;
+            padding: 10px;
+            background: #00ff00;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="star-background"></div>
+<div id="game-container">
+    <div id="lights-grid"></div>
+    <div id="move-counter">Moves: 0</div>
+    <button id="reset-button">Reset Game</button>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const grid = document.getElementById('lights-grid');
+        const counter = document.getElementById('move-counter');
+        const resetButton = document.getElementById('reset-button');
+        let moves = 0;
+        let lights = [];
+
+        function createGrid() {
+            for(let i = 0; i < 36; i++) {
+                let light = document.createElement('div');
+                light.className = 'light ' + (Math.random() > 0.5 ? 'on' : 'off');
+                grid.appendChild(light);
+                lights.push(light);
+                light.onclick = function() { toggleLight(i); };
+            }
+        }
+
+        function toggleLight(index) {
+            const directions = [0, -1, 1, -6, 6];
+            directions.forEach(dir => {
+                const newIndex = index + dir;
+                if(lights[newIndex]) {
+                    lights[newIndex].classList.toggle('on');
+                    lights[newIndex].classList.toggle('off');
+                }
+            });
+            updateMoves();
+            checkWin();
+        }
+
+        function updateMoves() {
+            moves++;
+            counter.textContent = `Moves: ${moves}`;
+        }
+
+        function checkWin() {
+            if(lights.every(light => !light.classList.contains('on'))) {
+                setTimeout(() => alert('Congratulations! You turned off all the cosmic lights!'), 100);
+            }
+        }
+
+        function resetGame() {
+            moves = 0;
+            counter.textContent = 'Moves: 0';
+            lights.forEach(light => {
+                light.className = 'light ' + (Math.random() > 0.5 ? 'on' : 'off');
+            });
+        }
+
+        resetButton.onclick = resetGame;
+        createGrid();
+    });
+</script>
+</body>
+</html>

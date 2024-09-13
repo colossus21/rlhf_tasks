@@ -1,0 +1,5 @@
+Can you create a game called 'Cosmic Lights Out' with the following features:
+1. A 6x6 grid of lights representing stars in neonish green color.
+2. Clicking a panel toggles its state and the state of up, down, left and right panels. The goal is to turn off all lights.
+3. Add a move counter to track turns below the game. Add a reset button to start a new game.
+4. Use a space themed background (deep blue) with scrolling stars. Center the layout.

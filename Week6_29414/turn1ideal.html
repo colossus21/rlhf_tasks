@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmic Lights Out</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #0a0a2a;
+            color: #ffffff;
+        }
+        .starfield-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+        }
+        .starfield {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            animation: scrollStars 60s linear infinite;
+        }
+        .star {
+            position: absolute;
+            background-color: #ffffff;
+            border-radius: 50%;
+        }
+        @keyframes scrollStars {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(100%); }
+        }
+        #game-container {
+            text-align: center;
+            background-color: rgba(26, 26, 74, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(136, 206, 2, 0.3);
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(6, 60px);
+            gap: 4px;
+            margin-top: 20px;
+            background-color: rgba(42, 42, 106, 0.5);
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .cell {
+            width: 60px;
+            height: 60px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .cell.on {
+            background-color: #88ce02;
+            box-shadow: 0 0 10px #88ce02, 0 0 20px #88ce02;
+        }
+        .cell.off {
+            background-color: #2a2a6a;
+        }
+        #moves {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        #reset-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4a4a8a;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        #reset-button:hover {
+            background-color: #5a5a9a;
+        }
+        @keyframes win-animation {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .win .cell {
+            animation: win-animation 0.5s ease-in-out;
+        }
+        #win-message {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(136, 206, 2, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 24px;
+            text-align: center;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+<div class="starfield-container">
+    <div class="starfield"></div>
+</div>
+<div id="game-container">
+    <h1>Cosmic Lights Out</h1>
+    <div id="board"></div>
+    <div id="moves">Moves: 0</div>
+    <button id="reset-button" onclick="resetGame()">New Game</button>
+</div>
+<div id="win-message"></div>
+
+<script>
+    const BOARD_SIZE = 6;
+    let board = [];
+    let moves = 0;
+
+    function createBoard() {
+        const boardElement = document.getElementById('board');
+        boardElement.innerHTML = '';
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            for (let j = 0; j < BOARD_SIZE; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.onclick = () => handleCellClick(i, j);
+                boardElement.appendChild(cell);
+            }
+        }
+    }
+
+    function initializeBoard() {
+        board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(false));
+        for (let i = 0; i < 10; i++) {
+            const row = Math.floor(Math.random() * BOARD_SIZE);
+            const col = Math.floor(Math.random() * BOARD_SIZE);
+            toggleLight(row, col);
+            toggleLight(row - 1, col);
+            toggleLight(row + 1, col);
+            toggleLight(row, col - 1);
+            toggleLight(row, col + 1);
+        }
+        updateBoard();
+    }
+
+    function toggleLight(row, col) {
+        if (row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE) {
+            board[row][col] = !board[row][col];
+        }
+    }
+
+    function handleCellClick(row, col) {
+        toggleLight(row, col);
+        toggleLight(row - 1, col);
+        toggleLight(row + 1, col);
+        toggleLight(row, col - 1);
+        toggleLight(row, col + 1);
+        moves++;
+        updateBoard();
+        checkWinCondition();
+    }
+
+    function updateBoard() {
+        const cells = document.querySelectorAll('.cell');
+        board.flat().forEach((isOn, index) => {
+            cells[index].className = `cell ${isOn ? 'on' : 'off'}`;
+        });
+        document.getElementById('moves').textContent = `Moves: ${moves}`;
+    }
+
+    function checkWinCondition() {
+        const allOff = board.flat().every(cell => !cell);
+        if (allOff) {
+            document.getElementById('board').classList.add('win');
+            showWinMessage();
+        }
+    }
+
+    function showWinMessage() {
+        const winMessage = document.getElementById('win-message');
+        winMessage.textContent = `Congratulations! You won in ${moves} moves!`;
+        winMessage.style.display = 'block';
+        setTimeout(() => {
+            winMessage.style.display = 'none';
+            resetGame();
+        }, 3000);
+    }
+
+    function resetGame() {
+        moves = 0;
+        document.getElementById('board').classList.remove('win');
+        document.getElementById('win-message').style.display = 'none';
+        initializeBoard();
+    }
+
+    function createStarfield() {
+        const starfield = document.querySelector('.starfield');
+        const numStars = 200;
+
+        for (let i = 0; i < numStars; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = `${Math.random() * 100}%`;
+            star.style.top = `${Math.random() * 200}%`;
+            const size = Math.random() * 3;
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.opacity = Math.random();
+            starfield.appendChild(star);
+        }
+    }
+
+    createBoard();
+    createStarfield();
+    resetGame();
+</script>
+</body>
+</html>

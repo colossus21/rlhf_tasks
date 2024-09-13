@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mini Battleship</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+        }
+        #gameTitle {
+            color: #2c3e50;
+        }
+        #gameBoard {
+            display: grid;
+            grid-template-columns: repeat(6, 50px);
+            gap: 2px;
+            margin-top: 20px;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            background: #3498db;
+            border: 1px solid #2980b9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .cell:hover {
+            background: #2980b9;
+        }
+        .ship {
+            background: #e74c3c;
+        }
+        .hit {
+            background: #e74c3c !important;
+            animation: hit 0.5s ease-out;
+        }
+        .miss {
+            background: #ecf0f1 !important;
+            animation: miss 0.5s ease-out;
+        }
+        .placement-guide {
+            background: rgba(255, 255, 0, 0.3);
+        }
+        @keyframes hit {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        @keyframes miss {
+            0% { transform: rotate(0deg); }
+            50% { transform: rotate(15deg); }
+            100% { transform: rotate(0deg); }
+        }
+        #status {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+
+<h1 id="gameTitle">Mini Battleship</h1>
+<div id="gameBoard"></div>
+<div id="status">Place your ships!</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    const board = $('#gameBoard');
+    const status = $('#status');
+    let gamePhase = 'placement';
+    let currentPlayer = 'player';
+    let playerShips = {triangle: false, square: false, circle: false, star: false};
+    let cpuShips = {triangle: false, square: false, circle: false, star: false};
+
+    // Initialize board
+    for(let i = 0; i < 36; i++) {
+        board.append(`<div class="cell" data-index="${i}"></div>`);
+    }
+
+    // Game logic
+    function placeShip(shape, isPlayer = true) {
+        const cells = $('.cell');
+        if (isPlayer) {
+            cells.filter((index) => index < 18).on('click', function() {
+                if (!playerShips[shape]) {
+                    $(this).addClass(`ship ${shape}`);
+                    playerShips[shape] = true;
+                    if (Object.values(playerShips).every(v => v)) {
+                        status.text("All ships placed. Start attacking!");
+                        gamePhase = 'attack';
+                        placeCPUShips();
+                    }
+                }
+            }).hover(
+                function() { $(this).addClass('placement-guide'); },
+                function() { $(this).removeClass('placement-guide'); }
+            );
+        }
+    }
+
+    function placeCPUShips() {
+        const shapes = ['triangle', 'square', 'circle', 'star'];
+        shapes.forEach(shape => {
+            let placed = false;
+            while(!placed) {
+                let randomIndex = Math.floor(Math.random() * 18) + 18; // CPU area
+                if (!$('.cell').eq(randomIndex).hasClass('ship')) {
+                    $('.cell').eq(randomIndex).addClass(`ship ${shape}`);
+                    cpuShips[shape] = true;
+                    placed = true;
+                }
+            }
+        });
+    }
+
+    function attack(cell) {
+        if (gamePhase === 'attack' && currentPlayer === 'player' && cell.index() >= 18) {
+            if (!cell.hasClass('hit') && !cell.hasClass('miss')) {
+                if (cell.hasClass('ship')) {
+                    cell.addClass('hit');
+                    status.text('Hit! Your turn again.');
+                } else {
+                    cell.addClass('miss');
+                    status.text('Miss! CPU\'s turn.');
+                    currentPlayer = 'cpu';
+                    setTimeout(cpuTurn, 1000);
+                }
+            }
+        }
+    }
+
+    function cpuTurn() {
+        let playerCells = $('.cell').slice(0, 18);
+        let target;
+        do {
+            target = playerCells.eq(Math.floor(Math.random() * playerCells.length));
+        } while(target.hasClass('hit') || target.hasClass('miss'));
+
+        if (target.hasClass('ship')) {
+            target.addClass('hit');
+            status.text('CPU hit your ship! Your turn.');
+        } else {
+            target.addClass('miss');
+            status.text('CPU missed. Your turn.');
+        }
+        currentPlayer = 'player';
+    }
+
+    // Setup game
+    placeShip('triangle');
+    placeShip('square');
+    placeShip('circle');
+    placeShip('star');
+
+    board.on('click', '.cell', function() {
+        if (gamePhase === 'attack') {
+            attack($(this));
+        }
+    });
+</script>
+
+</body>
+</html>

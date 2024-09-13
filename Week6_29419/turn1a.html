@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Maze Gem</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+            color: #fff;
+            margin: 0;
+            height: 100vh;
+        }
+        #game {
+            text-align: center;
+            background: #111;
+            padding: 20px;
+        }
+        #maze {
+            display: inline-block;
+            position: relative;
+        }
+        .cell {
+            width: 20px;
+            height: 20px;
+            line-height: 20px;
+            text-align: center;
+            float: left;
+        }
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at center, transparent 0%, black 100%);
+        }
+        #stats { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+<div id="game">
+    <h1>Maze Gem</h1>
+    <div id="stats"></div>
+    <div id="maze"></div>
+    <div id="overlay"></div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const mazeSize = 12;
+        let player = {x: 0, y: 0, energy: 100, gems: 0, moves: 0};
+        let maze = [];
+        const directions = [[0, -1], [1, 0], [0, 1], [-1, 0]]; // up, right, down, left
+
+        // Maze generation
+        function generateMaze() {
+            for(let i = 0; i < mazeSize; i++) {
+                maze[i] = new Array(mazeSize).fill('█');
+            }
+            let stack = [{x: 1, y: 1}];
+            maze[1][1] = ' ';
+            while(stack.length > 0) {
+                let current = stack[stack.length - 1];
+                let neighbors = directions.filter(d =>
+                    current.x + d[0]*2 > 0 && current.x + d[0]*2 < mazeSize &&
+                    current.y + d[1]*2 > 0 && current.y + d[1]*2 < mazeSize &&
+                    maze[current.y + d[1]*2][current.x + d[0]*2] === '█'
+                );
+                if(neighbors.length) {
+                    let dir = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    maze[current.y + dir[1]][current.x + dir[0]] = ' ';
+                    maze[current.y + dir[1]*2][current.x + dir[0]*2] = ' ';
+                    stack.push({x: current.x + dir[0]*2, y: current.y + dir[1]*2});
+                } else {
+                    stack.pop();
+                }
+            }
+            placeItems('💎', 3); // Gems
+            placeItems('💥', 5); // Traps
+        }
+
+        function placeItems(item, count) {
+            for(let i = 0; i < count; i++) {
+                let x, y;
+                do {
+                    x = Math.floor(Math.random() * mazeSize);
+                    y = Math.floor(Math.random() * mazeSize);
+                } while(maze[y][x] !== ' ');
+                maze[y][x] = item;
+            }
+        }
+
+        function updateDisplay() {
+            let display = '';
+            for(let y = 0; y < mazeSize; y++) {
+                for(let x = 0; x < mazeSize; x++) {
+                    if(Math.abs(player.x - x) <= 1 && Math.abs(player.y - y) <= 1 ||
+                        (Math.abs(player.x - x) <= 2 && Math.abs(player.y - y) <= 2)) {
+                        display += maze[y][x] === '█' ? '█' : (maze[y][x] || ' ');
+                    } else {
+                        display += ' ';
+                    }
+                }
+                display += '<br>';
+            }
+            document.getElementById('maze').innerHTML = display.replace(/ /g, '&nbsp;');
+            document.getElementById('stats').innerHTML = `Energy: ${player.energy}% | Gems: ${player.gems}/3 | Moves: ${player.moves}`;
+            if(maze[player.y][player.x] === '💎') {
+                player.gems++;
+                maze[player.y][player.x] = ' ';
+            } else if(maze[player.y][player.x] === '💥') {
+                player.energy -= 20;
+            }
+            player.energy = Math.max(player.energy - 1, 0); // Decrease energy by 1 per move
+            if(player.energy <= 0 || player.gems === 3) {
+                endGame();
+            }
+        }
+
+        function movePlayer(dx, dy) {
+            let newX = player.x + dx;
+            let newY = player.y + dy;
+            if(newX >= 0 && newY >= 0 && newX < mazeSize && newY < mazeSize && maze[newY][newX] !== '█') {
+                player.x = newX;
+                player.y = newY;
+                player.moves++;
+                updateDisplay();
+            }
+        }
+
+        function endGame() {
+            if(player.energy <= 0) alert('Game Over! You ran out of energy.');
+            else alert('Congratulations! You collected all the gems!');
+            location.reload(); // Reset game
+        }
+
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowUp': movePlayer(0, -1); break;
+                case 'ArrowRight': movePlayer(1, 0); break;
+                case 'ArrowDown': movePlayer(0, 1); break;
+                case 'ArrowLeft': movePlayer(-1, 0); break;
+            }
+        });
+
+        generateMaze();
+        updateDisplay();
+    });
+</script>
+</body>
+</html>

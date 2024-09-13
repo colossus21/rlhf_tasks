@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Battle of the Squares</title>
+    <style>
+        body { margin: 0; background: skyblue; overflow: hidden; }
+        canvas { display: block; }
+        #gameOver { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; color: white; background: rgba(0,0,0,0.8); padding: 20px; display: none; }
+        #restartBtn { font-size: 20px; margin-top: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<div id="gameOver">Game Over<br><span id="winner"></span>
+    <button id="restartBtn">Restart</button>
+</div>
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Game objects and settings
+    const keys = {};
+    const players = {
+        p1: {x: 50, y: canvas.height - 50, width: 40, height: 40, color: 'red', dx: 0, dy: 0, hp: 100, special: 0, direction: 1, keys: {up: 'w', left: 'a', right: 'd', shoot: 'r', special: 'e'}},
+        p2: {x: canvas.width - 90, y: canvas.height - 50, width: 40, height: 40, color: 'blue', dx: 0, dy: 0, hp: 100, special: 0, direction: -1, keys: {up: 'i', left: 'j', right: 'l', shoot: 'p', special: 'o'}}
+    };
+
+    let platforms = [];
+    let bullets = [];
+    let particles = [];
+    let clouds = [];
+
+    function createClouds() {
+        for(let i = 0; i < 5; i++) {
+            clouds.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * 100,
+                speed: Math.random() * 0.5 + 0.1
+            });
+        }
+    }
+
+    function createPlatforms() {
+        for(let i = 0; i < 10; i++) {
+            const width = Math.random() * 100 + 50;
+            const x = Math.random() * (canvas.width - width);
+            const y = Math.random() * (canvas.height - 100) + 50;
+            platforms.push({x, y, width, height: 20});
+        }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw clouds with parallax effect
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        clouds.forEach(cloud => {
+            ctx.beginPath();
+            ctx.arc(cloud.x, cloud.y, 30, 0, Math.PI * 2);
+            ctx.fill();
+            cloud.x -= cloud.speed;
+            if(cloud.x + 30 < 0) cloud.x = canvas.width + 30;
+        });
+
+        // Title
+        ctx.font = "30px Arial";
+        ctx.fillStyle = "white";
+        ctx.textAlign = "center";
+        ctx.fillText("Battle of the Squares", canvas.width/2, 40);
+
+        // Platforms
+        ctx.fillStyle = '#333';
+        platforms.forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
+
+        // Players
+        Object.values(players).forEach(player => {
+            ctx.fillStyle = player.color;
+            ctx.beginPath();
+            ctx.roundRect(player.x, player.y, player.width, player.height, 5);
+            ctx.fill();
+
+            // HP and Special bars
+            ctx.fillStyle = 'green';
+            ctx.fillRect(player === players.p1 ? 10 : canvas.width - 110, player === players.p1 ? 10 : 30, player.hp, 10);
+            ctx.fillStyle = 'yellow';
+            ctx.fillRect(player === players.p1 ? 10 : canvas.width - 110, player === players.p1 ? 25 : 45, player.special, 10);
+        });
+
+        // Bullets and Particles
+        bullets.forEach((bullet, index) => {
+            ctx.fillStyle = 'black';
+            ctx.fillRect(bullet.x, bullet.y, 5, 5);
+            bullet.x += bullet.dx;
+            if(bullet.x < 0 || bullet.x > canvas.width) bullets.splice(index, 1);
+        });
+
+        particles.forEach((particle, index) => {
+            ctx.fillStyle = particle.color;
+            ctx.globalAlpha = particle.alpha;
+            ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
+            particle.x += particle.dx;
+            particle.y += particle.dy;
+            particle.alpha -= 0.01;
+            if(particle.alpha <= 0) particles.splice(index, 1);
+            ctx.globalAlpha = 1;
+        });
+    }
+
+    function update() {
+        Object.values(players).forEach(player => {
+            // Movement
+            if(keys[player.keys.left]) player.x -= 5;
+            if(keys[player.keys.right]) player.x += 5;
+            if(keys[player.keys.up] && player.dy === 0) player.dy = -10;
+
+            // Gravity and Platform collision
+            player.dy += 0.5; // gravity
+            player.y += player.dy;
+            player.dy *= 0.9; // friction
+
+            platforms.forEach(platform => {
+                if(player.y + player.height > platform.y &&
+                    player.y < platform.y + platform.height &&
+                    player.x + player.width > platform.x &&
+                    player.x < platform.x + platform.width) {
+                    player.y = platform.y - player.height;
+                    player.dy = 0;
+                }
+            });
+
+            // Ground check
+            if(player.y + player.height >= canvas.height) {
+                player.y = canvas.height - player.height;
+                player.dy = 0;
+            }
+
+            // Shooting
+            if(keys[player.keys.shoot]) {
+                bullets.push({x: player.x + (player.direction === 1 ? player.width : 0), y: player.y + player.height/2, dx: 10 * player.direction});
+                keys[player.keys.shoot] = false; // Simple cooldown mechanism
+            }
+
+            // Special
+            if(player.special < 100 && (keys[player.keys.left] || keys[player.keys.right])) player.special += 0.5;
+        });
+
+        // Bullet collision
+        bullets.forEach((bullet, bIndex) => {
+            Object.values(players).forEach((player, pIndex) => {
+                if(bullet.x < player.x + player.width &&
+                    bullet.x + 5 > player.x &&
+                    bullet.y < player.y + player.height &&
+                    bullet.y + 5 > player.y) {
+                    player.hp -= 10;
+                    bullets.splice(bIndex, 1);
+                    for(let i = 0; i < 20; i++) {
+                        particles.push({
+                            x: player.x, y: player.y,
+                            dx: Math.random() * 4 - 2, dy: Math.random() * 4 - 2,
+                            size: Math.random() * 3 + 1,
+                            color: player.color,
+                            alpha: 1
+                        });
+                    }
+                    const hitWords = ["Hit!", "Kaboom!", "Bam!", "Pow!"];
+                    particles.push({
+                        x: player.x, y: player.y - 20,
+                        size: 10, color: 'black', alpha: 1,
+                        text: hitWords[Math.floor(Math.random() * hitWords.length)],
+                        dx: 0, dy: -0.5
+                    });
+                }
+            });
+        });
+
+        // Check for game over
+        if(players.p1.hp <= 0 || players.p2.hp <= 0) {
+            document.getElementById('gameOver').style.display = 'block';
+            document.getElementById('winner').textContent = players.p1.hp > 0 ? 'Red Wins!' : 'Blue Wins!';
+            return;
+        }
+
+        draw();
+        requestAnimationFrame(update);
+    }
+
+    // Event listeners for controls
+    document.addEventListener('keydown', (e) => keys[e.key.toLowerCase()] = true);
+    document.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
+
+    document.getElementById('restartBtn').addEventListener('click', () => {
+        document.getElementById('gameOver').style.display = 'none';
+        players.p1.hp = players.p2.hp = 100;
+        players.p1.special = players.p2.special = 0;
+        update();
+    });
+
+    createClouds();
+    createPlatforms();
+    update();
+</script>
+</body>
+</html>
