@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            height: 100vh;
+            background-color: #1f2937;
+            color: white;
+            font-family: 'Arial', sans-serif;
+        }
+
+        #turn-indicator {
+            grid-row: 1 / 2;
+            text-align: center;
+            font-size: 1.5rem;
+            padding: 10px;
+        }
+
+        #game-board {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            grid-template-rows: 1fr auto 1fr;
+            gap: 10px;
+            justify-items: center;
+            align-items: center;
+        }
+
+        .player {
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #374151;
+            text-align: center;
+        }
+
+        .player-name {
+            margin-bottom: 10px;
+        }
+
+        .player-score {
+            margin-top: 10px;
+            font-size: 1.25rem;
+        }
+
+        .player-role {
+            margin-top: 10px;
+            font-size: 1rem;
+            color: #10b981;
+        }
+
+        #player-left {
+            grid-column: 1 / 2;
+            grid-row: 2 / 3;
+        }
+
+        #player-top {
+            grid-column: 2 / 3;
+            grid-row: 1 / 2;
+        }
+
+        #player-right {
+            grid-column: 3 / 4;
+            grid-row: 2 / 3;
+        }
+
+        #player-bottom {
+            grid-column: 2 / 3;
+            grid-row: 3 / 4;
+        }
+
+        #card-center {
+            grid-column: 2 / 3;
+            grid-row: 2 / 3;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .card {
+            background-color: #3b82f6;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+        }
+
+        .card:hover {
+            transform: scale(1.1);
+            background-color: #2563eb;
+        }
+
+        .picked {
+            background-color: #10b981;
+        }
+
+        .revealed {
+            background-color: #ef4444;
+        }
+
+        #message-display {
+            grid-row: 3 / 4;
+            text-align: center;
+            font-size: 1.25rem;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #nextTurn {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="turn-indicator">
+    Turn <span id="turnNumber">1</span>
+</div>
+
+<div id="game-board">
+    <div id="player-left" class="player">
+        <div class="player-name">CPU 1</div>
+        <div id="roleLeft" class="player-role"></div>
+        <div id="scoreLeft" class="player-score">0 points</div>
+    </div>
+    <div id="player-top" class="player">
+        <div class="player-name">CPU 2</div>
+        <div id="roleTop" class="player-role"></div>
+        <div id="scoreTop" class="player-score">0 points</div>
+    </div>
+    <div id="player-right" class="player">
+        <div class="player-name">CPU 3</div>
+        <div id="roleRight" class="player-role"></div>
+        <div id="scoreRight" class="player-score">0 points</div>
+    </div>
+    <div id="card-center">
+        <div id="card1" class="card">Card 1</div>
+        <div id="card2" class="card">Card 2</div>
+        <div id="card3" class="card">Card 3</div>
+        <div id="card4" class="card">Card 4</div>
+    </div>
+    <div id="player-bottom" class="player">
+        <div class="player-name">You</div>
+        <div id="roleBottom" class="player-role"></div>
+        <div id="scoreBottom" class="player-score">0 points</div>
+    </div>
+</div>
+
+<div id="message-display">
+    <button id="nextTurn" class="bg-blue-600 px-4 py-2 rounded-lg">Next Turn</button>
+</div>
+
+<script>
+    // Initialize turn number and player scores
+    let turnNumber = 1;
+    let scores = {
+        playerLeft: 0,
+        playerTop: 0,
+        playerRight: 0,
+        playerBottom: 0,
+    };
+
+    // Define card properties
+    const cards = [
+        { name: "King", points: 1000, elementId: "card1" },
+        { name: "Detective", points: 800, elementId: "card2" },
+        { name: "Bandit", points: 600, elementId: "card3" },
+        { name: "Thief", points: 500, elementId: "card4" },
+    ];
+
+    // Shuffle an array using Fisher-Yates algorithm
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    // Add event listeners to the cards for the player's turn
+    function addCardEventListeners() {
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('click', playerPickCard);
+        });
+    }
+
+    addCardEventListeners();
+
+    // Handle player's card selection
+    function playerPickCard(event) {
+        const cardId = event.target.id;
+        const card = cards.find(c => c.elementId === cardId);
+        if (!card.assigned) {
+            assignRole("Bottom", card);
+            setTimeout(() => cpuTakeTurn("Left"), 500);
+        }
+    }
+
+    // Handle CPU player's card selection
+    function cpuTakeTurn(player) {
+        let remainingCards = cards.filter(card => !card.assigned);
+        if (remainingCards.length) {
+            const card = remainingCards.splice(Math.floor(Math.random() * remainingCards.length), 1)[0];
+            assignRole(player, card);
+            if (player === "Left") {
+                setTimeout(() => cpuTakeTurn("Top"), 500);
+            } else if (player === "Top") {
+                setTimeout(() => cpuTakeTurn("Right"), 500);
+            } else {
+                document.getElementById('nextTurn').style.display = "block";
+                updateScores();
+                checkForWinner();
+            }
+        }
+    }
+
+    // Assign the selected role to the player and update the card
+    function assignRole(player, card) {
+        const roleElement = document.getElementById(`role${player}`);
+        const cardElement = document.getElementById(card.elementId);
+        if (roleElement && cardElement) {
+            roleElement.innerText = card.name;
+            cardElement.classList.add('picked');
+            cardElement.innerText = card.name;
+            scores[`player${player}`] += card.points;
+            card.assigned = true;
+        } else {
+            console.error(`Element not found: role${player} or ${card.elementId}`);
+        }
+    }
+
+    // Update the score display for all players
+    function updateScores() {
+        for (const player in scores) {
+            const playerKey = player.replace('player', ''); // Extract "Left", "Top", etc.
+            const scoreElement = document.getElementById(`score${playerKey}`);
+            if (scoreElement) {
+                scoreElement.innerText = `${scores[player]} points`;
+            } else {
+                console.error(`Element not found: score${playerKey}`);
+            }
+        }
+    }
+
+    // Check if any player has won the game
+    function checkForWinner() {
+        for (const player in scores) {
+            if (scores[player] >= 3000) {
+                let winnerMessage = player === "playerBottom" ? "You win the game!" : `${getCPUName(player)} wins the game!`;
+                alert(winnerMessage);
+                resetGame();
+            }
+        }
+    }
+
+    // Get the name of the CPU based on the player key
+    function getCPUName(player) {
+        const cpuNames = {
+            playerLeft: "CPU 1",
+            playerTop: "CPU 2",
+            playerRight: "CPU 3"
+        };
+        return cpuNames[player];
+    }
+
+    // Reset the game for a new round
+    function resetGame() {
+        turnNumber = 1;
+        scores = {
+            playerLeft: 0,
+            playerTop: 0,
+            playerRight: 0,
+            playerBottom: 0,
+        };
+        cards.forEach(card => {
+            card.assigned = false;
+            const cardElement = document.getElementById(card.elementId);
+            if (cardElement) {
+                cardElement.innerText = "Card";
+                cardElement.classList.remove('picked', 'revealed');
+            }
+        });
+        updateScores();
+        document.getElementById('turnNumber').innerText = turnNumber;
+        resetTurn();
+    }
+
+    // Move to the next turn
+    document.getElementById('nextTurn').addEventListener('click', () => {
+        turnNumber += 1;
+        document.getElementById('turnNumber').innerText = turnNumber;
+        resetTurn();
+    });
+
+    // Reset the game board for the next turn
+    function resetTurn() {
+        shuffle(cards);
+
+        // Update the card elements to reflect the new order
+        const cardCenter = document.getElementById('card-center');
+        cardCenter.innerHTML = '';
+
+        cards.forEach(card => {
+            const cardElement = document.createElement('div');
+            cardElement.id = card.elementId;
+            cardElement.className = 'card';
+            cardElement.innerText = 'Card';
+            cardCenter.appendChild(cardElement);
+        });
+
+        addCardEventListeners(); // Reassign event listeners
+
+        cards.forEach((c, i) => {
+            delete cards[i].assigned;
+        });
+
+        ["Left", "Top", "Right", "Bottom"].forEach(player => {
+            const roleElement = document.getElementById(`role${player}`);
+            if (roleElement) {
+                roleElement.innerText = "";
+            }
+        });
+        document.getElementById('nextTurn').style.display = "none";
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medicine Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        input[type="checkbox"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid #3b82f6;
+            outline: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        input[type="checkbox"]:checked {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="bg-blue-800 flex flex-col items-center justify-center min-h-screen">
+    <div class="mb-4">
+        <button id="addMedicineBtn" class="text-white bg-blue-500 hover:bg-blue-600 font-bold py-1 px-2 rounded-sm mr-2">Add Medicine</button>
+        <button id="resetChecklistBtn" class="text-white bg-red-500 hover:bg-red-600 font-bold py-1 px-2 rounded-sm">Reset Checklist</button>
+    </div>
+    <div class="bg-white p-6 rounded-lg shadow-xl w-full max-w-lg">
+        <h1 class="text-3xl font-bold mb-6 text-center text-blue-900">Medicines</h1>
+        <ul id="medicineList" class="space-y-3">
+            <!-- Medicine items will be added here -->
+        </ul>
+    </div>
+
+    <!-- Modal -->
+    <div id="medicineModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-lg w-full max-w-sm">
+            <h2 class="text-xl font-bold mb-4 text-center text-blue-900">Add Medicine</h2>
+            <div class="mb-4">
+                <label class="block text-gray-700">Time</label>
+                <select id="medicineTime" class="w-full p-2 border border-gray-300 rounded">
+                    <option value="Morning">Morning</option>
+                    <option value="Noon">Noon</option>
+                    <option value="Evening">Evening</option>
+                    <option value="Night">Night</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-700">Name</label>
+                <input type="text" id="medicineName" class="w-full p-2 border border-gray-300 rounded">
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-700">Instruction</label>
+                <input type="text" id="medicineInstruction" class="w-full p-2 border border-gray-300 rounded">
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-700">Quantity</label>
+                <select id="medicineQuantity" class="w-full p-2 border border-gray-300 rounded">
+                    <option value="1/4">1/4</option>
+                    <option value="1/2">1/2</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+            <div class="flex justify-end">
+                <button id="cancelBtn" class="text-gray-500 bg-gray-200 hover:bg-gray-300 font-bold py-1 px-2 rounded-sm mr-2">Cancel</button>
+                <button id="saveMedicineBtn" class="text-white bg-blue-500 hover:bg-blue-600 font-bold py-1 px-2 rounded-sm">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        let medicines = [
+            { time: "Morning", name: "Aspirin", instruction: "Before Meal", quantity: "1 Tablet" },
+            { time: "Noon", name: "Paracetamol", instruction: "After Meal", quantity: "1 Tablet" },
+            { time: "Evening", name: "Vitamin D", instruction: "With Meal", quantity: "1 Capsule" }
+        ];
+
+        function renderMedicines() {
+            const list = document.getElementById('medicineList');
+            list.innerHTML = '';  // Clear the list
+            const savedState = JSON.parse(localStorage.getItem('medicineState') || '{}');
+
+            // Sort medicines, unchecked first
+            const sortedMedicines = medicines.map((medicine, index) => ({ ...medicine, index }))
+                .sort((a, b) => (savedState[a.index] || false) - (savedState[b.index] || false));
+
+            sortedMedicines.forEach(({ time, name, instruction, quantity, index }, idx) => {
+                const isChecked = savedState[index] || false;
+                const isNextMedicine = !isChecked && idx === 0;  // Highlight next medicine
+                const li = document.createElement('li');
+                li.className = `flex items-center justify-between p-4 rounded-lg transition-all duration-300 ${
+                    isChecked ? 'bg-gray-100 order-last opacity-50' : isNextMedicine ? 'bg-yellow-200 shadow-lg transform scale-105' : 'bg-blue-200 hover:bg-blue-300'
+                }`;
+                li.innerHTML = `
+                    <div class="flex items-center">
+                        <input type="checkbox" class="form-checkbox" ${isChecked ? 'checked' : ''} data-index="${index}">
+                        <label class="ml-4 flex-1">
+                            <span class="text-sm text-gray-500">${time}</span><br>
+                            <span class="font-semibold text-lg ${isChecked ? 'line-through text-gray-400' : 'text-blue-900'}">${name}</span>
+                            <span class="text-sm text-gray-600">, ${instruction}, ${quantity}</span>
+                        </label>
+                    </div>
+                    <button class="removeBtn text-red-500 hover:text-red-700" data-index="${index}">Remove</button>
+                `;
+                list.appendChild(li);
+            });
+
+            // Update local storage and re-render on change
+            list.querySelectorAll('input[type="checkbox"]').forEach(box => {
+                box.addEventListener('change', function() {
+                    const index = this.getAttribute('data-index');
+                    savedState[index] = this.checked;
+                    localStorage.setItem('medicineState', JSON.stringify(savedState));
+                    renderMedicines();
+                });
+            });
+
+            // Remove medicine on button click
+            list.querySelectorAll('.removeBtn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = this.getAttribute('data-index');
+                    medicines.splice(index, 1);
+                    localStorage.setItem('medicineState', JSON.stringify(savedState));
+                    renderMedicines();
+                });
+            });
+        }
+
+        // Open modal
+        document.getElementById('addMedicineBtn').addEventListener('click', () => {
+            document.getElementById('medicineModal').classList.remove('hidden');
+        });
+
+        // Close modal
+        document.getElementById('cancelBtn').addEventListener('click', () => {
+            document.getElementById('medicineModal').classList.add('hidden');
+        });
+
+        // Save new medicine
+        document.getElementById('saveMedicineBtn').addEventListener('click', () => {
+            const time = document.getElementById('medicineTime').value;
+            const name = document.getElementById('medicineName').value;
+            const instruction = document.getElementById('medicineInstruction').value;
+            const quantity = document.getElementById('medicineQuantity').value;
+
+            if (name && instruction) {
+                medicines.push({ time, name, instruction, quantity });
+                renderMedicines();
+                document.getElementById('medicineModal').classList.add('hidden');
+            }
+        });
+
+        // Reset checklist
+        document.getElementById('resetChecklistBtn').addEventListener('click', () => {
+            localStorage.removeItem('medicineState');
+            renderMedicines();
+        });
+
+        // Initial render
+        renderMedicines();
+    </script>
+</body>
+</html>

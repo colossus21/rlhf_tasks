@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oni Tactics</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #game-container {
+            text-align: center;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(5, 70px);
+            gap: 4px;
+            margin-top: 20px;
+            background-color: #ddd;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .cell {
+            width: 70px;
+            height: 70px;
+            border: 1px solid #aaa;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            cursor: pointer;
+            background-color: white;
+            transition: all 0.3s ease;
+        }
+        .cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .piece {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+        }
+        .red .piece {
+            background-color: #ff4136;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .blue .piece {
+            background-color: #0074d9;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .valid-move {
+            background-color: #7fdbff;
+            opacity: 0.7;
+        }
+        .capture-move {
+            background-color: #ff4136;
+            opacity: 0.7;
+        }
+        .selected {
+            background-color: #ffdc00;
+            opacity: 0.7;
+        }
+        #message {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        #current-player {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        .red-text { color: #ff4136; }
+        .blue-text { color: #0074d9; }
+        #restart-button {
+            display: none;
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #2ecc40;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #restart-button:hover {
+            background-color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+<div id="game-container">
+    <h1>Oni Tactics</h1>
+    <div id="current-player">Current Player: <span id="player-name" class="red-text">Red</span></div>
+    <div id="board"></div>
+    <div id="message"></div>
+    <button id="restart-button" onclick="window.location.reload()">Restart Game</button>
+</div>
+
+<script>
+    const BOARD_SIZE = 5;
+    const PLAYERS = ['Red', 'Blue'];
+    let currentPlayer = 0;
+    let board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
+    let selectedCell = null;
+    let gameOver = false;
+
+    const CHARACTERS = {
+        SAMURAI: { symbol: '🤺', name: 'Samurai' },
+        RONIN: { symbol: '⚔️', name: 'Ronin' },
+        NINJA: { symbol: '🥷', name: 'Ninja' },
+        DAIMYO: { symbol: '👹', name: 'Daimyo' }
+    };
+
+    function initializeBoard() {
+        // Set up Red player (top)
+        board[0] = [
+            { type: CHARACTERS.SAMURAI, player: 0 },
+            { type: CHARACTERS.RONIN, player: 0 },
+            { type: CHARACTERS.DAIMYO, player: 0 },
+            { type: CHARACTERS.RONIN, player: 0 },
+            { type: CHARACTERS.SAMURAI, player: 0 }
+        ];
+        board[1] = Array(BOARD_SIZE).fill().map(() => ({ type: CHARACTERS.NINJA, player: 0 }));
+
+        // Set up Blue player (bottom)
+        board[3] = Array(BOARD_SIZE).fill().map(() => ({ type: CHARACTERS.NINJA, player: 1 }));
+        board[4] = [
+            { type: CHARACTERS.SAMURAI, player: 1 },
+            { type: CHARACTERS.RONIN, player: 1 },
+            { type: CHARACTERS.DAIMYO, player: 1 },
+            { type: CHARACTERS.RONIN, player: 1 },
+            { type: CHARACTERS.SAMURAI, player: 1 }
+        ];
+    }
+
+    function createBoard() {
+        const boardElement = document.getElementById('board');
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            for (let j = 0; j < BOARD_SIZE; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.onclick = () => handleCellClick(i, j);
+                cell.onmouseover = () => handleCellHover(i, j);
+                cell.onmouseout = () => handleCellHoverExit(i, j);
+                boardElement.appendChild(cell);
+            }
+        }
+    }
+
+    function updateBoard() {
+        const cells = document.querySelectorAll('.cell');
+        board.flat().forEach((cell, index) => {
+            if (cell) {
+                cells[index].innerHTML = `<div class="piece">${cell.type.symbol}</div>`;
+                cells[index].className = `cell ${PLAYERS[cell.player].toLowerCase()}`;
+            } else {
+                cells[index].innerHTML = '';
+                cells[index].className = 'cell';
+            }
+        });
+        if (selectedCell) {
+            cells[selectedCell.row * BOARD_SIZE + selectedCell.col].classList.add('selected');
+            showAvailableMoves(selectedCell.row, selectedCell.col);
+        }
+    }
+
+    function handleCellClick(row, col) {
+        if (gameOver) return;
+
+        if (selectedCell && selectedCell.row === row && selectedCell.col === col) {
+            // Deselect the current piece
+            selectedCell = null;
+        } else if (selectedCell) {
+            if (move(selectedCell.row, selectedCell.col, row, col)) {
+                selectedCell = null;
+                switchPlayer();
+            } else {
+                selectedCell = board[row][col] && board[row][col].player === currentPlayer ? { row, col } : null;
+            }
+        } else if (board[row][col] && board[row][col].player === currentPlayer) {
+            selectedCell = { row, col };
+        }
+        updateBoard();
+    }
+
+    function handleCellHover(row, col) {
+        if (gameOver) return;
+
+        if (!selectedCell && board[row][col] && board[row][col].player === currentPlayer) {
+            showAvailableMoves(row, col);
+        }
+    }
+
+    function handleCellHoverExit(row, col) {
+        if (gameOver) return;
+
+        if (!selectedCell) {
+            clearHighlights();
+        }
+    }
+
+    function showAvailableMoves(row, col) {
+        clearHighlights();
+        const piece = board[row][col];
+        if (!piece || piece.player !== currentPlayer) return;
+
+        const moves = getValidMoves(row, col);
+        const cells = document.querySelectorAll('.cell');
+
+        moves.forEach(move => {
+            const cellIndex = move.row * BOARD_SIZE + move.col;
+            if (board[move.row][move.col] && board[move.row][move.col].player !== currentPlayer) {
+                cells[cellIndex].classList.add('capture-move');
+            } else {
+                cells[cellIndex].classList.add('valid-move');
+            }
+        });
+    }
+
+    function clearHighlights() {
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach(cell => {
+            cell.classList.remove('valid-move', 'capture-move');
+        });
+    }
+
+    function move(fromRow, fromCol, toRow, toCol) {
+        const piece = board[fromRow][fromCol];
+        if (!piece || piece.player !== currentPlayer) return false;
+
+        const validMove = getValidMoves(fromRow, fromCol).some(move => move.row === toRow && move.col === toCol);
+        if (!validMove) return false;
+
+        // Check if Daimyo is captured
+        if (board[toRow][toCol] && board[toRow][toCol].type === CHARACTERS.DAIMYO) {
+            board[toRow][toCol] = piece;
+            board[fromRow][fromCol] = null;
+            endGame();
+            return true;
+        }
+
+        // Perform the move
+        board[toRow][toCol] = piece;
+        board[fromRow][fromCol] = null;
+
+        return true;
+    }
+
+    function getValidMoves(row, col) {
+        const piece = board[row][col];
+        if (!piece) return [];
+
+        const moves = [];
+        const direction = piece.player === 0 ? 1 : -1; // 1 for Red (moving down), -1 for Blue (moving up)
+
+        switch (piece.type) {
+            case CHARACTERS.SAMURAI:
+                // Diagonal moves in any direction
+                for (let i = 1; i < BOARD_SIZE; i++) {
+                    if (!addMoveIfValid(moves, row + i, col + i, piece.player)) break;
+                }
+                for (let i = 1; i < BOARD_SIZE; i++) {
+                    if (!addMoveIfValid(moves, row + i, col - i, piece.player)) break;
+                }
+                for (let i = 1; i < BOARD_SIZE; i++) {
+                    if (!addMoveIfValid(moves, row - i, col + i, piece.player)) break;
+                }
+                for (let i = 1; i < BOARD_SIZE; i++) {
+                    if (!addMoveIfValid(moves, row - i, col - i, piece.player)) break;
+                }
+                break;
+            case CHARACTERS.RONIN:
+                // Vertical and horizontal moves (like a rook)
+                for (let i = 1; i < BOARD_SIZE; i++) {
+                    if (!addMoveIfValid(moves, row + i, col, piece.player)) break;
+                }
+                for (let i = 1; i < BOARD_SIZE; i++) {
+                    if (!addMoveIfValid(moves, row - i, col, piece.player)) break;
+                }
+                for (let i = 1; i < BOARD_SIZE; i++) {
+                    if (!addMoveIfValid(moves, row, col + i, piece.player)) break;
+                }
+                for (let i = 1; i < BOARD_SIZE; i++) {
+                    if (!addMoveIfValid(moves, row, col - i, piece.player)) break;
+                }
+                break;
+            case CHARACTERS.NINJA:
+                // Exactly 2 spaces in any direction
+                for (let dr = -2; dr <= 2; dr += 2) {
+                    for (let dc = -2; dc <= 2; dc += 2) {
+                        if (dr !== 0 || dc !== 0) {
+                            addMoveIfValid(moves, row + dr, col + dc, piece.player);
+                        }
+                    }
+                }
+                break;
+            case CHARACTERS.DAIMYO:
+                // One space in all directions
+                for (let dr = -1; dr <= 1; dr++) {
+                    for (let dc = -1; dc <= 1; dc++) {
+                        if (dr !== 0 || dc !== 0) {
+                            addMoveIfValid(moves, row + dr, col + dc, piece.player);
+                        }
+                    }
+                }
+                break;
+        }
+        return moves;
+    }
+
+    function addMoveIfValid(moves, row, col, player) {
+        if (!isValidCell(row, col)) return false;
+        if (!board[row][col]) {
+            moves.push({ row, col });
+            return true;
+        }
+        if (board[row][col].player !== player) {
+            moves.push({ row, col });
+        }
+        return false;
+    }
+
+    function isValidCell(row, col) {
+        return row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE;
+    }
+
+    function switchPlayer() {
+        currentPlayer = 1 - currentPlayer;
+        const playerNameElement = document.getElementById('player-name');
+        playerNameElement.textContent = PLAYERS[currentPlayer];
+        playerNameElement.className = `${PLAYERS[currentPlayer].toLowerCase()}-text`;
+    }
+
+    function endGame() {
+        gameOver = true;
+        const winner = PLAYERS[currentPlayer];
+        const messageElement = document.getElementById('message');
+        messageElement.textContent = `${winner} wins!`;
+        messageElement.className = `${winner.toLowerCase()}-text`;
+        document.getElementById('restart-button').style.display = 'inline-block';
+    }
+
+    createBoard();
+    initializeBoard();
+    updateBoard();
+</script>
+</body>
+</html>

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bluff Game - Rock, Paper, Scissors</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .highlighted {
+            border: 4px solid #38bdf8; /* Tailwind's sky-400 color */
+            background-color: #0ea5e9; /* Tailwind's sky-500 color */
+        }
+        .log-entry {
+            margin-bottom: 0.5rem;
+        }
+        .log-entry.player {
+            color: #38bdf8; /* Tailwind's sky-400 color */
+        }
+        .log-entry.cpu {
+            color: #f87171; /* Tailwind's red-400 color */
+        }
+    </style>
+</head>
+<body class="bg-gray-800 text-white">
+
+<div class="container mx-auto my-8">
+    <h1 id="gameStatus" class="text-center text-3xl font-bold mb-6">Your Turn</h1>
+
+    <!-- CPU Cards -->
+    <div id="cpuCards" class="flex justify-center mb-4">
+        <!-- CPU cards will be generated dynamically here -->
+    </div>
+
+    <!-- Game Log -->
+    <div id="gameLog" class="bg-gray-700 p-4 rounded-lg h-32 overflow-y-auto mb-4"></div>
+
+    <!-- Player Cards -->
+    <div id="playerCards" class="flex justify-center mb-4">
+        <!-- Player cards will be generated dynamically here -->
+    </div>
+
+    <!-- Action Buttons -->
+    <div id="actionButtons" class="flex justify-center space-x-4 mb-4">
+        <!-- Action buttons will be generated dynamically here -->
+    </div>
+
+    <!-- Bluff Action -->
+    <div id="bluffAction" class="text-center"></div>
+</div>
+
+<script>
+    const cards = Array(10).fill('Rock').concat(Array(10).fill('Paper'), Array(10).fill('Scissors'));
+    const cardStyles = {
+        'Rock': 'bg-yellow-700 border-b-4 border-yellow-900',
+        'Paper': 'bg-gray-200 border-b-4 border-gray-400',
+        'Scissors': 'bg-gray-500 border-b-4 border-gray-700'
+    };
+    let playerDeck = [];
+    let cpuDeck = [];
+    let currentPlayer = 'Player'; // Player starts the game
+    let selectedCardIndex = null;
+    let lastDeclaredMove = null;
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function dealCards() {
+        const deck = shuffle([...cards]); // 30 cards
+        playerDeck = deck.slice(0, 10);
+        cpuDeck = deck.slice(10, 20);
+        renderCards();
+        updateGameStatus();
+    }
+
+    function renderCards() {
+        const playerCardsDiv = document.getElementById('playerCards');
+        const cpuCardsDiv = document.getElementById('cpuCards');
+        playerCardsDiv.innerHTML = '';
+        cpuCardsDiv.innerHTML = '';
+
+        // Render Player Cards
+        playerDeck.forEach((card, index) => {
+            const cardElement = document.createElement('div');
+            cardElement.className = `card ${cardStyles[card]} text-black font-bold py-6 px-4 mx-2 rounded shadow-lg cursor-pointer text-center uppercase w-24 h-32 flex items-center justify-center`;
+            cardElement.innerText = card;
+            cardElement.onclick = () => selectCard(index);
+            if (index === selectedCardIndex) {
+                cardElement.classList.add('highlighted');
+            }
+            playerCardsDiv.appendChild(cardElement);
+        });
+
+        // Render CPU Cards (Upside Down)
+        cpuDeck.forEach(() => {
+            const cardElement = document.createElement('div');
+            cardElement.className = `card bg-gray-600 border-b-4 border-gray-800 py-6 px-4 mx-2 rounded shadow-lg text-center uppercase w-24 h-32 flex items-center justify-center transform rotate-180`;
+            cardElement.innerText = 'CPU';
+            cpuCardsDiv.appendChild(cardElement);
+        });
+    }
+
+    function selectCard(index) {
+        if (currentPlayer === 'Player') {
+            selectedCardIndex = index;
+            renderCards();  // Re-render cards to apply the highlight to the selected one
+            renderActionButtons();
+        }
+    }
+
+    function renderActionButtons() {
+        const actionButtonsDiv = document.getElementById('actionButtons');
+        actionButtonsDiv.innerHTML = '';
+
+        const validMoves = getValidMoves();
+
+        validMoves.forEach(action => {
+            const actionButton = document.createElement('button');
+            actionButton.className = 'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded';
+            actionButton.innerText = `I have played ${action}`;
+            actionButton.onclick = () => declareMove(action);
+            actionButtonsDiv.appendChild(actionButton);
+        });
+
+        const bluffButton = document.createElement('button');
+        bluffButton.className = 'bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded';
+        bluffButton.innerText = 'Call Bluff';
+        bluffButton.onclick = () => callBluff();
+        actionButtonsDiv.appendChild(bluffButton);
+
+        const passButton = document.createElement('button');
+        passButton.className = 'bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded';
+        passButton.innerText = 'Pass';
+        passButton.onclick = () => passTurn();
+        actionButtonsDiv.appendChild(passButton);
+    }
+
+    function getValidMoves() {
+        if (!lastDeclaredMove) {
+            return ['Rock', 'Paper', 'Scissors'];
+        }
+        switch (lastDeclaredMove) {
+            case 'Rock':
+                return ['Rock', 'Paper'];
+            case 'Paper':
+                return ['Paper', 'Scissors'];
+            case 'Scissors':
+                return ['Scissors', 'Rock'];
+            default:
+                return ['Rock', 'Paper', 'Scissors'];
+        }
+    }
+
+    function declareMove(declaredMove) {
+        if (selectedCardIndex === null) return;
+
+        const actualMove = playerDeck[selectedCardIndex];
+        logAction(`[Player plays ${actualMove}] Player declares ${declaredMove}.`, 'player');
+
+        playerDeck.splice(selectedCardIndex, 1);
+        selectedCardIndex = null;
+        lastDeclaredMove = declaredMove;
+        renderCards();
+        currentPlayer = 'CPU';
+        cpuTurn();
+    }
+
+    function callBluff() {
+        if (lastDeclaredMove === null) return;
+
+        const actualMove = cpuDeck[cpuDeck.length - 1]; // Assuming CPU plays from the top of its deck
+        handleBluff(lastDeclaredMove, actualMove);
+    }
+
+    function passTurn() {
+        logAction(`Player passes their turn.`, 'player');
+        currentPlayer = 'CPU';
+        cpuTurn();
+    }
+
+    function cpuTurn() {
+        updateGameStatus();
+        setTimeout(() => {
+            const action = Math.random();
+
+            if (action < 0.15 && lastDeclaredMove !== null) {
+                // Call Bluff
+                const actualMove = playerDeck[playerDeck.length - 1]; // Assuming Player plays from the top of its deck
+                handleBluff(lastDeclaredMove, actualMove);
+            } else if (action < 0.40) {
+                // Pass
+                logAction(`CPU passes its turn.`, 'cpu');
+                currentPlayer = 'Player';
+                renderCards();
+                updateGameStatus();
+            } else {
+                // Play a Card
+                const cpuMoveIndex = Math.floor(Math.random() * cpuDeck.length);
+                const validMoves = getValidMoves();
+                const declaredMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+
+                logAction(`[CPU plays a card] CPU declares ${declaredMove}.`, 'cpu');
+
+                cpuDeck.splice(cpuMoveIndex, 1);
+                lastDeclaredMove = declaredMove;
+                currentPlayer = 'Player';
+                renderCards();
+                updateGameStatus();
+            }
+
+            checkWinConditions();
+        }, 200);
+    }
+
+    function handleBluff(declaredMove, actualMove) {
+        const logDiv = document.getElementById('gameLog');
+        const bluffActionDiv = document.getElementById('bluffAction');
+
+        if (declaredMove !== actualMove) {
+            logDiv.innerHTML += `<p class="log-entry ${currentPlayer === 'Player' ? 'cpu' : 'player'}">${currentPlayer} calls Bluff! The other player loses!</p>`;
+            if (currentPlayer === 'Player') {
+                announceWinner('CPU loses! Player wins!');
+            } else {
+                announceWinner('Player loses! CPU wins!');
+            }
+        } else {
+            logDiv.innerHTML += `<p class="log-entry ${currentPlayer === 'Player' ? 'cpu' : 'player'}">${currentPlayer} calls Bluff! But they were wrong!</p>`;
+            if (currentPlayer === 'Player') {
+                announceWinner('CPU wins!');
+            } else {
+                announceWinner('Player wins!');
+            }
+        }
+        bluffActionDiv.innerHTML = '<button onclick="resetGame()" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mt-4">Restart Game</button>';
+    }
+
+    function announceWinner(message) {
+        const gameStatus = document.getElementById('gameStatus');
+        gameStatus.innerText = message;
+        const bluffActionDiv = document.getElementById('bluffAction');
+        bluffActionDiv.innerHTML = '<button onclick="resetGame()" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mt-4">Restart Game</button>';
+    }
+
+    function logAction(message, type) {
+        const logDiv = document.getElementById('gameLog');
+        const logEntry = document.createElement('p');
+        logEntry.className = `log-entry ${type}`;
+        logEntry.innerText = message;
+        logDiv.appendChild(logEntry);
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function checkWinConditions() {
+        if (playerDeck.length === 0) {
+            announceWinner('Player wins!');
+        } else if (cpuDeck.length === 0) {
+            announceWinner('CPU wins!');
+        }
+    }
+
+    function resetGame() {
+        playerDeck = [];
+        cpuDeck = [];
+        selectedCardIndex = null;
+        lastDeclaredMove = null;
+        currentPlayer = 'Player';
+        document.getElementById('gameLog').innerHTML = '';
+        document.getElementById('bluffAction').innerHTML = '';
+        dealCards();
+        updateGameStatus();
+    }
+
+    function updateGameStatus() {
+        const gameStatus = document.getElementById('gameStatus');
+        gameStatus.innerText = currentPlayer === 'Player' ? 'Your Turn' : "CPU's Turn";
+    }
+
+    // Initialize the game
+    dealCards();
+</script>
+
+</body>
+</html>

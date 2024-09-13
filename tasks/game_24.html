@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Bird Game with PixiJS - Triangles</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #333;
+        }
+        canvas {
+            display: block;
+        }
+        #restartButton {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 10px 20px;
+            font-size: 24px;
+            background-color: #f00;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        #gameOver {
+            display: none;
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 48px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div id="gameOver">Game Over</div>
+<button id="restartButton" onclick="restartGame()">Restart</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.0.4/pixi.min.js"></script>
+<script>
+    let app, player, obstacles = [], score = 0, speedIncrease = 0.01, obstacleSpeed = -5, gameActive = true, scoreText;
+    const gravity = 0.1;
+    const jumpVelocity = -6;
+
+    // Initialize the game
+    function initGame() {
+        // Create a PixiJS application
+        app = new PIXI.Application({
+            width: 800,
+            height: 600,
+            backgroundColor: 0x1099bb
+        });
+        document.body.appendChild(app.view);
+
+        // Create the player (a smaller yellow triangle)
+        player = new PIXI.Graphics();
+        player.beginFill(0xFFFF00);
+        player.drawPolygon([-15, 15, 15, 15, 0, -15]); // Smaller triangle, equal to black triangles
+        player.endFill();
+        player.x = 100;
+        player.y = app.view.height / 2;
+        player.vy = 0;
+        app.stage.addChild(player);
+
+        // Create score text
+        scoreText = new PIXI.Text('Score: 0', {
+            fontFamily: 'Arial',
+            fontSize: 36,
+            fill: 0xffffff,
+            align: 'center'
+        });
+        scoreText.x = app.view.width - 200;
+        scoreText.y = 20;
+        app.stage.addChild(scoreText);
+
+        // Add event listener for jumping
+        window.addEventListener("keydown", (e) => {
+            if (e.code === "Space" && gameActive) {
+                player.vy = jumpVelocity;
+            }
+        });
+
+        // Create obstacles at intervals
+        setInterval(createObstacle, 2000);
+
+        // Start the game loop
+        app.ticker.add(gameLoop);
+    }
+
+    // Function to create an obstacle
+    function createObstacle() {
+        if (!gameActive) return;
+        const obstacle = new PIXI.Graphics();
+        obstacle.beginFill(0x000000);
+        obstacle.drawPolygon([-15, 15, 15, 15, 0, -15]);
+        obstacle.endFill();
+        obstacle.x = app.view.width;
+        obstacle.y = Math.random() * (app.view.height - 200);
+        obstacle.vx = obstacleSpeed;
+        app.stage.addChild(obstacle);
+        obstacles.push(obstacle);
+    }
+
+    // Game loop function to update game state
+    function gameLoop(delta) {
+        if (!gameActive) return;
+
+        // Update player position with fixed gravity
+        player.vy += gravity;
+        player.y += player.vy;
+
+        // Increase difficulty over time
+        obstacleSpeed -= speedIncrease * delta;
+
+        // Update obstacles
+        obstacles.forEach((obstacle, index) => {
+            obstacle.x += obstacle.vx * delta;
+
+            // Check for collision
+            if (hitTestTriangle(player, obstacle)) {
+                endGame();
+            }
+
+            // Remove obstacle if it goes off screen
+            if (obstacle.x < -30) {
+                obstacles.splice(index, 1);
+                app.stage.removeChild(obstacle);
+            }
+        });
+
+        // Update score
+        score += delta;
+        scoreText.text = `Score: ${Math.floor(score)}`;
+
+        // Check if the player is off-screen
+        if (player.y > app.view.height || player.y < 0) {
+            endGame();
+        }
+    }
+
+    // Function to check for triangle collision
+    function hitTestTriangle(t1, t2) {
+        const dx = t1.x - t2.x;
+        const dy = t1.y - t2.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        return distance < 30;
+    }
+
+    // End the game
+    function endGame() {
+        gameActive = false;
+        app.ticker.stop();
+        document.getElementById("gameOver").style.display = "block";
+        document.getElementById("restartButton").style.display = "block";
+    }
+
+    // Restart the game
+    function restartGame() {
+        score = 0;
+        obstacleSpeed = -5;
+        gameActive = true;
+
+        // Remove all obstacles
+        obstacles.forEach(obstacle => {
+            app.stage.removeChild(obstacle);
+        });
+        obstacles = [];
+
+        // Reset player position
+        player.x = 100;
+        player.y = app.view.height / 2;
+        player.vy = 0;
+
+        // Restart the game loop and hide game over elements
+        app.ticker.start();
+        document.getElementById("gameOver").style.display = "none";
+        document.getElementById("restartButton").style.display = "none";
+    }
+
+    // Start the game on page load
+    window.onload = initGame;
+</script>
+
+</body>
+</html>

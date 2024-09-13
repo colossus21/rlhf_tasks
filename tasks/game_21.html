@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Side-Scroller Game</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+        #gameContainer {
+            position: relative;
+            width: 800px;
+            height: 400px;
+            overflow: hidden;
+            border: 2px solid #fff;
+            background: #222;
+        }
+        #timer, #distance {
+            position: absolute;
+            top: 10px;
+            font-size: 18px;
+        }
+        #timer {
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        #distance {
+            right: 10px;
+        }
+        #gameMessage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            display: none;
+        }
+        #restartButton {
+            position: absolute;
+            top: 70%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            background: #fff;
+            color: #000;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div id="gameContainer">
+    <div id="timer">60s</div>
+    <div id="distance">1000m</div>
+    <div id="gameMessage"></div>
+    <button id="restartButton">Restart</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<script>
+    const { Engine, Render, Runner, World, Bodies, Body, Events } = Matter;
+
+    const gameContainer = document.getElementById('gameContainer');
+    const timerElement = document.getElementById('timer');
+    const distanceElement = document.getElementById('distance');
+    const gameMessage = document.getElementById('gameMessage');
+    const restartButton = document.getElementById('restartButton');
+
+    const engine = Engine.create();
+    const world = engine.world;
+    const render = Render.create({
+        element: gameContainer,
+        engine: engine,
+        options: {
+            width: 800,
+            height: 400,
+            wireframes: false,
+            background: '#000',
+        }
+    });
+
+    Render.run(render);
+    const runner = Runner.create();
+    Runner.run(runner, engine);
+
+    // Create player
+    const player = Bodies.polygon(100, 300, 3, 20, {
+        render: { fillStyle: 'yellow' },
+        inertia: Infinity, // Prevent rotation
+        angle: Math.PI / 2 // Face upwards
+    });
+    World.add(world, player);
+
+    // Create ground
+    const ground = Bodies.rectangle(25000, 390, 50000, 40, { isStatic: true });
+    World.add(world, ground);
+
+    // Create finish line
+    const finishLine = Bodies.rectangle(25000, 370, 20, 200, { isStatic: true, render: { fillStyle: 'green' } });
+    World.add(world, finishLine);
+
+    // Create obstacles
+    const obstacleSize = 30;
+    const yPosition = 370;
+
+    for (let i = 300; i <= 49600; i += 500) {
+        const block = Bodies.rectangle(i, yPosition, obstacleSize, obstacleSize, {
+            isStatic: true,
+            render: { fillStyle: getRandomColor() }
+        });
+        World.add(world, block);
+    }
+
+    // Create background shapes
+    const backgroundShapes = [];
+    const shapeTypes = ['rectangle', 'circle', 'polygon'];
+    for (let i = 0; i < 200; i++) {
+        const shapeType = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
+        let shape;
+
+        if (shapeType === 'rectangle') {
+            shape = Bodies.rectangle(Math.random() * 50000, Math.random() * 400, 50, 50, {
+                isStatic: true,
+                render: {
+                    fillStyle: getRandomColor(),
+                    opacity: 0.5
+                },
+                collisionFilter: {
+                    group: -1,
+                    category: 0x0002,
+                    mask: 0x0000
+                }
+            });
+        } else if (shapeType === 'circle') {
+            shape = Bodies.circle(Math.random() * 50000, Math.random() * 400, 25, {
+                isStatic: true,
+                render: {
+                    fillStyle: getRandomColor(),
+                    opacity: 0.5
+                },
+                collisionFilter: {
+                    group: -1,
+                    category: 0x0002,
+                    mask: 0x0000
+                }
+            });
+        } else if (shapeType === 'polygon') {
+            shape = Bodies.polygon(Math.random() * 50000, Math.random() * 400, 6, 30, {
+                isStatic: true,
+                render: {
+                    fillStyle: getRandomColor(),
+                    opacity: 0.5
+                },
+                collisionFilter: {
+                    group: -1,
+                    category: 0x0002,
+                    mask: 0x0000
+                }
+            });
+        }
+
+        backgroundShapes.push(shape);
+        World.add(world, shape);
+    }
+
+    // Timer and distance tracking
+    let timeLeft = 60;
+    let distanceLeft = 25000;
+    const finishLineX = finishLine.position.x;
+
+    const timerInterval = setInterval(() => {
+        timeLeft--;
+        timerElement.innerText = `${timeLeft}s`;
+        if (timeLeft <= 0) {
+            endGame(false);
+        }
+    }, 1000);
+
+    // Player movement
+    function movePlayer() {
+        Body.setVelocity(player, { x: 2.5, y: player.velocity.y });
+        distanceLeft = Math.max(0, ((finishLineX - player.position.x) / 10).toFixed(0));
+        distanceElement.innerText = `${distanceLeft}m`;
+
+        if (player.position.x >= finishLineX-30) {
+            endGame(true);
+        }
+    }
+
+    // Camera follows player
+    Events.on(engine, 'beforeUpdate', () => {
+        const viewportCenter = {
+            x: player.position.x,
+            y: render.options.height / 2
+        };
+        Render.lookAt(render, {
+            min: { x: viewportCenter.x - render.options.width / 2, y: 0 },
+            max: { x: viewportCenter.x + render.options.width / 2, y: render.options.height }
+        });
+    });
+
+    // Game end function
+    function endGame(win) {
+        clearInterval(timerInterval);
+        gameMessage.innerText = win ? 'You Win!' : 'You Lose!';
+        gameMessage.style.display = 'block';
+        restartButton.style.display = 'block';
+        Runner.stop(runner);
+    }
+
+    // Restart function
+    restartButton.addEventListener('click', () => {
+        location.reload();
+    });
+
+    // Player controls
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'w') {
+            if (player.velocity.y === 0) {
+                Body.applyForce(player, player.position, { x: 0, y: -0.015 });
+            }
+        }
+    });
+
+    // Prevent player from flying off-screen
+    Events.on(engine, 'beforeUpdate', function() {
+        if (player.position.y < 20) {
+            Body.setVelocity(player, { x: player.velocity.x, y: 0 });
+            Body.setPosition(player, { x: player.position.x, y: 20 });
+        }
+    });
+
+    Events.on(engine, 'beforeUpdate', movePlayer);
+
+    // Utility function to generate random colors
+    function getRandomColor() {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+
+</script>
+</body>
+</html>
