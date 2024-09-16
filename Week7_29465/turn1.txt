@@ -1,0 +1,9 @@
+Can you create a 6x6 grid word game called 'Grid Words' where with the following features:
+1. Players form words by selecting letters from the grid. Random letters should form the grid cells, common letters should be more frequent.
+2. Use this API for word validation: https://api.dictionaryapi.dev/api/v2/entries/en/<word>. For correct words you'll receive a response like this: "[{"word":"poolside","phonetics":[],"meanings":[{"partOfSpeech":"noun","definitions":[{"definition":"The area beside a pool.","synonyms":[],"antonyms":[]}],"synonyms":[],"antonyms":[]},{"partOfSpeech":"adjective","definitions":[{"definition":"By the side of a pool.","synonyms":[],"antonyms":[],"example":"She was sunbathing on the poolside deckchair."}],"synonyms":[],"antonyms":[]},{"partOfSpeech":"adverb","definitions":[{"definition":"Beside a pool.","synonyms":[],"antonyms":[]}],"synonyms":[],"antonyms":[]}],"license":{"name":"CC BY-SA 3.0","url":"https://creativecommons.org/licenses/by-sa/3.0"},"sourceUrls":["https://en.wiktionary.org/wiki/poolside"]}]"
+3. For incorrect words, you'll get a 404 error if you fetch via API. So, use the API accordingly.
+4. Add score based on word length. Highlight found words and making them non-reusable.
+5. Add a shuffle button (top left) and an end game button to finish the game early (top right) above the grid.
+6. Display of word information (phonetics/meanings) in a carousel format below the grid. This information is fetched via API.
+7. When all cells are used game should be over. Display the final score and list of found words. Game should be over pressing the end game button as well. Add a restart button.
+8. Use no external images, center the layout.

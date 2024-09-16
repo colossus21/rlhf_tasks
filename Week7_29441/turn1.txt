@@ -1,0 +1,10 @@
+Can you create a grid-based tower defense game called 'Grid Guardians', it will have the following features:
+1. Create a 12x6 grid with the leftmost 3 columns for player units and the rest for enemy movement.
+2. There are 2 phases: players can place units during a 'break' phase and defend against waves of enemies in the attack phase.
+3. Include 4 types of player units: Swordsman (melee, 50g), Archer (ranged, 75g), Guardian (tanky melee, 100g), and Mage (powerful ranged, 125g). Enemy units: Orcs, Vampires (ranged), Dragons (ranged), and Skeletons.
+4. Units attack automatically based on their range. AI units, keep moving to player's base. Here's a sample stat in JSON applicable for both player and cpu units: { symbol: '⚔️', type: 'melee', name: 'Swordsman', cost: 50, maxHealth: 100, health: 100, damage: 30, range: 1 }, change these values according to units.
+5. Add visual effects for unit placement, attacks, and hits. Include a resource system (gold) for purchasing units.
+6. With each wave increase the difficulty increases as well. Gold formula: gold = 500 + wave * 200. Also, game starts with 600 gold.
+7. Player loses if an enemy reaches the leftmost column, waves keep increasing each wave win.
+8. Create a user interface showing current gold, wave number, and unit selection buttons. No external images should be used in this game.
+9. No alerts please use a message div. Add a restart option after the game ends mentioning how many waves the player survived.

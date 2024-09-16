@@ -1,0 +1,9 @@
+Can you create a 2 player strategic 6x6 grid game called 'Eco Cycle' with following elements:
+
+1. There are 4 playable moves each turn: Plants (🌿), Herbivores (🐰), Carnivores (🦊), and Decomposers (🍄).
+2. Each turn the player should be able to place one species on the grid. Each placement offers the player 1 point.
+3. Player can get bonus point based on these rules: i) Plants get extra points for each decomposer around. ii) Herbivores get extra points for each plant. iii) Carnivores for each herbivore and iv) Decomposers get extra points for any adjacent species except other decomposers.
+4. Player 1 moves will have blue border, player 2's red. Add a species selector with emoji buttons for each species type above the game grid. Make dark grayish bg when not selected, orangish when selected.
+5. Add scores below the grid for player 1 and player 2.
+6. Player with the highest score after all pieces are placed wins the game. Declare the winner after game. Add a restart button as well.
+7. The layout should be centered and visually attractive. Also, don't use alert and external images.

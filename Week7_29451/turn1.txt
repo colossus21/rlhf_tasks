@@ -1,0 +1,11 @@
+Can you create a space-themed shooter game using Phaser 3 with the following features:
+1. The game would be based off a 6x6 grid in which each cell is 80x80 pixels. Add a subtle grid overlay to visualize the 6x6 game area.
+2. The player controls a green triangle spaceship at the bottom of the screen. It moves left and right using array keys. Presses space to shoot.
+3. Enemies (red circles) spawn at the top and move downwards.
+4. The player can shoot yellow bullets to destroy enemies. Bullet should spawn from the center of the triangle pointed upwards with flash effect. Red circles are destroyed by bullet impacts.
+5. Implement a lives system where the player starts with 3 lives and loses one when an enemy reaches the bottom.
+6. Keep track of the score which increases when enemies are destroyed. Increase difficulty with the increase of score.
+7. Create an infinite scrolling star field background effect for a space atmosphere.
+8. UI: display the score and remaining lives on the screen. Player loses a life if a red circle goes beyond the screen below without getting destroyed.
+9. Create a game over screen when all lives are lost, with an option to restart.
+10. Use no external images, only shapes. No alerts as well.
