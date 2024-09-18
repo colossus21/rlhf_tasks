@@ -1,0 +1,10 @@
+Create a 9x9 grid puzzle game called "Desert Treasure Hunt" in which 5 treasures are hidden with 5 clues:
+i) The board would be in desert theme, each 3x3 sections, total 9 sections would have these elements each randomly: a) Cactus b) Camel c) Bones d) Oasis e) Pyramid f) Vulture g) Scorpion h) Palm Trees i) Tent. Use emojis for these.
+ii) Place 5 hidden treasures across the board not overlapping with the desert elements.
+iii) Generate 5 clues for players similar to this: "Treasure 1 is hidden North of Cactus, South of Oasis, West of Palm Trees". Can be any random 3 desert items, direction is based on the treasure location.
+iv) If a player clicks invalid treasure, put a cross. Else, show the treasure box and add 1 point the user.
+v) Player's turn is shown top of the grid, highlight player's turn with the appropriate color. First player to find 3 treasures win the game.
+vi) Strikethrough found treasure clues. Include a compass to help with directions below the clues.
+vii) Display a win message in a modal when the game ends with a restart button.
+viii) Add a 'New Game' button to restart. below the grid, clues and compass.
+ix) The colors, UI and theme should reflect desert theme. Only use emojis/symbols, no external pictures, no alerts.

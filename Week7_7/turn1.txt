@@ -1,0 +1,9 @@
+Create a game like 6x6 grid-based chain reaction game called "Color Reaction" in javascript but with colors:
+- The twist would be, the player who loses all cells wins the game. The checking should begin after 2 turns when both player place at least 1 cell.
+- Colors should explode with slight animations after reaction
+- Each cell can have 4 levels. Level 1 Level 2 Level 3 has color intensities. Upon reaching Level 4 cells explode.
+- Exploded cells convert the color of the top-right-left-right to the exploded cell, and increases the level by 1.
+- Use 6 different colors: 3 for player 1 (low intense red to high intense red), 3 for player 2 (low intense blue to high intense blue)
+- Show Player 1 and Player 2 colors below the grid with for reference for each player
+- Use numbers in the colored squares 1-2-3 based on level, show the current player indicator above the grid bold with proper highlighting
+- Add a restart button, center the layout. No external symbols or alerts please.

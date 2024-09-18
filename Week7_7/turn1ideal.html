@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Reaction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #game-container {
+            text-align: center;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(6, 80px);
+            grid-template-rows: repeat(6, 80px);
+            gap: 4px;
+            margin-top: 20px;
+            background-color: #ddd;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .cell {
+            width: 80px;
+            height: 80px;
+            background-color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+        }
+        .cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        #message {
+            margin-top: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        #restart-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        #restart-button:hover {
+            background-color: #45a049;
+        }
+        #color-legend {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .player-colors {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .color-box {
+            width: 30px;
+            height: 30px;
+            margin: 5px;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        #current-player {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        #player-name {
+            font-weight: bold;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .pulse {
+            animation: pulse 0.5s;
+        }
+    </style>
+</head>
+<body>
+<div id="game-container">
+    <h1>Color Reaction</h1>
+    <div id="current-player">Current Player: <span id="player-name">Player 1</span></div>
+    <div id="board"></div>
+    <div id="color-legend">
+        <div class="player-colors">
+            <h3>Player 1 Colors</h3>
+            <div>
+                <div class="color-box" style="background-color: #FFCCCB;"></div>
+                <div class="color-box" style="background-color: #FF6666;"></div>
+                <div class="color-box" style="background-color: #FF0000;"></div>
+            </div>
+        </div>
+        <div class="player-colors">
+            <h3>Player 2 Colors</h3>
+            <div>
+                <div class="color-box" style="background-color: #CCCCFF;"></div>
+                <div class="color-box" style="background-color: #6666FF;"></div>
+                <div class="color-box" style="background-color: #0000FF;"></div>
+            </div>
+        </div>
+    </div>
+    <div id="message"></div>
+    <button id="restart-button">Restart Game</button>
+</div>
+
+<script>
+    const BOARD_SIZE = 6;
+    const PLAYERS = ['Player 1', 'Player 2'];
+    const COLORS = [
+        ['#FFCCCB', '#FF6666', '#FF0000'],  // Player 1 colors (Red)
+        ['#CCCCFF', '#6666FF', '#0000FF']   // Player 2 colors (Blue)
+    ];
+    let currentPlayer = 0;
+    let board = [];
+    let gameOver = false;
+    let turnCount = 0;
+    let winCheckInterval;
+
+    function createBoard() {
+        const boardElement = document.getElementById('board');
+        boardElement.innerHTML = '';
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            board[i] = [];
+            for (let j = 0; j < BOARD_SIZE; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.onclick = () => handleCellClick(i, j);
+                boardElement.appendChild(cell);
+                board[i][j] = { player: null, level: 0 };
+            }
+        }
+    }
+
+    function handleCellClick(row, col) {
+        if (gameOver || (board[row][col].player !== null && board[row][col].player !== currentPlayer)) return;
+
+        board[row][col].player = currentPlayer;
+        board[row][col].level++;
+        updateCell(row, col);
+
+        if (board[row][col].level === 4) {
+            explodeCell(row, col);
+        }
+
+        turnCount++;
+
+        if (!gameOver) {
+            currentPlayer = 1 - currentPlayer;
+            updateCurrentPlayerDisplay();
+        }
+    }
+
+    function updateCell(row, col) {
+        const cell = document.getElementById('board').children[row * BOARD_SIZE + col];
+        const { level, player } = board[row][col];
+
+        if (level > 0 && player !== null) {
+            cell.style.backgroundColor = COLORS[player][level - 1];
+            cell.textContent = level;
+        } else {
+            cell.style.backgroundColor = '#fff';
+            cell.textContent = '';
+        }
+    }
+
+    function explodeCell(row, col) {
+        const player = board[row][col].player;
+        board[row][col].level = 0;
+        board[row][col].player = null;
+        updateCell(row, col);
+        animatePulse(row, col);
+
+        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+        directions.forEach(([dx, dy]) => {
+            const newRow = row + dx;
+            const newCol = col + dy;
+            if (newRow >= 0 && newRow < BOARD_SIZE && newCol >= 0 && newCol < BOARD_SIZE) {
+                board[newRow][newCol].player = player;
+                board[newRow][newCol].level++;
+                updateCell(newRow, newCol);
+                animatePulse(newRow, newCol);
+
+                if (board[newRow][newCol].level === 4) {
+                    setTimeout(() => explodeCell(newRow, newCol), 100);
+                }
+            }
+        });
+    }
+
+    function animatePulse(row, col) {
+        const cell = document.getElementById('board').children[row * BOARD_SIZE + col];
+        cell.classList.add('pulse');
+        setTimeout(() => cell.classList.remove('pulse'), 500);
+    }
+
+    function checkWinCondition() {
+        if (turnCount <= 2) return; // Don't check for win condition in the first 2 turns
+
+        const allCells = board.flat();
+        const player1Cells = allCells.filter(cell => cell.player === 0);
+        const player2Cells = allCells.filter(cell => cell.player === 1);
+
+        if (player1Cells.length === 0) {
+            endGame('Player 1'); // Player 1 wins by losing all their colors
+        } else if (player2Cells.length === 0) {
+            endGame('Player 2'); // Player 2 wins by losing all their colors
+        }
+    }
+
+    function endGame(winner) {
+        gameOver = true;
+        clearInterval(winCheckInterval);
+        document.getElementById('message').textContent = `${winner} wins by losing all their colors!`;
+        const playerNameElement = document.getElementById('player-name');
+        playerNameElement.textContent = winner;
+        playerNameElement.style.color = winner === 'Player 1' ? COLORS[0][2] : COLORS[1][2];
+    }
+
+    function updateCurrentPlayerDisplay() {
+        const playerNameElement = document.getElementById('player-name');
+        playerNameElement.textContent = PLAYERS[currentPlayer];
+        playerNameElement.style.color = COLORS[currentPlayer][2];
+    }
+
+    function restartGame() {
+        gameOver = false;
+        currentPlayer = 0;
+        turnCount = 0;
+        document.getElementById('message').textContent = '';
+        createBoard();
+        updateCurrentPlayerDisplay();
+        clearInterval(winCheckInterval);
+        winCheckInterval = setInterval(checkWinCondition, 1000);
+    }
+
+    document.getElementById('restart-button').addEventListener('click', restartGame);
+
+    createBoard();
+    updateCurrentPlayerDisplay();
+    winCheckInterval = setInterval(checkWinCondition, 1000);
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+Create a 2048-inspired Tetris game called 'Space Numbers' with the following features:
+
+1. Implement a 6x12 game board where numbered blocks fall from the top.
+2. Use random blocks with values from 2 to 512, each with a unique color.
+3. Allow players to move blocks left and right, and speed up their descent.
+4. Implement merging mechanics: when two blocks with the same number collide vertically, they combine into a single block with double the value, up to a maximum of 512.
+5. Create a space-themed background with an animated star field effect using CSS animations.
+6. Add a scoring system and levels that increase in difficulty (faster block descent) as the score goes up.
+7. Implement game over conditions when a new block can't be placed at the top of the board.
+8. Include a restart option after game over.
+9. Use HTML, CSS, and JavaScript to create a single-file game that runs in a web browser.
+10. Ensure the game is visually appealing with a cosmic theme, including glowing effects for the score and level display.

@@ -1,0 +1,6 @@
+Can you create a 2 player climbing game using Javascript with the following features:
+- Two players compete to climb to the top by pressing keys assigned to them.
+- Player 1 uses the keys: W, A, S, D, Player 2 uses the keys: I, J, K, L.
+- Each player is shown a key they need to press randomly chosen from their respective key sets. Correct key press makes the player go up, incorrect press makes the player go down.
+- Use vertical progress bars to represent each player's climb, if possible use an SVG human stick figure for each player (Red for P1, blue for P2).
+- After game ends place a restart button, no external images please.

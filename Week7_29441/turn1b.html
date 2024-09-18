@@ -1,7 +1,186 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<title>turn1b.html</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grid Guardians</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f0f0f0; margin: 0; padding: 0; }
+        #game-container { max-width: 800px; margin: 20px auto; background: white; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .grid { display: grid; grid-template-columns: repeat(12, 1fr); grid-gap: 1px; background: #ccc; margin-top: 10px; }
+        .cell { width: 100%; padding-top: 100%; position: relative; background: #fff; }
+        .cell div { position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; align-items: center; font-size: 2em; }
+        .player-zone { background: #e0e0ff; }
+        .enemy-zone { background: #ffe0e0; }
+        #ui { display: flex; justify-content: space-between; margin-top: 10px; }
+        button { padding: 10px; margin: 5px; }
+        #message { color: red; margin-top: 10px; }
+    </style>
 </head>
 <body>
+<div id="game-container">
+    <div id="ui">
+        <div>Gold: <span id="gold">600</span></div>
+        <div>Wave: <span id="wave">1</span></div>
+        <div id="unit-selection"></div>
+    </div>
+    <div id="grid" class="grid"></div>
+    <div id="message"></div>
+</div>
+
+<script>
+    let game = {
+        grid: [],
+        gold: 600,
+        wave: 1,
+        units: {
+            player: [
+                { symbol: '⚔️', type: 'melee', name: 'Swordsman', cost: 50, maxHealth: 100, damage: 30, range: 1 },
+                { symbol: '🏹', type: 'ranged', name: 'Archer', cost: 75, maxHealth: 70, damage: 20, range: 3 },
+                { symbol: '🛡️', type: 'melee', name: 'Guardian', cost: 100, maxHealth: 200, damage: 15, range: 1 },
+                { symbol: '🧙', type: 'ranged', name: 'Mage', cost: 125, maxHealth: 60, damage: 40, range: 4 }
+            ],
+            enemy: [
+                { symbol: '👹', name: 'Orc', health: 80, damage: 20, range: 1 },
+                { symbol: '🧛', name: 'Vampire', health: 60, damage: 15, range: 2 },
+                { symbol: '🐉', name: 'Dragon', health: 150, damage: 30, range: 3 },
+                { symbol: '💀', name: 'Skeleton', health: 50, damage: 10, range: 1 }
+            ]
+        },
+        phase: 'break',
+        enemies: [],
+        playerUnits: []
+    };
+
+    function initializeGrid() {
+        const gridDiv = document.getElementById('grid');
+        for(let y = 0; y < 6; y++) {
+            for(let x = 0; x < 12; x++) {
+                let cell = document.createElement('div');
+                cell.className = 'cell' + (x < 3 ? ' player-zone' : ' enemy-zone');
+                cell.dataset.x = x;
+                cell.dataset.y = y;
+                gridDiv.appendChild(cell);
+                game.grid.push({x, y, unit: null});
+            }
+        }
+        setupUnitSelection();
+    }
+
+    function setupUnitSelection() {
+        const selectionDiv = document.getElementById('unit-selection');
+        game.units.player.forEach(unit => {
+            let button = document.createElement('button');
+            button.textContent = `${unit.name} (${unit.cost}g)`;
+            button.onclick = () => placeUnit(unit);
+            selectionDiv.appendChild(button);
+        });
+    }
+
+    function placeUnit(unit) {
+        if(game.phase === 'break' && game.gold >= unit.cost) {
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.onclick = () => {
+                    if(cell.classList.contains('player-zone') && !cell.firstChild) {
+                        game.gold -= unit.cost;
+                        updateGold();
+                        let newUnit = {...unit, health: unit.maxHealth, x: parseInt(cell.dataset.x), y: parseInt(cell.dataset.y)};
+                        cell.innerHTML = `<div>${newUnit.symbol}</div>`;
+                        game.playerUnits.push(newUnit);
+                        cell.onclick = null;
+                    }
+                };
+            });
+        }
+    }
+
+    function startWave() {
+        game.phase = 'attack';
+        game.enemies = generateEnemies(game.wave);
+        document.getElementById('message').innerText = "Wave started!";
+        moveEnemies();
+    }
+
+    function generateEnemies(wave) {
+        let enemies = [];
+        for(let i = 0; i < wave * 2; i++) {
+            let type = game.units.enemy[Math.floor(Math.random() * game.units.enemy.length)];
+            enemies.push({...type, health: type.health * (1 + wave * 0.1), x: 11, y: Math.floor(Math.random() * 6)});
+        }
+        return enemies;
+    }
+
+    function moveEnemies() {
+        let interval = setInterval(() => {
+            if(game.enemies.length === 0) {
+                clearInterval(interval);
+                endWave();
+                return;
+            }
+            game.enemies.forEach((enemy, index) => {
+                if(enemy.health <= 0) {
+                    game.enemies.splice(index, 1);
+                    return;
+                }
+                let newX = enemy.x - 1;
+                if(newX < 0) {
+                    gameOver();
+                    return;
+                }
+                let targetCell = game.grid.find(c => c.x == newX && c.y == enemy.y);
+                if(!targetCell.unit) {
+                    enemy.x = newX;
+                    document.querySelector(`[data-x="${newX}"][data-y="${enemy.y}"]`).innerHTML = `<div>${enemy.symbol}</div>`;
+                    document.querySelector(`[data-x="${newX+1}"][data-y="${enemy.y}"]`).innerHTML = '';
+                } else {
+                    attack(targetCell.unit, enemy);
+                }
+            });
+            // Player units attack
+            game.playerUnits.forEach(unit => attack(unit, findTarget(unit)));
+        }, 1000);
+    }
+
+    function attack(attacker, defender) {
+        if(defender && Math.abs(attacker.x - defender.x) <= attacker.range) {
+            defender.health -= attacker.damage;
+            if(defender.health <= 0) {
+                document.querySelector(`[data-x="${defender.x}"][data-y="${defender.y}"]`).innerHTML = '';
+                if(defender.name) { // If it's an enemy
+                    game.playerUnits = game.playerUnits.filter(u => u !== defender);
+                } else {
+                    game.enemies = game.enemies.filter(e => e !== defender);
+                }
+            }
+        }
+    }
+
+    function findTarget(attacker) {
+        return game.enemies.find(e => Math.abs(attacker.y - e.y) <= 1 && e.x - attacker.x <= attacker.range && e.x > attacker.x);
+    }
+
+    function endWave() {
+        game.phase = 'break';
+        game.gold = 500 + game.wave * 200;
+        updateGold();
+        document.getElementById('wave').innerText = ++game.wave;
+        document.getElementById('message').innerText = "Prepare for the next wave!";
+    }
+
+    function updateGold() {
+        document.getElementById('gold').innerText = game.gold;
+    }
+
+    function gameOver() {
+        clearInterval(this.interval);
+        document.getElementById('message').innerText = `Game Over! You survived ${game.wave - 1} waves.`;
+        let restart = document.createElement('button');
+        restart.textContent = "Restart";
+        restart.onclick = () => location.reload();
+        document.getElementById('ui').appendChild(restart);
+    }
+
+    initializeGrid();
+</script>
 </body>
 </html>

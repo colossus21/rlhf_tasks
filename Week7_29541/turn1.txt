@@ -1,0 +1,9 @@
+Can you create a turn-based strategy game called 'Battle Grid' with the following features:
+1. The game has a board of 12x12 grid in which 2 players place 6 units (each team) to fight against each other.
+2. Units are Knight, Archer, Wizard, Dragon, Healer, and Rogue having different stats (movement, attack range, attack power, HP).
+3. Players take turns moving their units and attacking opponent units, each unit has an HP bar below. To make distinction between players' units, add blue circular background to P1 units and red to P2 units.
+4. Healer units can heal allied units instead of attacking.
+5. Highlight available moves, attack ranges, and heal options when a unit is selected.
+6. Animations for attacks, healing, and unit destruction would be great. Also, show unit info that shows details of the selected unit on selecting an unit (top-centered when bottom-half characters are selected, bottom-center when top-half are selected).
+7. Show current turn indicator below the game and a restart button as well. A player wins by eliminating all units of other player, show a winning message below.
+8. No external image should be used to create this game. Only symbols and emojis can be used to represent the units.

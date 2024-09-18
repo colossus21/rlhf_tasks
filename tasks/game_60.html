@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battle Grid</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #game-container {
+            text-align: center;
+            position: relative;
+        }
+        #game-board {
+            display: inline-grid;
+            grid-template-columns: repeat(12, 40px);
+            grid-gap: 1px;
+            background-color: #ccc;
+            border: 1px solid #999;
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            position: relative;
+            cursor: pointer;
+        }
+        .cell.highlight-move {
+            background-color: rgba(0, 255, 0, 0.3);
+        }
+        .cell.highlight-attack {
+            background-color: rgba(255, 0, 0, 0.3);
+        }
+        .cell.highlight-heal {
+            background-color: rgba(0, 255, 0, 0.3);
+        }
+        .hp-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background-color: #2ecc71;
+        }
+        .unit-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .player1 .unit-icon {
+            background-color: rgba(52, 152, 219, 0.7);
+        }
+        .player2 .unit-icon {
+            background-color: rgba(231, 76, 60, 0.7);
+        }
+        #game-info {
+            margin-top: 20px;
+        }
+        #unit-info {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+        }
+        #unit-info.top {
+            top: 10px;
+        }
+        #unit-info.bottom {
+            bottom: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+        #current-phase, #current-player, #game-message {
+            font-family: 'Arial', sans-serif;
+            font-weight: bold;
+        }
+        #game-message {
+            font-size: 24px;
+        }
+        @keyframes attack-animation {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        @keyframes hit-animation {
+            0% { background-color: rgba(255, 0, 0, 0.5); }
+            100% { background-color: transparent; }
+        }
+        @keyframes heal-animation {
+            0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+        }
+        @keyframes explosion {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        #feedback-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 18px;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        #restart-button {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+<div id="game-container">
+    <h1>Battle Grid</h1>
+    <div id="game-board"></div>
+    <div id="game-info">
+        <p id="current-phase"></p>
+        <p id="current-player"></p>
+        <p id="game-message"></p>
+        <button id="restart-button">Restart Game</button>
+    </div>
+    <div id="unit-info" class="hidden"></div>
+    <div id="feedback-message" class="hidden"></div>
+</div>
+
+<script>
+    const GRID_SIZE = 12;
+    const UNITS = {
+        Knight: { icon: '🛡️', movement: 2, attackRange: 1, attackPower: 3, hp: 10 },
+        Archer: { icon: '🏹', movement: 3, attackRange: 3, attackPower: 2, hp: 8 },
+        Wizard: { icon: '🧙', movement: 2, attackRange: 2, attackPower: 4, hp: 6 },
+        Dragon: { icon: '🐉', movement: 2, attackRange: 2, attackPower: 5, hp: 12 },
+        Healer: { icon: '💗', movement: 2, healRange: 1, healAmount: 5, hp: 5, attackPower: 0 },
+        Rogue: { icon: '🗡️', movement: 3, attackRange: 1, attackPower: 4, hp: 7 }
+    };
+
+    let gameState = {
+        phase: 'placement',
+        currentPlayer: 1,
+        selectedUnit: null,
+        grid: Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(null)),
+        placementOrder: ['Knight', 'Archer', 'Wizard', 'Dragon', 'Healer', 'Rogue']
+    };
+
+    const gameBoard = document.getElementById('game-board');
+    const currentPlayerElement = document.getElementById('current-player');
+    const gameMessageElement = document.getElementById('game-message');
+    const restartButton = document.getElementById('restart-button');
+    const unitInfoElement = document.getElementById('unit-info');
+    const feedbackMessageElement = document.getElementById('feedback-message');
+
+    function initializeGame() {
+        gameState = {
+            currentPlayer: 1,
+            selectedUnit: null,
+            grid: Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(null)),
+            placementOrder: ['Knight', 'Archer', 'Wizard', 'Dragon', 'Healer', 'Rogue']
+        };
+        renderBoard();
+        updateGameInfo();
+        autoPlaceUnits();
+    }
+
+    function renderBoard() {
+        gameBoard.innerHTML = '';
+        for (let row = 0; row < GRID_SIZE; row++) {
+            for (let col = 0; col < GRID_SIZE; col++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.dataset.row = row;
+                cell.dataset.col = col;
+                cell.addEventListener('click', handleCellClick);
+                gameBoard.appendChild(cell);
+
+                const unit = gameState.grid[row][col];
+                if (unit) {
+                    cell.classList.add(`player${unit.player}`);
+                    const unitIcon = document.createElement('div');
+                    unitIcon.classList.add('unit-icon');
+                    unitIcon.textContent = UNITS[unit.type].icon;
+                    cell.appendChild(unitIcon);
+
+                    const hpBar = document.createElement('div');
+                    hpBar.classList.add('hp-bar');
+                    hpBar.style.width = `${(unit.hp / UNITS[unit.type].hp) * 100}%`;
+                    cell.appendChild(hpBar);
+                }
+            }
+        }
+    }
+
+    function updateGameInfo() {
+        currentPlayerElement.textContent = `Current Player: ${gameState.currentPlayer}`;
+        gameMessageElement.textContent = '';
+    }
+
+    function autoPlaceUnits() {
+        const placements = [
+            {row: 1, col: 1}, {row: 1, col: 5}, {row: 1, col: 9},
+            {row: 3, col: 1}, {row: 3, col: 5}, {row: 3, col: 9}
+        ];
+
+        gameState.placementOrder.forEach((unitType, index) => {
+            const { row, col } = placements[index];
+            gameState.grid[row][col] = { type: unitType, player: 1, hp: UNITS[unitType].hp };
+            gameState.grid[GRID_SIZE - 1 - row][col] = { type: unitType, player: 2, hp: UNITS[unitType].hp };
+        });
+
+        renderBoard();
+        gameState.phase = 'battle';
+        updateGameInfo();
+    }
+
+    function handleCellClick(event) {
+        const row = parseInt(event.target.closest('.cell').dataset.row);
+        const col = parseInt(event.target.closest('.cell').dataset.col);
+
+        if (gameState.phase === 'battle') {
+            const clickedUnit = gameState.grid[row][col];
+
+            if (gameState.selectedUnit) {
+                const { selectedRow, selectedCol } = gameState.selectedUnit;
+                const selectedUnit = gameState.grid[selectedRow][selectedCol];
+
+                if (selectedUnit.type === 'Healer') {
+                    handleHealerAction(selectedRow, selectedCol, row, col);
+                } else {
+                    if (isValidMove(selectedRow, selectedCol, row, col)) {
+                        moveUnit(selectedRow, selectedCol, row, col);
+                    } else if (isValidAttack(selectedRow, selectedCol, row, col)) {
+                        attackUnit(selectedRow, selectedCol, row, col);
+                    } else {
+                        deselectUnit();
+                    }
+                }
+            } else if (clickedUnit && clickedUnit.player === gameState.currentPlayer) {
+                selectUnit(row, col);
+            }
+        }
+    }
+
+    function handleHealerAction(fromRow, fromCol, toRow, toCol) {
+        if (isValidMove(fromRow, fromCol, toRow, toCol)) {
+            moveUnit(fromRow, fromCol, toRow, toCol);
+        } else if (isValidHeal(fromRow, fromCol, toRow, toCol)) {
+            healUnit(fromRow, fromCol, toRow, toCol);
+        } else {
+            deselectUnit();
+        }
+    }
+
+    function deselectUnit() {
+        gameState.selectedUnit = null;
+        clearHighlights();
+        hideUnitInfo();
+    }
+
+    function isValidHeal(fromRow, fromCol, toRow, toCol) {
+        const unit = gameState.grid[fromRow][fromCol];
+        if (unit.type !== 'Healer') return false;
+        const healRange = UNITS[unit.type].healRange;
+        const distance = Math.abs(fromRow - toRow) + Math.abs(fromCol - toCol);
+        const targetUnit = gameState.grid[toRow][toCol];
+        return distance <= healRange &&
+            targetUnit &&
+            targetUnit.player === gameState.currentPlayer &&
+            targetUnit.hp < UNITS[targetUnit.type].hp &&
+            (fromRow !== toRow || fromCol !== toCol); // Ensure healer can't heal itself
+    }
+
+    function selectUnit(row, col) {
+        clearHighlights();
+        gameState.selectedUnit = { selectedRow: row, selectedCol: col };
+        const unit = gameState.grid[row][col];
+
+        if (unit.type === 'Healer') {
+            highlightHealerOptions(row, col, UNITS[unit.type].movement, UNITS[unit.type].healRange);
+        } else {
+            highlightMovementOptions(row, col, UNITS[unit.type].movement);
+            highlightAttackOptions(row, col, UNITS[unit.type].attackRange);
+        }
+
+        showUnitInfo(row, col);
+    }
+
+    function highlightHealerOptions(row, col, movement, healRange) {
+        for (let r = Math.max(0, row - Math.max(movement, healRange)); r <= Math.min(GRID_SIZE - 1, row + Math.max(movement, healRange)); r++) {
+            for (let c = Math.max(0, col - Math.max(movement, healRange)); c <= Math.min(GRID_SIZE - 1, col + Math.max(movement, healRange)); c++) {
+                const distance = Math.abs(r - row) + Math.abs(c - col);
+                if (distance <= movement && !gameState.grid[r][c]) {
+                    const cell = document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+                    cell.classList.add('highlight-move');
+                } else if (distance <= healRange) {
+                    const targetUnit = gameState.grid[r][c];
+                    if (targetUnit && targetUnit.player === gameState.currentPlayer && targetUnit.hp < UNITS[targetUnit.type].hp && (r !== row || c !== col)) {
+                        const cell = document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+                        cell.classList.add('highlight-heal');
+                    }
+                }
+            }
+        }
+    }
+
+    function clearHighlights() {
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach(cell => {
+            cell.classList.remove('highlight-move', 'highlight-attack', 'highlight-heal');
+        });
+    }
+
+    function highlightMovementOptions(row, col, movement) {
+        for (let r = Math.max(0, row - movement); r <= Math.min(GRID_SIZE - 1, row + movement); r++) {
+            for (let c = Math.max(0, col - movement); c <= Math.min(GRID_SIZE - 1, col + movement); c++) {
+                if (Math.abs(r - row) + Math.abs(c - col) <= movement && !gameState.grid[r][c]) {
+                    const cell = document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+                    cell.classList.add('highlight-move');
+                }
+            }
+        }
+    }
+
+    function highlightAttackOptions(row, col, range) {
+        const unit = gameState.grid[row][col];
+        if (UNITS[unit.type].attackPower === 0) return;
+
+        for (let r = Math.max(0, row - range); r <= Math.min(GRID_SIZE - 1, row + range); r++) {
+            for (let c = Math.max(0, col - range); c <= Math.min(GRID_SIZE - 1, col + range); c++) {
+                if (Math.abs(r - row) + Math.abs(c - col) <= range) {
+                    const targetUnit = gameState.grid[r][c];
+                    if (targetUnit && targetUnit.player !== gameState.currentPlayer) {
+                        const cell = document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+                        cell.classList.add('highlight-attack');
+                    }
+                }
+            }
+        }
+    }
+
+    function highlightHealOptions(row, col, range) {
+        for (let r = Math.max(0, row - range); r <= Math.min(GRID_SIZE - 1, row + range); r++) {
+            for (let c = Math.max(0, col - range); c <= Math.min(GRID_SIZE - 1, col + range); c++) {
+                if (Math.abs(r - row) + Math.abs(c - col) <= range) {
+                    const targetUnit = gameState.grid[r][c];
+                    if (targetUnit && targetUnit.player === gameState.currentPlayer && targetUnit.hp < UNITS[targetUnit.type].hp) {
+                        const cell = document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+                        cell.classList.add('highlight-heal');
+                    }
+                }
+            }
+        }
+    }
+
+    function showUnitInfo(row, col) {
+        const unit = gameState.grid[row][col];
+        const unitStats = UNITS[unit.type];
+        unitInfoElement.innerHTML = `
+        <h3>${unit.type} (Player ${unit.player})</h3>
+        <p>HP: ${unit.hp}/${unitStats.hp}</p>
+        <p>Movement: ${unitStats.movement}</p>
+        <p>Attack Range: ${unitStats.attackRange}</p>
+        <p>Attack Power: ${unitStats.attackPower}</p>
+        ${unit.type === 'Healer' ? `<p>Heal Amount: ${unitStats.healAmount}</p>` : ''}
+    `;
+        unitInfoElement.classList.remove('hidden', 'top', 'bottom');
+
+        // Determine whether to show the info at the top or bottom
+        if (row < GRID_SIZE / 2) {
+            unitInfoElement.classList.add('bottom');
+        } else {
+            unitInfoElement.classList.add('top');
+        }
+    }
+
+    function isValidMove(fromRow, fromCol, toRow, toCol) {
+        const unit = gameState.grid[fromRow][fromCol];
+        const movement = UNITS[unit.type].movement;
+        const distance = Math.abs(fromRow - toRow) + Math.abs(fromCol - toCol);
+        return distance <= movement && !gameState.grid[toRow][toCol];
+    }
+
+    function isValidAttack(fromRow, fromCol, toRow, toCol) {
+        const unit = gameState.grid[fromRow][fromCol];
+        const attackRange = UNITS[unit.type].attackRange;
+        const distance = Math.abs(fromRow - toRow) + Math.abs(fromCol - toCol);
+        const targetUnit = gameState.grid[toRow][toCol];
+        return distance <= attackRange && targetUnit && targetUnit.player !== gameState.currentPlayer && UNITS[unit.type].attackPower > 0;
+    }
+
+    function moveUnit(fromRow, fromCol, toRow, toCol) {
+        gameState.grid[toRow][toCol] = gameState.grid[fromRow][fromCol];
+        gameState.grid[fromRow][fromCol] = null;
+        showFeedbackMessage(`${gameState.grid[toRow][toCol].type} moved`);
+        renderBoard();
+        clearHighlights();
+        gameState.selectedUnit = null;
+        hideUnitInfo();
+        endTurn();
+    }
+
+    function attackUnit(fromRow, fromCol, toRow, toCol) {
+        const attackingUnit = gameState.grid[fromRow][fromCol];
+        const defendingUnit = gameState.grid[toRow][toCol];
+        const damage = UNITS[attackingUnit.type].attackPower;
+        defendingUnit.hp -= damage;
+
+        showFeedbackMessage(`${attackingUnit.type} attacks ${defendingUnit.type} for ${damage} damage!`);
+
+        animateAttack(fromRow, fromCol, toRow, toCol);
+
+        if (defendingUnit.hp <= 0) {
+            setTimeout(() => {
+                animateExplosion(toRow, toCol);
+                gameState.grid[toRow][toCol] = null;
+                checkWinCondition();
+            }, 500);
+        }
+
+        renderBoard();
+        clearHighlights();
+        gameState.selectedUnit = null;
+        hideUnitInfo();
+        endTurn();
+    }
+
+    function healUnit(fromRow, fromCol, toRow, toCol) {
+        const healerUnit = gameState.grid[fromRow][fromCol];
+        const targetUnit = gameState.grid[toRow][toCol];
+        const healAmount = UNITS[healerUnit.type].healAmount;
+        const actualHeal = Math.min(healAmount, UNITS[targetUnit.type].hp - targetUnit.hp);
+        targetUnit.hp += actualHeal;
+
+        showFeedbackMessage(`${healerUnit.type} heals ${targetUnit.type} for ${actualHeal} HP!`);
+
+        animateHeal(toRow, toCol);
+
+        renderBoard();
+        clearHighlights();
+        gameState.selectedUnit = null;
+        hideUnitInfo();
+        endTurn();
+    }
+
+    function animateAttack(fromRow, fromCol, toRow, toCol) {
+        const attackerCell = document.querySelector(`.cell[data-row="${fromRow}"][data-col="${fromCol}"]`);
+        const defenderCell = document.querySelector(`.cell[data-row="${toRow}"][data-col="${toCol}"]`);
+
+        attackerCell.style.animation = 'attack-animation 0.5s';
+        setTimeout(() => {
+            defenderCell.style.animation = 'hit-animation 0.5s';
+        }, 250);
+
+        setTimeout(() => {
+            attackerCell.style.animation = '';
+            defenderCell.style.animation = '';
+        }, 750);
+    }
+
+    function animateHeal(row, col) {
+        const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+        cell.style.animation = 'heal-animation 1s';
+        setTimeout(() => {
+            cell.style.animation = '';
+        }, 1000);
+    }
+
+    function animateExplosion(row, col) {
+        const cell = document.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+        cell.style.animation = 'explosion 0.5s';
+        setTimeout(() => {
+            cell.style.animation = '';
+        }, 500);
+    }
+
+    function showFeedbackMessage(message) {
+        feedbackMessageElement.textContent = message;
+        feedbackMessageElement.classList.remove('hidden');
+        setTimeout(() => {
+            feedbackMessageElement.classList.add('hidden');
+        }, 2000);
+    }
+
+    function hideUnitInfo() {
+        unitInfoElement.classList.add('hidden');
+    }
+
+    function endTurn() {
+        gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+        updateGameInfo();
+    }
+
+    function checkWinCondition() {
+        const player1Units = gameState.grid.flat().filter(unit => unit && unit.player === 1);
+        const player2Units = gameState.grid.flat().filter(unit => unit && unit.player === 2);
+
+        if (player1Units.length === 0) {
+            gameMessageElement.textContent = 'Player 2 wins!';
+            gameState.phase = 'gameover';
+        } else if (player2Units.length === 0) {
+            gameMessageElement.textContent = 'Player 1 wins!';
+            gameState.phase = 'gameover';
+        }
+    }
+
+    restartButton.addEventListener('click', initializeGame);
+
+    initializeGame();
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+Certainly! I'll add more points to the game description without modifying the existing text. Here's an expanded version of the game idea:
+
+Create a 2d game in javascript, here's the idea:
+i) Layout: P1 has 4 cards at top, P2 has 4 cards a bottom, center contains an unrevealed card.
+ii) Cards: a) Fish, b) Banana, c) Bamboo, d) Carrot
+iii) Centered deck reveals card each turn from any one of these: a) Penguin, b) Monkey, c) Panda, d) Rabbit
+iv) Each round - P1 selects a card then P2 selects a card, then AI reveals a card.
+v) Player can get a points if: a) player picks Fish and AI picks Penguin, b) player picks Banana and AI picks Monkey, c) player picks Bamboo and AI picks Panda, d) player picks Carrot and AI picks Rabbit
+vi) Use emojis/symbols for the cards. Show rounds top of the game.
+vii) Make it visually appealing with centered layout.
+viii) Add score below the game, first player to get 5 points wins. Show round above the game.
+ix) Highlight the scores below the game. Also, add an alert "Do you want to play again?" after game ends.

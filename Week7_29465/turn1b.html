@@ -1,7 +1,186 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<title>turn1b.html</title>
+    <meta charset="UTF-8">
+    <title>Grid Words</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f8f9fa;
+        }
+        .grid {
+            width: 300px;
+            height: 300px;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            border: 1px solid #ddd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            cursor: pointer;
+            background-color: white;
+        }
+        .used {
+            background-color: #e9ecef;
+            cursor: default;
+        }
+        #wordInfo {
+            margin-top: 20px;
+            width: 100%;
+            max-width: 600px;
+        }
+        .carousel-item div {
+            text-align: center;
+        }
+        .controls {
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 <body>
+
+<div class="container">
+    <div class="controls">
+        <button id="shuffle" class="btn btn-info">Shuffle</button>
+        <button id="endGame" class="btn btn-danger float-right">End Game</button>
+    </div>
+    <div id="game" class="text-center">
+        <div id="grid" class="grid mx-auto"></div>
+        <div id="score">Score: <span id="currentScore">0</span></div>
+        <div id="wordInfo" class="carousel slide" data-ride="carousel">
+            <div class="carousel-inner"></div>
+            <a class="carousel-control-prev" href="#wordInfo" role="button" data-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            </a>
+            <a class="carousel-control-next" href="#wordInfo" role="button" data-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            </a>
+        </div>
+    </div>
+    <div id="endGameScreen" style="display:none;">
+        <h2>Game Over</h2>
+        <p>Final Score: <span id="finalScore"></span></p>
+        <p>Words Found:</p>
+        <ul id="wordsList"></ul>
+        <button id="restart" class="btn btn-primary">Restart</button>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+<script>
+    let grid = [];
+    let selectedCells = [];
+    let score = 0;
+    const letters = 'AAAAAAAAABBCCDDDDEEEEEEEEEEEEFFGGGHHIIIIIIIIIJKLLLLMMNNNNNNOOOOOOOOPPQRRRRRRSSSSTTTTTTUUUUVVWWXYYZ';
+    const gridElement = document.getElementById('grid');
+    const scoreElement = document.getElementById('currentScore');
+    const wordInfoCarousel = document.querySelector('.carousel-inner');
+
+    function createGrid() {
+        grid = [];
+        for(let i = 0; i < 36; i++) {
+            grid.push(letters[Math.floor(Math.random() * letters.length)]);
+        }
+        renderGrid();
+    }
+
+    function renderGrid() {
+        gridElement.innerHTML = '';
+        grid.forEach((letter, index) => {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.textContent = letter;
+            cell.onclick = () => selectCell(index);
+            gridElement.appendChild(cell);
+        });
+    }
+
+    function selectCell(index) {
+        if(!selectedCells.includes(index) && selectedCells.length < 6) {
+            selectedCells.push(index);
+            gridElement.children[index].classList.add('bg-primary', 'text-white');
+        }
+    }
+
+    function checkWord() {
+        const word = selectedCells.map(i => grid[i]).join('');
+        fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`)
+            .then(response => {
+                if (!response.ok) throw new Error('Word not found');
+                return response.json();
+            })
+            .then(data => {
+                if (data.length) {
+                    updateScore(word.length);
+                    showWordInfo(data[0]);
+                    selectedCells.forEach(i => gridElement.children[i].classList.add('used'));
+                    selectedCells = [];
+                }
+            })
+            .catch(() => {
+                alert('Not a valid word!');
+                resetSelection();
+            });
+    }
+
+    function showWordInfo(wordData) {
+        wordInfoCarousel.innerHTML = '';
+        wordData.meanings.forEach(meaning => {
+            const item = document.createElement('div');
+            item.className = 'carousel-item';
+            if (meaning === wordData.meanings[0]) item.classList.add('active');
+            const def = document.createElement('div');
+            def.textContent = `${meaning.partOfSpeech}: ${meaning.definitions[0].definition}`;
+            item.appendChild(def);
+            wordInfoCarousel.appendChild(item);
+        });
+    }
+
+    function updateScore(length) {
+        score += length * 10;
+        scoreElement.textContent = score;
+    }
+
+    function resetSelection() {
+        selectedCells.forEach(i => gridElement.children[i].classList.remove('bg-primary', 'text-white'));
+        selectedCells = [];
+    }
+
+    document.getElementById('shuffle').onclick = () => {
+        createGrid();
+        resetSelection();
+    };
+
+    document.getElementById('endGame').onclick = endGame;
+
+    function endGame() {
+        document.getElementById('game').style.display = 'none';
+        document.getElementById('endGameScreen').style.display = 'block';
+        document.getElementById('finalScore').textContent = score;
+        // Note: Here you would list all found words, which is not implemented in this basic version.
+    }
+
+    document.getElementById('restart').onclick = () => {
+        document.getElementById('endGameScreen').style.display = 'none';
+        document.getElementById('game').style.display = 'block';
+        score = 0;
+        scoreElement.textContent = score;
+        createGrid();
+        resetSelection();
+    };
+
+    // Initialize the game
+    createGrid();
+</script>
+
 </body>
 </html>

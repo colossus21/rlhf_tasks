@@ -1,0 +1,7 @@
+Can you create a puzzle game with forest theme with the following features:
+1. Spawn rocks, trees and holes. Player need to cover all holes by pushing the rocks to win a level. Use emojis/symbols for player, rocks, walls and trees. Trees are not pushable.
+2. Design 5 solvable levels of increasing difficulty. Congrats player after winning each level, also after completing all levels.
+3. Add a visual feedback when a rock fills a hole like a green border. Player can have fade-in/out animation after each move with green background.
+4. Display the current level number and move count above the game.
+5. After completing each level show 'Next Level' button.
+6. Provide a final congratulatory message when all levels are completed. Make the game playable with both on-screen buttons (for mobile) in addition to keyboard arrow keys.

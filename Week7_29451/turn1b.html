@@ -1,7 +1,147 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<title>turn1b.html</title>
+    <meta charset="UTF-8">
+    <title>Space Shooter</title>
+<!--    <script src="//cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
+    <style>
+        body { margin: 0; background: #000; }
+        canvas { display: block; margin: 0 auto; }
+    </style>
 </head>
 <body>
+<script>
+    const config = {
+        type: Phaser.AUTO,
+        width: 480, // 6 cells * 80px
+        height: 480, // 6 cells * 80px
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        },
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 0 },
+                debug: false
+            }
+        }
+    };
+
+    const game = new Phaser.Game(config);
+    let player, cursors, enemies, bullets, scoreText, livesText, gameOverText;
+    let score = 0;
+    let lives = 3;
+    let starField;
+
+    function preload() {
+        // Preloading isn't necessary for shapes, but for future assets or sounds
+    }
+
+    function create() {
+        // Create star field background
+        starField = this.add.particles('white').createEmitter({
+            x: { min: 0, max: config.width },
+            y: { min: -50, max: config.height },
+            lifespan: 2000,
+            speedY: { min: 50, max: 100 },
+            scale: { start: 0.5, end: 0 },
+            quantity: 2,
+            blendMode: 'ADD'
+        });
+
+        // Draw grid
+        const graphics = this.add.graphics();
+        graphics.lineStyle(1, 0x444444, 0.5);
+        for (let i = 0; i < 6; i++) {
+            graphics.lineBetween(0, i * 80, 480, i * 80);
+            graphics.lineBetween(i * 80, 0, i * 80, 480);
+        }
+
+        // Player
+        player = this.physics.add.sprite(240, 440, 'triangle').setScale(0.5);
+        player.setCollideWorldBounds(true);
+
+        // Controls
+        cursors = this.input.keyboard.createCursorKeys();
+
+        // Enemies
+        enemies = this.physics.add.group();
+        this.time.addEvent({ delay: 1000, callback: createEnemy, callbackScope: this, loop: true });
+
+        // Bullets
+        bullets = this.physics.add.group();
+
+        // UI
+        scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '20px', fill: '#fff' });
+        livesText = this.add.text(380, 16, 'Lives: 3', { fontSize: '20px', fill: '#fff' });
+
+        // Collisions
+        this.physics.add.overlap(bullets, enemies, hitEnemy, null, this);
+        this.physics.add.overlap(player, enemies, loseLife, null, this);
+
+        // Game Over Text
+        gameOverText = this.add.text(240, 240, 'GAME OVER', { fontSize: '32px', fill: '#ff0000' }).setOrigin(0.5).setVisible(false);
+    }
+
+    function update() {
+        // Player movement
+        if (cursors.left.isDown) {
+            player.setVelocityX(-160);
+        } else if (cursors.right.isDown) {
+            player.setVelocityX(160);
+        } else {
+            player.setVelocityX(0);
+        }
+
+        // Shooting
+        if (cursors.space.isDown && this.time.now > (this.lastFired || 0)) {
+            fireBullet();
+            this.lastFired = this.time.now + 300; // Fire rate control
+        }
+
+        // Check for game over
+        if (lives <= 0 && !gameOverText.visible) {
+            gameOver();
+        }
+    }
+
+    function createEnemy() {
+        let enemy = enemies.create(Phaser.Math.Between(40, 440), 0, 'circle').setScale(0.5);
+        enemy.setVelocityY(50 + score * 0.5); // Increase speed with score
+    }
+
+    function fireBullet() {
+        let bullet = bullets.create(player.x, player.y - 20, 'bullet').setScale(0.5);
+        bullet.setVelocityY(-300);
+    }
+
+    function hitEnemy(bullet, enemy) {
+        bullet.destroy();
+        enemy.destroy();
+        score += 10;
+        scoreText.setText('Score: ' + score);
+    }
+
+    function loseLife(player, enemy) {
+        enemy.destroy();
+        lives--;
+        livesText.setText('Lives: ' + lives);
+        if (lives <= 0) {
+            gameOver();
+        }
+    }
+
+    function gameOver() {
+        this.physics.pause();
+        gameOverText.setVisible(true);
+        this.add.text(240, 280, 'Press SPACE to Restart', { fontSize: '24px', fill: '#fff' }).setOrigin(0.5);
+        this.input.keyboard.once('keydown-SPACE', () => {
+            this.scene.restart();
+        });
+    }
+</script>
 </body>
 </html>

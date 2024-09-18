@@ -1,7 +1,135 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<title>turn1a.html</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eco Cycle</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #f4f4f9; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: #333; }
+        #game-container { text-align: center; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        #grid { display: grid; grid-template-columns: repeat(6, 50px); gap: 2px; margin: 20px auto; }
+        .cell { width: 50px; height: 50px; background: #e0e0e0; display: flex; justify-content: center; align-items: center; font-size: 1.5em; cursor: pointer; }
+        .cell.blue { border: 2px solid #3498db; }
+        .cell.red { border: 2px solid #e74c3c; }
+        #species-selector button { font-size: 1.5em; margin: 0 5px; padding: 10px 15px; border: none; background: #4a4a4a; color: white; cursor: pointer; border-radius: 5px; transition: background 0.3s; }
+        #species-selector button.selected { background: #ff9800; }
+        #scores { margin-top: 20px; font-size: 1.2em; }
+        #restart { margin-top: 20px; padding: 10px 20px; background: #2ecc71; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; }
+    </style>
 </head>
 <body>
+<div id="game-container">
+    <div id="species-selector">
+        <button class="selected" data-species="🌿">🌿</button>
+        <button data-species="🐰">🐰</button>
+        <button data-species="🦊">🦊</button>
+        <button data-species="🍄">🍄</button>
+    </div>
+    <div id="grid"></div>
+    <div id="scores">
+        <span style="color: #3498db;">Player 1: <span id="score1">0</span></span> |
+        <span style="color: #e74c3c;">Player 2: <span id="score2">0</span></span>
+    </div>
+    <button id="restart">Restart Game</button>
+</div>
+<script>
+    const grid = document.getElementById('grid');
+    const speciesSelector = document.getElementById('species-selector');
+    const restartBtn = document.getElementById('restart');
+    const score1 = document.getElementById('score1');
+    const score2 = document.getElementById('score2');
+
+    let gameState = {
+        board: Array(6).fill().map(() => Array(6).fill(null)),
+        currentPlayer: 1,
+        movesLeft: 36,
+        scores: {1: 0, 2: 0},
+        selectedSpecies: '🌿'
+    };
+
+    function createGrid() {
+        grid.innerHTML = '';
+        gameState.board.forEach((row, i) => {
+            row.forEach((cell, j) => {
+                const div = document.createElement('div');
+                div.className = 'cell';
+                div.onclick = () => placeSpecies(i, j);
+                grid.appendChild(div);
+            });
+        });
+    }
+
+    function placeSpecies(x, y) {
+        if (gameState.board[x][y] === null && gameState.movesLeft > 0) {
+            gameState.board[x][y] = {player: gameState.currentPlayer, species: gameState.selectedSpecies};
+            updateCell(x, y);
+            updateScore(x, y);
+            gameState.movesLeft--;
+            if (gameState.movesLeft === 0) endGame();
+            gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+        }
+    }
+
+    function updateCell(x, y) {
+        const cell = grid.children[x * 6 + y];
+        cell.textContent = gameState.board[x][y].species;
+        cell.classList.add(gameState.board[x][y].player === 1 ? 'blue' : 'red');
+    }
+
+    function updateScore(x, y) {
+        const species = gameState.board[x][y].species;
+        let bonus = 0;
+        const directions = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+
+        directions.forEach(([dx, dy]) => {
+            const nx = x + dx, ny = y + dy;
+            if (nx >= 0 && nx < 6 && ny >= 0 && ny < 6) {
+                const neighbor = gameState.board[nx][ny];
+                if (neighbor) {
+                    if ((species === '🌿' && neighbor.species === '🍄') ||
+                        (species === '🐰' && neighbor.species === '🌿') ||
+                        (species === '🦊' && neighbor.species === '🐰') ||
+                        (species === '🍄' && neighbor.species !== '🍄')) {
+                        bonus++;
+                    }
+                }
+            }
+        });
+
+        gameState.scores[gameState.currentPlayer] += 1 + bonus;
+        document.getElementById(`score${gameState.currentPlayer}`).textContent = gameState.scores[gameState.currentPlayer];
+    }
+
+    function endGame() {
+        const winner = gameState.scores[1] > gameState.scores[2] ? 'Player 1' :
+            (gameState.scores[1] < gameState.scores[2] ? 'Player 2' : 'It\'s a tie!');
+        setTimeout(() => alert(`${winner} wins!`), 10);
+    }
+
+    function restartGame() {
+        gameState = {
+            board: Array(6).fill().map(() => Array(6).fill(null)),
+            currentPlayer: 1,
+            movesLeft: 36,
+            scores: {1: 0, 2: 0},
+            selectedSpecies: '🌿'
+        };
+        createGrid();
+        score1.textContent = '0';
+        score2.textContent = '0';
+    }
+
+    speciesSelector.onclick = (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            document.querySelector('.selected').classList.remove('selected');
+            e.target.classList.add('selected');
+            gameState.selectedSpecies = e.target.getAttribute('data-species');
+        }
+    };
+
+    restartBtn.onclick = restartGame;
+
+    createGrid();
+</script>
 </body>
 </html>

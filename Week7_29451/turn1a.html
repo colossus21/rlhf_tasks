@@ -1,7 +1,194 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<title>turn1a.html</title>
+    <meta charset="UTF-8">
+    <title>Space Shooter</title>
+<!--    <script src="//cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #000;
+        }
+        #gameCanvas {
+            border: 1px solid #333;
+        }
+    </style>
 </head>
 <body>
+<div id="game"></div>
+
+<script type="module">
+    const config = {
+        type: Phaser.AUTO,
+        width: 480,
+        height: 480,
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        },
+        physics: {
+            default: 'arcade',
+            arcade: {
+                debug: false
+            }
+        }
+    };
+
+    let game = new Phaser.Game(config);
+    let player;
+    let cursors;
+    let bullets;
+    let enemies;
+    let score = 0;
+    let scoreText;
+    let lives = 3;
+    let livesText;
+    let starfield;
+
+    function preload() {
+        // No external images to load
+    }
+
+    function create() {
+        // Create starfield background
+        starfield = this.add.tileSprite(0, 0, config.width, config.height, 'star').setOrigin(0, 0);
+        this.anims.create({
+            key: 'star',
+            frames: this.anims.generateFrameNumbers('star', { start: 0, end: 0 }),
+            frameRate: 1,
+            repeat: -1
+        });
+
+        // Grid overlay
+        let graphics = this.add.graphics();
+        graphics.lineStyle(1, 0x444444, 0.5);
+        for(let i = 0; i <= 6; i++) {
+            graphics.lineBetween(i * 80, 0, i * 80, 480);
+            graphics.lineBetween(0, i * 80, 480, i * 80);
+        }
+
+        // Player setup
+        player = this.physics.add.sprite(240, 430, 'triangle').setScale(0.1);
+        player.setCollideWorldBounds(true);
+
+        // Bullets group
+        bullets = this.physics.add.group();
+
+        // Enemies group
+        enemies = this.physics.add.group();
+
+        // UI
+        scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '20px', fill: '#FFF' });
+        livesText = this.add.text(350, 16, 'Lives: 3', { fontSize: '20px', fill: '#FFF' });
+
+        // Controls
+        cursors = this.input.keyboard.createCursorKeys();
+
+        // Spawn enemies
+        this.time.addEvent({
+            delay: 1500,
+            callback: spawnEnemy,
+            callbackScope: this,
+            loop: true
+        });
+    }
+
+    function update() {
+        // Starfield movement
+        starfield.tilePositionY -= 1;
+
+        // Player movement
+        if (cursors.left.isDown) {
+            player.setVelocityX(-160);
+        } else if (cursors.right.isDown) {
+            player.setVelocityX(160);
+        } else {
+            player.setVelocityX(0);
+        }
+
+        if (cursors.space.isDown && this.time.now > this.nextFire) {
+            fireBullet();
+            this.nextFire = this.time.now + 500; // Fire rate
+        }
+
+        // Check collisions
+        this.physics.overlap(bullets, enemies, hitEnemy, null, this);
+
+        // Check if enemies reach the bottom
+        enemies.children.iterate(function (enemy) {
+            if (enemy.y > config.height) {
+                loseLife();
+                enemy.destroy();
+            }
+        });
+    }
+
+    function spawnEnemy() {
+        let x = Phaser.Math.Between(0, 5) * 80 + 40; // Random within grid
+        let enemy = enemies.create(x, 40, 'circle').setScale(0.05);
+        enemy.setVelocityY(50 + score * 0.1); // Increase speed with score
+    }
+
+    function fireBullet() {
+        let bullet = bullets.create(player.x, player.y - 20, 'bullet').setScale(0.02);
+        bullet.setVelocityY(-300);
+    }
+
+    function hitEnemy(bullet, enemy) {
+        bullet.destroy();
+        enemy.destroy();
+        score += 10;
+        scoreText.setText('Score: ' + score);
+    }
+
+    function loseLife() {
+        lives--;
+        livesText.setText('Lives: ' + lives);
+        if (lives === 0) {
+            gameOver();
+        }
+    }
+
+    function gameOver() {
+        this.physics.pause();
+        let gameOverText = this.add.text(240, 240, 'Game Over', { fontSize: '32px', fill: '#FFF' }).setOrigin(0.5);
+        let restartText = this.add.text(240, 280, 'Click to Restart', { fontSize: '16px', fill: '#FFF' }).setOrigin(0.5);
+        this.input.once('pointerdown', function () {
+            this.scene.restart();
+            score = 0;
+            lives = 3;
+        }, this);
+    }
+</script>
+
+<script>
+    // Here we define shapes for Phaser
+    Phaser.GameObjects.GameObjectFactory.register('triangle', function () {
+        let triangle = new Phaser.Geom.Triangle.BuildEquilateral(this.scene.cameras.main.width / 2, this.scene.cameras.main.height - 50, 20);
+        let graphics = this.scene.add.graphics({ fillStyle: { color: 0x00ff00 } });
+        graphics.fillTriangleShape(triangle);
+        return graphics;
+    });
+
+    Phaser.GameObjects.GameObjectFactory.register('circle', function () {
+        let graphics = this.scene.add.graphics({ fillStyle: { color: 0xff0000 } });
+        graphics.fillCircleShape(new Phaser.Geom.Circle(0, 0, 10));
+        return graphics;
+    });
+
+    Phaser.GameObjects.GameObjectFactory.register('bullet', function () {
+        let graphics = this.scene.add.graphics({ fillStyle: { color: 0xffff00 } });
+        graphics.fillRect(-2, -10, 4, 10); // Simple rectangle for bullet
+        return graphics;
+    });
+</script>
+
 </body>
 </html>
