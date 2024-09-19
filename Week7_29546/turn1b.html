@@ -1,7 +1,151 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<title>turn1b.html</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2 Player Climbing Game</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+        }
+
+        #gameArea {
+            display: flex;
+            justify-content: space-around;
+            width: 80%;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .player {
+            text-align: center;
+            width: 45%;
+        }
+
+        .progress {
+            height: 300px;
+            width: 50px;
+            background-color: #ddd;
+            margin: 10px auto;
+            position: relative;
+        }
+
+        .bar {
+            width: 100%;
+            position: absolute;
+            bottom: 0;
+            transition: height 0.3s;
+        }
+
+        #player1 .bar { background: red; }
+        #player2 .bar { background: blue; }
+
+        .keyPrompt {
+            font-size: 2em;
+            margin: 10px 0;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            display: none;
+        }
+    </style>
 </head>
 <body>
+
+<div id="gameArea">
+    <div id="player1" class="player">
+        <div class="keyPrompt">Press</div>
+        <div class="progress"><div class="bar" id="bar1"></div></div>
+    </div>
+    <div id="player2" class="player">
+        <div class="keyPrompt">Press</div>
+        <div class="progress"><div class="bar" id="bar2"></div></div>
+    </div>
+</div>
+<button id="restartBtn">Restart Game</button>
+
+<script>
+    const keysP1 = ['w', 'a', 's', 'd'];
+    const keysP2 = ['i', 'j', 'k', 'l'];
+    let currentKeyP1 = '';
+    let currentKeyP2 = '';
+    let positionP1 = 0;
+    let positionP2 = 0;
+    const maxHeight = 300;
+    let gameRunning = true;
+
+    const gameArea = document.getElementById('gameArea');
+    const restartBtn = document.getElementById('restartBtn');
+    const keyPromptP1 = document.querySelector('#player1 .keyPrompt');
+    const keyPromptP2 = document.querySelector('#player2 .keyPrompt');
+    const bar1 = document.getElementById('bar1');
+    const bar2 = document.getElementById('bar2');
+
+    function pickRandomKey(playerKeys) {
+        return playerKeys[Math.floor(Math.random() * playerKeys.length)];
+    }
+
+    function startGame() {
+        currentKeyP1 = pickRandomKey(keysP1);
+        currentKeyP2 = pickRandomKey(keysP2);
+        keyPromptP1.textContent = currentKeyP1.toUpperCase();
+        keyPromptP2.textContent = currentKeyP2.toUpperCase();
+        positionP1 = positionP2 = 0;
+        bar1.style.height = bar2.style.height = '0px';
+        gameRunning = true;
+        restartBtn.style.display = 'none';
+    }
+
+    function checkWin() {
+        if (positionP1 >= maxHeight || positionP2 >= maxHeight) {
+            gameRunning = false;
+            alert(`Player ${positionP1 >= maxHeight ? '1' : '2'} Wins!`);
+            restartBtn.style.display = 'block';
+        }
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (!gameRunning) return;
+
+        if (keysP1.includes(event.key)) {
+            if (event.key === currentKeyP1) {
+                positionP1 += 30;
+            } else {
+                positionP1 = Math.max(0, positionP1 - 15);
+            }
+            currentKeyP1 = pickRandomKey(keysP1);
+            keyPromptP1.textContent = currentKeyP1.toUpperCase();
+        } else if (keysP2.includes(event.key)) {
+            if (event.key === currentKeyP2) {
+                positionP2 += 30;
+            } else {
+                positionP2 = Math.max(0, positionP2 - 15);
+            }
+            currentKeyP2 = pickRandomKey(keysP2);
+            keyPromptP2.textContent = currentKeyP2.toUpperCase();
+        }
+
+        bar1.style.height = `${positionP1}px`;
+        bar2.style.height = `${positionP2}px`;
+        checkWin();
+    });
+
+    restartBtn.addEventListener('click', startGame);
+
+    startGame();
+</script>
+
 </body>
 </html>

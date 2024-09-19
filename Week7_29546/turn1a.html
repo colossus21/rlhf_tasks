@@ -1,7 +1,102 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<title>turn1a.html</title>
+    <meta charset="UTF-8">
+    <title>2 Player Climbing Game</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; background: #f0f0f0; }
+        #gameArea { width: 800px; height: 500px; background: white; border: 2px solid #ccc; position: relative; }
+        .player { position: absolute; bottom: 0; }
+        .progress { width: 20px; position: absolute; bottom: 50px; }
+        #p1Progress { left: 200px; background: red; }
+        #p2Progress { right: 200px; background: blue; }
+        #keyDisplay { text-align: center; margin-top: 10px; font-size: 20px; }
+        #restartBtn { display: none; padding: 10px 20px; margin: 20px auto; cursor: pointer; }
+        svg { position: absolute; bottom: 0; transition: bottom 0.1s; }
+        #p1 { left: 190px; fill: red; }
+        #p2 { right: 190px; fill: blue; }
+    </style>
 </head>
 <body>
+
+<div id="gameArea">
+    <div id="p1Progress" class="progress" style="height: 0;"></div>
+    <div id="p2Progress" class="progress" style="height: 0;"></div>
+    <svg id="p1" width="30" height="50" viewBox="0 0 30 50" class="player">
+        <rect x="10" y="0" width="10" height="30" />
+        <line x1="15" y1="30" x2="15" y2="40" />
+        <line x1="15" y1="30" x2="20" y2="40" />
+    </svg>
+    <svg id="p2" width="30" height="50" viewBox="0 0 30 50" class="player">
+        <rect x="10" y="0" width="10" height="30" />
+        <line x1="15" y1="30" x2="15" y2="40" />
+        <line x1="15" y1="30" x2="20" y2="40" />
+    </svg>
+</div>
+<div id="keyDisplay"></div>
+<button id="restartBtn">Restart Game</button>
+
+<script>
+    const keysP1 = ['W', 'A', 'S', 'D'];
+    const keysP2 = ['I', 'J', 'K', 'L'];
+    let currentKeyP1, currentKeyP2, p1Height = 0, p2Height = 0, gameOver = false;
+
+    function setupGame() {
+        document.getElementById('restartBtn').style.display = 'none';
+        p1Height = p2Height = 0;
+        gameOver = false;
+        updateDisplay();
+        setNewKeys();
+        document.addEventListener('keydown', onKeyPress);
+    }
+
+    function setNewKeys() {
+        currentKeyP1 = keysP1[Math.floor(Math.random() * keysP1.length)];
+        currentKeyP2 = keysP2[Math.floor(Math.random() * keysP2.length)];
+        updateKeyDisplay();
+    }
+
+    function updateKeyDisplay() {
+        document.getElementById('keyDisplay').innerText = `P1: ${currentKeyP1} | P2: ${currentKeyP2}`;
+    }
+
+    function updateDisplay() {
+        document.getElementById('p1Progress').style.height = `${p1Height}%`;
+        document.getElementById('p2Progress').style.height = `${p2Height}%`;
+        document.getElementById('p1').style.bottom = `${p1Height}%`;
+        document.getElementById('p2').style.bottom = `${p2Height}%`;
+    }
+
+    function onKeyPress(e) {
+        if (gameOver) return;
+
+        if (e.key.toUpperCase() === currentKeyP1 && ['W', 'A', 'S', 'D'].includes(e.key.toUpperCase())) {
+            p1Height = Math.min(p1Height + 10, 100);
+        } else if (['I', 'J', 'K', 'L'].includes(e.key.toUpperCase())) {
+            p2Height = Math.min(p2Height + 10, 100);
+        } else {
+            if (['W', 'A', 'S', 'D'].includes(e.key.toUpperCase())) p1Height = Math.max(p1Height - 5, 0);
+            else if (['I', 'J', 'K', 'L'].includes(e.key.toUpperCase())) p2Height = Math.max(p2Height - 5, 0);
+        }
+
+        updateDisplay();
+        if (p1Height === 100 || p2Height === 100) {
+            endGame(p1Height === 100 ? 'Player 1' : 'Player 2');
+        } else {
+            setNewKeys();
+        }
+    }
+
+    function endGame(winner) {
+        gameOver = true;
+        document.getElementById('keyDisplay').innerText = `${winner} wins!`;
+        document.getElementById('restartBtn').style.display = 'block';
+        document.removeEventListener('keydown', onKeyPress);
+    }
+
+    document.getElementById('restartBtn').addEventListener('click', setupGame);
+    setupGame();
+</script>
+
 </body>
 </html>

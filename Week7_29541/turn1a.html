@@ -1,7 +1,235 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<title>turn1a.html</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battle Grid</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #f4f4f4; }
+        #gameBoard { margin: 20px auto; width: 600px; height: 600px; background: #e0e0e0; display: grid; grid-template-columns: repeat(12, 1fr); }
+        .cell { width: 50px; height: 50px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; }
+        .unit { position: relative; }
+        .hp-bar { position: absolute; bottom: -15px; left: 0; width: 100%; height: 5px; background: red; }
+        .hp { height: 100%; background: green; }
+        .blue { background: rgba(0, 0, 255, 0.3); }
+        .red { background: rgba(255, 0, 0, 0.3); }
+        .selected { border: 2px solid yellow; }
+        .possible-move { background: rgba(0, 255, 0, 0.2); }
+        .possible-attack { background: rgba(255, 0, 0, 0.2); }
+        #infoPanel { text-align: center; margin-top: 10px; }
+        #turnIndicator, #winMessage { text-align: center; margin-top: 10px; }
+    </style>
 </head>
 <body>
+
+<div id="gameBoard"></div>
+<div id="infoPanel"></div>
+<div id="turnIndicator">Player 1's Turn</div>
+<div id="winMessage"></div>
+<button onclick="restartGame()" class="btn btn-primary">Restart Game</button>
+
+<script>
+    const board = document.getElementById('gameBoard');
+    const infoPanel = document.getElementById('infoPanel');
+    const turnIndicator = document.getElementById('turnIndicator');
+    const winMessage = document.getElementById('winMessage');
+
+    const units = {
+        'Knight': { symbol: '🗡️', move: 1, range: 1, attack: 3, hp: 10 },
+        'Archer': { symbol: '🏹', move: 2, range: 3, attack: 2, hp: 7 },
+        'Wizard': { symbol: '🧙', move: 1, range: 2, attack: 4, hp: 6 },
+        'Dragon': { symbol: '🐉', move: 3, range: 1, attack: 5, hp: 12 },
+        'Healer': { symbol: '🩺', move: 2, range: 2, attack: 0, hp: 5, heal: 2 },
+        'Rogue': { symbol: '🥷', move: 3, range: 1, attack: 2, hp: 8 }
+    };
+
+    let gameState = {
+        board: Array(12).fill().map(() => Array(12).fill(null)),
+        currentPlayer: 1,
+        selectedUnit: null,
+        unitsPlaced: 0
+    };
+
+    function initializeBoard() {
+        for(let y = 0; y < 12; y++) {
+            for(let x = 0; x < 12; x++) {
+                let cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.x = x;
+                cell.dataset.y = y;
+                cell.onclick = () => handleCellClick(x, y);
+                board.appendChild(cell);
+            }
+        }
+    }
+
+    function placeInitialUnits() {
+        if(gameState.unitsPlaced < 12) {
+            // Here you would implement a function to allow players to place their units
+            // For simplicity, let's just randomly place units for now
+            let player = gameState.unitsPlaced < 6 ? 1 : 2;
+            let unitTypes = Object.keys(units);
+            let unitType = unitTypes[gameState.unitsPlaced % 6];
+
+            let x, y;
+            do {
+                x = player === 1 ? Math.floor(Math.random() * 6) : Math.floor(Math.random() * 6) + 6;
+                y = Math.floor(Math.random() * 12);
+            } while(gameState.board[y][x] !== null);
+
+            gameState.board[y][x] = {
+                type: unitType,
+                player: player,
+                hp: units[unitType].hp
+            };
+            gameState.unitsPlaced++;
+            renderBoard();
+            if(gameState.unitsPlaced === 12) startGame();
+        }
+    }
+
+    function startGame() {
+        turnIndicator.textContent = "Player 1's Turn";
+    }
+
+    function handleCellClick(x, y) {
+        const cell = gameState.board[y][x];
+        if(!cell && gameState.selectedUnit) {
+            if(canMoveTo(x, y)) {
+                moveUnit(x, y);
+            }
+        } else if(cell) {
+            if(cell.player === gameState.currentPlayer) {
+                selectUnit(x, y);
+            } else if(gameState.selectedUnit) {
+                if(canAttack(x, y)) {
+                    attackUnit(x, y);
+                }
+            }
+        }
+    }
+
+    function selectUnit(x, y) {
+        if(gameState.selectedUnit) {
+            document.querySelector(`[data-x="${gameState.selectedUnit.x}"][data-y="${gameState.selectedUnit.y}"]`).classList.remove('selected');
+        }
+        gameState.selectedUnit = {x, y};
+        document.querySelector(`[data-x="${x}"][data-y="${y}"]`).classList.add('selected');
+        showPossibleMoves(x, y);
+        showUnitInfo(x, y);
+    }
+
+    function showUnitInfo(x, y) {
+        const unit = gameState.board[y][x];
+        const position = y < 6 ? 'bottom' : 'top';
+        infoPanel.innerHTML = `${units[unit.type].symbol} ${unit.type} - HP: ${unit.hp} <br> Position: ${position}-center`;
+    }
+
+    function showPossibleMoves(x, y) {
+        // Clear previous highlights
+        document.querySelectorAll('.possible-move, .possible-attack').forEach(el => el.classList.remove('possible-move', 'possible-attack'));
+
+        const unit = gameState.board[y][x];
+        const {move, range} = units[unit.type];
+
+        // Show move and attack ranges
+        for(let dy = -move; dy <= move; dy++) {
+            for(let dx = -move; dx <= move; dx++) {
+                if(Math.abs(dx) + Math.abs(dy) <= move && isInBounds(x + dx, y + dy) && !gameState.board[y + dy][x + dx]) {
+                    document.querySelector(`[data-x="${x + dx}"][data-y="${y + dy}"]`).classList.add('possible-move');
+                }
+            }
+        }
+
+        for(let dy = -range; dy <= range; dy++) {
+            for(let dx = -range; dx <= range; dx++) {
+                if(Math.max(Math.abs(dx), Math.abs(dy)) === range && isInBounds(x + dx, y + dy) && gameState.board[y + dy][x + dx] && gameState.board[y + dy][x + dx].player !== unit.player) {
+                    document.querySelector(`[data-x="${x + dx}"][data-y="${y + dy}"]`).classList.add('possible-attack');
+                }
+            }
+        }
+    }
+
+    function canMoveTo(x, y) {
+        return document.querySelector(`[data-x="${x}"][data-y="${y}"]`).classList.contains('possible-move');
+    }
+
+    function canAttack(x, y) {
+        return document.querySelector(`[data-x="${x}"][data-y="${y}"]`).classList.contains('possible-attack');
+    }
+
+    function moveUnit(x, y) {
+        const {selectedUnit} = gameState;
+        gameState.board[y][x] = gameState.board[selectedUnit.y][selectedUnit.x];
+        gameState.board[selectedUnit.y][selectedUnit.x] = null;
+        endTurn();
+    }
+
+    function attackUnit(x, y) {
+        const attacker = gameState.board[gameState.selectedUnit.y][gameState.selectedUnit.x];
+        const defender = gameState.board[y][x];
+
+        defender.hp -= units[attacker.type].attack;
+        if(defender.hp <= 0) {
+            gameState.board[y][x] = null;
+            checkWinCondition();
+        }
+        endTurn();
+    }
+
+    function checkWinCondition() {
+        let player1Units = 0, player2Units = 0;
+        gameState.board.forEach(row => row.forEach(cell => {
+            if(cell) {
+                cell.player === 1 ? player1Units++ : player2Units++;
+            }
+        }));
+        if(player1Units === 0) {
+            winMessage.textContent = "Player 2 Wins!";
+        } else if(player2Units === 0) {
+            winMessage.textContent = "Player 1 Wins!";
+        }
+    }
+
+    function endTurn() {
+        gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+        turnIndicator.textContent = `Player ${gameState.currentPlayer}'s Turn`;
+        gameState.selectedUnit = null;
+        renderBoard();
+    }
+
+    function renderBoard() {
+        board.innerHTML = '';
+        gameState.board.forEach((row, y) => {
+            row.forEach((cell, x) => {
+                let div = document.createElement('div');
+                div.className = 'cell';
+                div.dataset.x = x;
+                div.dataset.y = y;
+                if(cell) {
+                    div.classList.add(cell.player === 1 ? 'blue' : 'red');
+                    div.innerHTML = `<div class="unit">${units[cell.type].symbol}<div class="hp-bar"><div class="hp" style="width:${(cell.hp/units[cell.type].hp)*100}%"></div></div></div>`;
+                }
+                board.appendChild(div);
+            });
+        });
+    }
+
+    function restartGame() {
+        gameState = {
+            board: Array(12).fill().map(() => Array(12).fill(null)),
+            currentPlayer: 1,
+            selectedUnit: null,
+            unitsPlaced: 0
+        };
+        winMessage.textContent = '';
+        placeInitialUnits();
+    }
+
+    initializeBoard();
+    placeInitialUnits();
+</script>
+
 </body>
 </html>

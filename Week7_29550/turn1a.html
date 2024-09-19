@@ -1,7 +1,103 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<title>turn1a.html</title>
+    <meta charset="UTF-8">
+    <title>Battle of Foods</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: 'Arial', sans-serif; text-align: center; background: #f0f8ff; }
+        .game-area { width: 80%; margin: 20px auto; }
+        .cards { display: flex; justify-content: center; margin: 20px 0; }
+        .card { font-size: 30px; margin: 0 15px; cursor: pointer; }
+        .ai-card { font-size: 50px; }
+        .score { font-weight: bold; font-size: 20px; margin: 10px; }
+        .highlight { background-color: yellow; }
+        #round { font-size: 18px; color: #333; }
+        button { margin-top: 20px; padding: 10px; font-size: 16px; cursor: pointer; }
+    </style>
 </head>
 <body>
+
+<div class="game-area">
+    <div id="round">Round: 1</div>
+    <div class="cards" id="player1">
+        <div class="card" data-type="Fish">🐟</div>
+        <div class="card" data-type="Banana">🍌</div>
+        <div class="card" data-type="Bamboo">🎍</div>
+        <div class="card" data-type="Carrot">🥕</div>
+    </div>
+    <div class="ai-card" id="aiCard">❓</div>
+    <div class="cards" id="player2">
+        <div class="card" data-type="Fish">🐟</div>
+        <div class="card" data-type="Banana">🍌</div>
+        <div class="card" data-type="Bamboo">🎍</div>
+        <div class="card" data-type="Carrot">🥕</div>
+    </div>
+    <div class="score">
+        <span id="score1">Player 1: 0</span> | <span id="score2">Player 2: 0</span>
+    </div>
+    <button id="playAgain" style="display:none;">Play Again?</button>
+</div>
+
+<script>
+    $(document).ready(function() {
+        let score1 = 0, score2 = 0;
+        let round = 1;
+        const aiChoices = ['🐧', '🐒', '🐼', '🐰'];
+
+        function resetHighlight() {
+            $('.card').removeClass('highlight');
+        }
+
+        function endGame(winner) {
+            alert(winner + " wins the game!");
+            $('#playAgain').show();
+        }
+
+        $('.card').click(function() {
+            if ($(this).parent().attr('id') === 'player1' || 'player2') {
+                resetHighlight();
+                $(this).addClass('highlight');
+                if ($('#player1 .highlight').length && $('#player2 .highlight').length) {
+                    let aiCard = aiChoices[Math.floor(Math.random() * aiChoices.length)];
+                    $('#aiCard').html(aiCard);
+                    checkWin($('#player1 .highlight').data('type'), $('#player2 .highlight').data('type'), aiCard);
+                }
+            }
+        });
+
+        function checkWin(p1Choice, p2Choice, aiCard) {
+            let winner = '';
+            if (p1Choice === 'Fish' && aiCard === '🐧') score1++;
+            if (p2Choice === 'Banana' && aiCard === '🐒') score2++;
+            if (p1Choice === 'Bamboo' && aiCard === '🐼') score1++;
+            if (p2Choice === 'Carrot' && aiCard === '🐰') score2++;
+
+            $('#score1').text('Player 1: ' + score1);
+            $('#score2').text('Player 2: ' + score2);
+
+            if (score1 >= 5 || score2 >= 5) {
+                winner = score1 > score2 ? 'Player 1' : 'Player 2';
+                setTimeout(() => endGame(winner), 1000);
+            } else {
+                round++;
+                $('#round').text('Round: ' + round);
+                $('#aiCard').html('❓');
+                resetHighlight();
+            }
+        }
+
+        $('#playAgain').click(function() {
+            score1 = score2 = 0;
+            round = 1;
+            $('#score1, #score2').text('Player 1: 0 | Player 2: 0');
+            $('#round').text('Round: 1');
+            $(this).hide();
+            resetHighlight();
+            $('#aiCard').html('❓');
+        });
+    });
+</script>
+
 </body>
 </html>

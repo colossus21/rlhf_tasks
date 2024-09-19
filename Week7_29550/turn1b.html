@@ -1,7 +1,152 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<title>turn1b.html</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battle of Foods</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+        .game-container {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .cards {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+        .card {
+            font-size: 3em;
+            cursor: pointer;
+            padding: 10px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .card:hover {
+            background: #d0d0d0;
+        }
+        .center-card {
+            font-size: 4em;
+            margin: 20px 0;
+        }
+        .score, .round {
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+        .highlight {
+            color: #ff4500;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
+
+<div class="game-container">
+    <div class="round">Round: <span id="round">1</span></div>
+    <div class="cards" id="player1Cards"></div>
+    <div class="center-card" id="centerCard">?</div>
+    <div class="cards" id="player2Cards"></div>
+    <div class="score">
+        <span class="highlight">P1: <span id="score1">0</span></span> |
+        <span class="highlight">P2: <span id="score2">0</span></span>
+    </div>
+</div>
+
+<script>
+    const cards = {
+        fish: '🐟', banana: '🍌', bamboo: '🎍', carrot: '🥕',
+        penguin: '🐧', monkey: '🐒', panda: '🐼', rabbit: '🐰'
+    };
+    let player1Score = 0, player2Score = 0, round = 1;
+    let player1Choice, player2Choice;
+    const centerCard = document.getElementById('centerCard');
+    const player1CardsDiv = document.getElementById('player1Cards');
+    const player2CardsDiv = document.getElementById('player2Cards');
+    const score1El = document.getElementById('score1');
+    const score2El = document.getElementById('score2');
+    const roundEl = document.getElementById('round');
+
+    function setupGame() {
+        for (let card in cards) {
+            if (['fish', 'banana', 'bamboo', 'carrot'].includes(card)) {
+                let cardDiv = document.createElement('div');
+                cardDiv.className = 'card';
+                cardDiv.textContent = cards[card];
+                cardDiv.onclick = () => selectCard(card, 1);
+                player1CardsDiv.appendChild(cardDiv.cloneNode(true));
+                cardDiv.onclick = () => selectCard(card, 2);
+                player2CardsDiv.appendChild(cardDiv);
+            }
+        }
+    }
+
+    function selectCard(card, player) {
+        if (player === 1) player1Choice = card;
+        else player2Choice = card;
+        if (player1Choice && player2Choice) nextTurn();
+    }
+
+    function nextTurn() {
+        const aiCard = Object.keys(cards).filter(k => !['fish', 'banana', 'bamboo', 'carrot'].includes(k))[Math.floor(Math.random() * 4)];
+        centerCard.textContent = cards[aiCard];
+
+        if ((player1Choice === 'fish' && aiCard === 'penguin') ||
+            (player1Choice === 'banana' && aiCard === 'monkey') ||
+            (player1Choice === 'bamboo' && aiCard === 'panda') ||
+            (player1Choice === 'carrot' && aiCard === 'rabbit')) {
+            player1Score++;
+        }
+        if ((player2Choice === 'fish' && aiCard === 'penguin') ||
+            (player2Choice === 'banana' && aiCard === 'monkey') ||
+            (player2Choice === 'bamboo' && aiCard === 'panda') ||
+            (player2Choice === 'carrot' && aiCard === 'rabbit')) {
+            player2Score++;
+        }
+
+        updateDisplay();
+        checkGameEnd();
+        round++;
+        roundEl.textContent = round;
+    }
+
+    function updateDisplay() {
+        score1El.textContent = player1Score;
+        score2El.textContent = player2Score;
+    }
+
+    function checkGameEnd() {
+        if (player1Score >= 5 || player2Score >= 5) {
+            setTimeout(() => {
+                alert((player1Score >= 5 ? 'Player 1' : 'Player 2') + ' wins! Do you want to play again?');
+                if (confirm("Play again?")) {
+                    resetGame();
+                }
+            }, 100);
+        }
+    }
+
+    function resetGame() {
+        player1Score = player2Score = round = 0;
+        player1Choice = player2Choice = null;
+        centerCard.textContent = '?';
+        updateDisplay();
+        roundEl.textContent = 1;
+    }
+
+    setupGame();
+</script>
+
 </body>
 </html>
