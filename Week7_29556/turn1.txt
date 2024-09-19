@@ -1,5 +1,4 @@
 Create a 2048-inspired Tetris game called 'Space Numbers' with the following features:
-
 1. Implement a 6x12 game board where numbered blocks fall from the top.
 2. Use random blocks with values from 2 to 512, each with a unique color.
 3. Allow players to move blocks left and right, and speed up their descent.

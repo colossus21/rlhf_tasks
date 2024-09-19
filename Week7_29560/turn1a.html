@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Color Reaction</title>
+    <style>
+        #game {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        #grid {
+            display: inline-grid;
+            grid-template-columns: repeat(6, 40px);
+            gap: 2px;
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+        }
+        .player1 { background-color: #ffcccc; }
+        .player1-2 { background-color: #ff9999; }
+        .player1-3 { background-color: #ff6666; }
+        .player2 { background-color: #ccccff; }
+        .player2-2 { background-color: #9999ff; }
+        .player2-3 { background-color: #6666ff; }
+        .explosion {
+            animation: explode 0.5s ease-out;
+        }
+        @keyframes explode {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        #playerIndicator {
+            font-size: 20px;
+            margin: 10px 0;
+        }
+        .currentPlayer {
+            font-weight: bold;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div id="game">
+    <div id="playerIndicator"><span class="currentPlayer">Player 1</span>'s Turn</div>
+    <div id="grid"></div>
+    <div>
+        <div>Player 1: <span class="player1">1</span> <span class="player1-2">2</span> <span class="player1-3">3</span></div>
+        <div>Player 2: <span class="player2">1</span> <span class="player2-2">2</span> <span class="player2-3">3</span></div>
+    </div>
+    <button onclick="restartGame()">Restart</button>
+</div>
+<script>
+    const grid = document.getElementById('grid');
+    let currentPlayer = 1;
+    let turns = 0;
+
+    // Initialize grid
+    const gameState = Array(6).fill().map(() => Array(6).fill(0));
+
+    function createGrid() {
+        grid.innerHTML = '';
+        gameState.forEach((row, i) => {
+            row.forEach((cell, j) => {
+                const div = document.createElement('div');
+                div.className = 'cell';
+                div.onclick = () => cellClicked(i, j);
+                grid.appendChild(div);
+            });
+        });
+    }
+
+    function cellClicked(x, y) {
+        if (gameState[x][y] !== 0) return; // Cell already occupied
+
+        gameState[x][y] = currentPlayer * 10 + 1; // 11 for player 1 level 1, 21 for player 2 level 1
+        turns++;
+        updateCell(x, y);
+        if (turns > 2) checkExplosion(x, y);
+        switchPlayer();
+        checkWinCondition();
+    }
+
+    function updateCell(x, y) {
+        const cell = grid.children[x * 6 + y];
+        const level = gameState[x][y] % 10;
+        cell.textContent = level;
+        cell.className = `cell player${currentPlayer}-${level}`;
+    }
+
+    function checkExplosion(x, y) {
+        if (gameState[x][y] % 10 === 4) {
+            explode(x, y);
+        }
+    }
+
+    function explode(x, y) {
+        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+        gameState[x][y] = 0; // Reset cell
+        grid.children[x * 6 + y].classList.add('explosion');
+        setTimeout(() => {
+            grid.children[x * 6 + y].classList.remove('explosion');
+            updateCell(x, y);
+        }, 500);
+
+        directions.forEach(([dx, dy]) => {
+            const newX = x + dx, newY = y + dy;
+            if (newX >= 0 && newX < 6 && newY >= 0 && newY < 6) {
+                if (gameState[newX][newY] !== 0) {
+                    let newValue = gameState[newX][newY] + 1;
+                    if (newValue % 10 > 3) newValue = currentPlayer * 10 + 4; // Explode if level > 3
+                    gameState[newX][newY] = newValue;
+                    updateCell(newX, newY);
+                    if (newValue % 10 === 4) explode(newX, newY);
+                }
+            }
+        });
+    }
+
+    function switchPlayer() {
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+        document.querySelector('.currentPlayer').textContent = `Player ${currentPlayer}`;
+    }
+
+    function checkWinCondition() {
+        if (turns > 2) {
+            const player1Cells = gameState.flat().filter(cell => Math.floor(cell / 10) === 1).length;
+            const player2Cells = gameState.flat().filter(cell => Math.floor(cell / 10) === 2).length;
+            if (player1Cells === 0 || player2Cells === 0) {
+                alert(`Player ${player1Cells === 0 ? '1' : '2'} has lost all cells and wins!`);
+                restartGame();
+            }
+        }
+    }
+
+    function restartGame() {
+        currentPlayer = 1;
+        turns = 0;
+        gameState.forEach(row => row.fill(0));
+        createGrid();
+        document.querySelector('.currentPlayer').textContent = 'Player 1';
+    }
+
+    createGrid();
+</script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Numbers</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        #game-container {
+            position: relative;
+            background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+CjxyZWN0IHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCIgZmlsbD0iIzAwMDAwMCI+PC9yZWN0Pgo8L3N2Zz4=') repeat;
+            animation: starMove 100s linear infinite;
+            border: 2px solid #fff;
+            overflow: hidden;
+        }
+        @keyframes starMove {
+            from {background-position: 0 0;}
+            to {background-position: 1000px 500px;}
+        }
+        .block {
+            position: absolute;
+            border-radius: 5px;
+            transition: top 0.1s linear, left 0.1s linear;
+            text-align: center;
+            line-height: 50px;
+            font-weight: bold;
+        }
+        #score, #level, #gameOver, #restart {
+            position: absolute;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #gameOver, #restart {
+            display: none;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div id="game-container" style="width: 360px; height: 720px;">
+    <div id="score">Score: 0</div>
+    <div id="level">Level: 1</div>
+    <div id="gameOver">Game Over</div>
+    <button id="restart" onclick="restartGame()">Restart</button>
+</div>
+<script>
+    const container = document.getElementById('game-container');
+    const scoreDisplay = document.getElementById('score');
+    const levelDisplay = document.getElementById('level');
+    const gameOverDisplay = document.getElementById('gameOver');
+    const restartButton = document.getElementById('restart');
+
+    let board = Array(6).fill().map(() => Array(12).fill(0));
+    let score = 0, level = 1, fallInterval = 1000;
+
+    function createBlock() {
+        const value = Math.pow(2, Math.floor(Math.random() * 9) + 1); // 2 to 512
+        const color = `#${Math.floor(Math.random()*16777215).toString(16)}`;
+        const block = document.createElement('div');
+        block.className = 'block';
+        block.textContent = value;
+        block.style.width = block.style.height = '50px';
+        block.style.backgroundColor = color;
+        block.style.color = 'white';
+        block.dataset.value = value;
+        return block;
+    }
+
+    function placeBlock() {
+        const col = Math.floor(Math.random() * 6);
+        for(let row = 11; row >= 0; row--) {
+            if(board[col][row] === 0) {
+                const block = createBlock();
+                block.style.left = `${col * 60}px`;
+                block.style.top = `${row * 60}px`;
+                container.appendChild(block);
+                board[col][row] = block;
+                return;
+            }
+        }
+        gameOver();
+    }
+
+    function moveBlock(block, direction) {
+        const col = parseInt(block.style.left) / 60;
+        const row = parseInt(block.style.top) / 60;
+        if(direction === 'right' && col < 5 && board[col + 1][row] === 0) {
+            board[col][row] = 0;
+            board[col + 1][row] = block;
+            block.style.left = `${(col + 1) * 60}px`;
+        } else if(direction === 'left' && col > 0 && board[col - 1][row] === 0) {
+            board[col][row] = 0;
+            board[col - 1][row] = block;
+            block.style.left = `${(col - 1) * 60}px`;
+        }
+    }
+
+    function dropBlock(block) {
+        const col = parseInt(block.style.left) / 60;
+        const row = parseInt(block.style.top) / 60;
+        if(row < 11 && board[col][row + 1] === 0) {
+            board[col][row] = 0;
+            board[col][row + 1] = block;
+            block.style.top = `${(row + 1) * 60}px`;
+            return true;
+        } else if(row < 11 && board[col][row + 1].dataset.value === block.dataset.value) {
+            mergeBlocks(block, board[col][row + 1]);
+            return false;
+        }
+        return false;
+    }
+
+    function mergeBlocks(block1, block2) {
+        const newValue = parseInt(block1.dataset.value) * 2;
+        if(newValue > 512) return; // Max value
+        score += newValue;
+        updateScore();
+        block2.textContent = newValue;
+        block2.dataset.value = newValue;
+        block2.style.backgroundColor = `#${Math.floor(Math.random()*16777215).toString(16)}`;
+        container.removeChild(block1);
+        board[parseInt(block2.style.left) / 60][parseInt(block2.style.top) / 60] = block2;
+    }
+
+    function updateScore() {
+        scoreDisplay.textContent = `Score: ${score}`;
+        const newLevel = Math.floor(score / 1000) + 1;
+        if(newLevel > level) {
+            level = newLevel;
+            levelDisplay.textContent = `Level: ${level}`;
+            fallInterval = Math.max(100, 1000 - (level * 50));
+            clearInterval(gameInterval);
+            gameInterval = setInterval(tick, fallInterval);
+        }
+    }
+
+    function tick() {
+        let moved = false;
+        for(let row = 11; row >= 0; row--) {
+            for(let col = 0; col < 6; col++) {
+                if(board[col][row] && !dropBlock(board[col][row])) {
+                    moved = true;
+                }
+            }
+        }
+        if(moved) placeBlock();
+    }
+
+    function gameOver() {
+        clearInterval(gameInterval);
+        gameOverDisplay.style.display = 'block';
+        restartButton.style.display = 'block';
+    }
+
+    function restartGame() {
+        board = Array(6).fill().map(() => Array(12).fill(0));
+        score = 0; level = 1; fallInterval = 1000;
+        scoreDisplay.textContent = 'Score: 0';
+        levelDisplay.textContent = 'Level: 1';
+        gameOverDisplay.style.display = 'none';
+        restartButton.style.display = 'none';
+        container.innerHTML = '';
+        gameInterval = setInterval(tick, fallInterval);
+        placeBlock();
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if(event.key === 'ArrowRight') {
+            for(let row = 0; row < 12; row++) {
+                for(let col = 5; col >= 0; col--) {
+                    if(board[col][row]) moveBlock(board[col][row], 'right');
+                }
+            }
+        } else if(event.key === 'ArrowLeft') {
+            for(let row = 0; row < 12; row++) {
+                for(let col = 0; col < 6; col++) {
+                    if(board[col][row]) moveBlock(board[col][row], 'left');
+                }
+            }
+        } else if(event.key === 'ArrowDown') {
+            for(let i = 0; i < 6; i++) tick(); // Speed up descent
+        }
+    });
+
+    let gameInterval = setInterval(tick, fallInterval);
+    placeBlock();
+</script>
+</body>
+</html>

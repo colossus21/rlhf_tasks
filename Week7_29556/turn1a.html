@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Space Numbers</title>
+    <style>
+        body {
+            background: #000;
+            font-family: 'Arial', sans-serif;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #game-container {
+            position: relative;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><circle cx="50" cy="50" r="1" fill="white"/></svg>') repeat;
+            animation: starMove 100s linear infinite;
+            border: 2px solid #333;
+        }
+        @keyframes starMove {
+            from {background-position: 0 0;}
+            to {background-position: -10000px 5000px;}
+        }
+        .block {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            text-align: center;
+            border: 1px solid #444;
+            transition: all 0.3s;
+        }
+        #score, #level, #game-over {
+            position: absolute;
+            color: white;
+            font-size: 20px;
+        }
+        #game-over {
+            display: none;
+            background: rgba(0, 0, 0, 0.8);
+            width: 100%;
+            height: 100%;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+<div id="game-container" style="width: 300px; height: 600px;">
+    <div id="score">Score: 0</div>
+    <div id="level">Level: 1</div>
+    <div id="game-over">
+        <h2>Game Over</h2>
+        <button onclick="restartGame()">Restart</button>
+    </div>
+</div>
+<script>
+    const gameBoard = document.getElementById('game-container');
+    let grid = Array(12).fill().map(() => Array(6).fill(0));
+    let score = 0, level = 1, fallInterval = 1000, currentBlock = null;
+
+    function createBlock() {
+        const value = [2, 4, 8, 16, 32, 64, 128, 256, 512][Math.floor(Math.random() * 9)];
+        const block = document.createElement('div');
+        block.className = 'block';
+        block.style.backgroundColor = `hsl(${value * 0.2}, 100%, 50%)`;
+        block.textContent = value;
+        block.style.left = `${Math.floor(Math.random() * 6) * 50}px`;
+        block.style.top = '-50px';
+        gameBoard.appendChild(block);
+        return {element: block, value: value, x: parseInt(block.style.left) / 50, y: 0};
+    }
+
+    function moveDown() {
+        if (currentBlock.y + 1 < grid.length && grid[currentBlock.y + 1][currentBlock.x] === 0) {
+            currentBlock.y++;
+            currentBlock.element.style.top = `${currentBlock.y * 50}px`;
+        } else {
+            grid[currentBlock.y][currentBlock.x] = currentBlock.value;
+            checkMerge(currentBlock.y, currentBlock.x);
+            currentBlock = null;
+            if (currentBlock.y === 0) gameOver();
+            else spawnBlock();
+        }
+    }
+
+    function moveLeft() {
+        if (currentBlock.x > 0 && grid[currentBlock.y][currentBlock.x - 1] === 0) {
+            currentBlock.x--;
+            currentBlock.element.style.left = `${currentBlock.x * 50}px`;
+        }
+    }
+
+    function moveRight() {
+        if (currentBlock.x < 5 && grid[currentBlock.y][currentBlock.x + 1] === 0) {
+            currentBlock.x++;
+            currentBlock.element.style.left = `${currentBlock.x * 50}px`;
+        }
+    }
+
+    function checkMerge(y, x) {
+        if (y < grid.length - 1 && grid[y + 1][x] === grid[y][x]) {
+            grid[y + 1][x] *= 2;
+            grid[y][x] = 0;
+            updateBlock(x, y + 1);
+            score += grid[y + 1][x];
+            updateScore();
+        }
+    }
+
+    function updateBlock(x, y) {
+        const blocks = document.querySelectorAll('.block');
+        blocks.forEach(block => {
+            if (parseInt(block.style.left) / 50 === x && parseInt(block.style.top) / 50 === y) {
+                block.textContent = grid[y][x];
+                block.style.backgroundColor = `hsl(${grid[y][x] * 0.2}, 100%, 50%)`;
+            }
+        });
+    }
+
+    function updateScore() {
+        document.getElementById('score').textContent = `Score: ${score}`;
+        const newLevel = Math.floor(score / 1000) + 1;
+        if (newLevel > level) {
+            level = newLevel;
+            fallInterval = Math.max(200, 1000 - (level * 50));
+            document.getElementById('level').textContent = `Level: ${level}`;
+        }
+    }
+
+    function spawnBlock() {
+        currentBlock = createBlock();
+        setTimeout(function drop() {
+            if (currentBlock) moveDown();
+            if (currentBlock) setTimeout(drop, fallInterval);
+        }, fallInterval);
+    }
+
+    function gameOver() {
+        document.getElementById('game-over').style.display = 'flex';
+    }
+
+    function restartGame() {
+        grid = Array(12).fill().map(() => Array(6).fill(0));
+        score = 0;
+        level = 1;
+        fallInterval = 1000;
+        document.getElementById('game-over').style.display = 'none';
+        gameBoard.innerHTML = '';
+        updateScore();
+        spawnBlock();
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (!currentBlock) return;
+        switch(e.key) {
+            case 'ArrowLeft': moveLeft(); break;
+            case 'ArrowRight': moveRight(); break;
+            case 'ArrowDown': moveDown(); break;
+        }
+    });
+
+    spawnBlock();
+</script>
+</body>
+</html>

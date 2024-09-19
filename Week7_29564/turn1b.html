@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desert Treasure Hunt</title>
+    <style>
+        body { background-color: #f0e68c; font-family: 'Arial', sans-serif; color: #8b4513; }
+        .grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 2px; width: 450px; margin: 20px auto; }
+        .cell { width: 50px; height: 50px; background: #deb887; border: 1px solid #8b4513; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; }
+        .cell:hover { background: #d2b48c; }
+        .clues, .compass { text-align: center; margin-top: 20px; }
+        .compass div { font-size: 20px; margin: 5px 0; }
+        .player-turn { text-align: center; font-weight: bold; }
+        .win-modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
+        .modal-content { background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 50%; text-align: center; }
+        button { background-color: #8b4513; color: white; border: none; padding: 10px 20px; margin: 10px; cursor: pointer; }
+        .strikethrough { text-decoration: line-through; }
+    </style>
+</head>
+<body>
+
+<div class="player-turn">Player 1's Turn</div>
+<div class="grid" id="gameBoard"></div>
+<div class="clues">
+    <h3>Clues:</h3>
+    <ul id="cluesList"></ul>
+</div>
+<div class="compass">
+    <div>North</div>
+    <div>West ← → East</div>
+    <div>South</div>
+</div>
+<button onclick="newGame()">New Game</button>
+
+<div class="win-modal" id="winModal">
+    <div class="modal-content">
+        <h2 id="winMessage"></h2>
+        <button onclick="newGame()">Restart</button>
+    </div>
+</div>
+
+<script>
+    const board = document.getElementById('gameBoard');
+    const cluesList = document.getElementById('cluesList');
+    const winModal = document.getElementById('winModal');
+    const winMessage = document.getElementById('winMessage');
+    const playerTurnDisplay = document.querySelector('.player-turn');
+    let currentPlayer = 1;
+    let playerScores = {1: 0, 2: 0};
+
+    const elements = ['🌵', '🐪', '💀', '🌴', '🏜️', '🐫', '🦂', '🏕️', '🧭'];
+    const directions = ['North', 'South', 'East', 'West'];
+    let treasures = [];
+    let clues = [];
+
+    function setupGame() {
+        board.innerHTML = '';
+        treasures = [];
+        clues = [];
+        const usedCells = new Set();
+
+        // Setup board with elements
+        for(let i = 0; i < 81; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            if(Math.random() < 0.3) { // 30% chance to place an element
+                const element = elements[Math.floor(Math.random() * elements.length)];
+                cell.textContent = element;
+                usedCells.add(i);
+            }
+            board.appendChild(cell);
+        }
+
+        // Place treasures
+        for(let i = 0; i < 5; i++) {
+            let pos;
+            do {
+                pos = Math.floor(Math.random() * 81);
+            } while(usedCells.has(pos));
+            treasures.push(pos);
+            usedCells.add(pos);
+        }
+
+        generateClues();
+        updateClues();
+    }
+
+    function generateClues() {
+        const treasureElements = {};
+        board.querySelectorAll('.cell').forEach((cell, index) => {
+            if(cell.textContent && treasures.includes(index)) {
+                treasureElements[index] = cell.textContent;
+            }
+        });
+
+        treasures.forEach((treasure, index) => {
+            let clue = `Treasure ${index + 1} is hidden `;
+            const directionsToCheck = [...directions];
+            for(let i = 0; i < 3; i++) {
+                const dir = directionsToCheck.splice(Math.floor(Math.random() * directionsToCheck.length), 1)[0];
+                const element = findNearestElement(treasure, dir);
+                clue += `${dir} of ${element}${i < 2 ? ', ' : '.'}`;
+            }
+            clues.push(clue);
+        });
+    }
+
+    function findNearestElement(position, direction) {
+        const row = Math.floor(position / 9);
+        const col = position % 9;
+        let nearest = null;
+        let minDist = Infinity;
+
+        board.querySelectorAll('.cell').forEach((cell, idx) => {
+            if(cell.textContent) {
+                const cellRow = Math.floor(idx / 9);
+                const cellCol = idx % 9;
+                let valid = false;
+                switch(direction) {
+                    case 'North': valid = cellRow < row; break;
+                    case 'South': valid = cellRow > row; break;
+                    case 'East': valid = cellCol > col; break;
+                    case 'West': valid = cellCol < col; break;
+                }
+                if(valid) {
+                    const dist = Math.abs(cellRow - row) + Math.abs(cellCol - col);
+                    if(dist < minDist) {
+                        minDist = dist;
+                        nearest = cell.textContent;
+                    }
+                }
+            }
+        });
+        return nearest || 'an unknown landmark';
+    }
+
+    function updateClues() {
+        cluesList.innerHTML = clues.map((clue, idx) =>
+            `<li id="clue-${idx}" class="${treasures[idx] === -1 ? 'strikethrough' : ''}">${clue}</li>`
+        ).join('');
+    }
+
+    function checkTreasure(cellIndex) {
+        const treasureIndex = treasures.indexOf(cellIndex);
+        if(treasureIndex > -1) {
+            board.children[cellIndex].textContent = '💰';
+            playerScores[currentPlayer] += 1;
+            treasures[treasureIndex] = -1; // Mark as found
+            updateClues();
+            if(playerScores[currentPlayer] >= 3) {
+                winMessage.textContent = `Player ${currentPlayer} wins!`;
+                winModal.style.display = 'block';
+            } else {
+                switchPlayer();
+            }
+        } else {
+            board.children[cellIndex].textContent = '❌';
+            switchPlayer();
+        }
+    }
+
+    function switchPlayer() {
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+        playerTurnDisplay.textContent = `Player ${currentPlayer}'s Turn`;
+        playerTurnDisplay.style.color = currentPlayer === 1 ? '#b8860b' : '#8b4513';
+    }
+
+    function newGame() {
+        winModal.style.display = 'none';
+        setupGame();
+        playerScores = {1: 0, 2: 0};
+        currentPlayer = 1;
+        playerTurnDisplay.textContent = `Player ${currentPlayer}'s Turn`;
+        playerTurnDisplay.style.color = '#b8860b';
+    }
+
+    board.addEventListener('click', function(e) {
+        if(e.target.className === 'cell') {
+            checkTreasure(Array.from(board.children).indexOf(e.target));
+        }
+    });
+
+    setupGame();
+</script>
+</body>
+</html>

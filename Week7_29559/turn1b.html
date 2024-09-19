@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forest Puzzle</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f0f8ff; text-align: center; }
+        #gameBoard { margin: 20px auto; display: grid; grid-template-columns: repeat(10, 30px); grid-template-rows: repeat(10, 30px); gap: 2px; }
+        .cell { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .tree { background-color: #228B22; }
+        .rock, .player, .hole { background-color: #D2B48C; }
+        .hole-filled { border: 2px solid green; }
+        #controls button { margin: 5px; font-size: 20px; width: 40px; height: 40px; }
+        #status { margin: 10px 0; }
+        @keyframes fadeIn { from { opacity: 0; background-color: #90EE90; } to { opacity: 1; background-color: transparent; } }
+        .fade { animation: fadeIn 0.5s; }
+    </style>
+</head>
+<body>
+
+<div id="status">
+    <div>Level: <span id="level">1</span></div>
+    <div>Moves: <span id="moves">0</span></div>
+</div>
+<div id="gameBoard"></div>
+<div id="controls">
+    <button onclick="move('up')">↑</button><br>
+    <button onclick="move('left')">←</button><button onclick="move('down')">↓</button><button onclick="move('right')">→</button>
+</div>
+<div id="message"></div>
+
+<script>
+    const levels = [
+        // Level 1 to 5 layouts, 1 = player, 2 = rock, 3 = hole, 4 = tree, 0 = empty
+        // Example for Level 1:
+        [
+            [4,4,4,4,4,4,4,4,4,4],
+            [4,0,0,0,0,0,0,0,4,4],
+            [4,0,3,0,0,2,0,0,4,4],
+            [4,0,0,0,0,0,1,0,4,4],
+            [4,4,4,4,4,4,4,4,4,4]
+        ],
+        // Add more levels here...
+    ];
+
+    let currentLevel = 0;
+    let moves = 0;
+    let boardState = [];
+
+    function createBoard() {
+        const board = document.getElementById('gameBoard');
+        board.innerHTML = '';
+        for(let y = 0; y < levels[currentLevel].length; y++) {
+            for(let x = 0; x < levels[currentLevel][y].length; x++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                switch(levels[currentLevel][y][x]) {
+                    case 1: cell.textContent = '🧍'; cell.classList.add('player'); break;
+                    case 2: cell.textContent = '🪨'; cell.classList.add('rock'); break;
+                    case 3: cell.textContent = '🕳️'; cell.classList.add('hole'); break;
+                    case 4: cell.textContent = '🌲'; cell.classList.add('tree'); break;
+                }
+                board.appendChild(cell);
+                boardState[y][x] = {type: levels[currentLevel][y][x], element: cell};
+            }
+        }
+    }
+
+    function move(direction) {
+        const playerPos = findPlayer();
+        let newX = playerPos.x, newY = playerPos.y;
+
+        switch(direction) {
+            case 'up': newY--; break;
+            case 'down': newY++; break;
+            case 'left': newX--; break;
+            case 'right': newX++; break;
+        }
+
+        if(newY < 0 || newY >= boardState.length || newX < 0 || newX >= boardState[0].length) return;
+
+        const targetCell = boardState[newY][newX];
+        if(targetCell.type === 4) return; // Tree, cannot move
+
+        if(targetCell.type === 2) { // Rock
+            const beyondRockX = newX + (newX - playerPos.x);
+            const beyondRockY = newY + (newY - playerPos.y);
+            if(beyondRockY < 0 || beyondRockY >= boardState.length || beyondRockX < 0 || beyondRockX >= boardState[0].length || boardState[beyondRockY][beyondRockX].type !== 0 && boardState[beyondRockY][beyondRockX].type !== 3) return;
+
+            // Move rock
+            boardState[beyondRockY][beyondRockX].element.textContent = '🪨';
+            boardState[beyondRockY][beyondRockX].type = 2;
+            targetCell.element.textContent = '';
+            targetCell.type = 0;
+            checkHoleFilled(beyondRockY, beyondRockX);
+        }
+
+        // Move player
+        boardState[playerPos.y][playerPos.x].element.textContent = '';
+        boardState[playerPos.y][playerPos.x].element.classList.remove('player');
+        targetCell.element.textContent = '🧍';
+        targetCell.element.classList.add('player');
+        boardState[playerPos.y][playerPos.x].type = 0;
+        targetCell.type = 1;
+
+        moves++;
+        document.getElementById('moves').textContent = moves;
+        document.getElementById('gameBoard').classList.add('fade');
+        setTimeout(() => document.getElementById('gameBoard').classList.remove('fade'), 500);
+
+        if(checkWin()) {
+            if(currentLevel < levels.length - 1) {
+                document.getElementById('message').textContent = 'Level completed!';
+                const nextLevelBtn = document.createElement('button');
+                nextLevelBtn.textContent = 'Next Level';
+                nextLevelBtn.onclick = () => {
+                    currentLevel++;
+                    initializeLevel();
+                };
+                document.getElementById('message').appendChild(nextLevelBtn);
+            } else {
+                document.getElementById('message').textContent = 'Congratulations! You have completed all levels!';
+            }
+        }
+    }
+
+    function checkHoleFilled(y, x) {
+        if(boardState[y][x].type === 3) {
+            boardState[y][x].element.classList.add('hole-filled');
+        }
+    }
+
+    function checkWin() {
+        return boardState.flat().every(cell => cell.type !== 3);
+    }
+
+    function findPlayer() {
+        for(let y = 0; y < boardState.length; y++) {
+            for(let x = 0; x < boardState[y].length; x++) {
+                if(boardState[y][x].type === 1) return {x, y};
+            }
+        }
+    }
+
+    function initializeLevel() {
+        document.getElementById('level').textContent = currentLevel + 1;
+        document.getElementById('moves').textContent = moves = 0;
+        document.getElementById('message').innerHTML = '';
+        boardState = levels[currentLevel].map(row => row.map(cell => ({type: cell})));
+        createBoard();
+    }
+
+    document.addEventListener('keydown', (event) => {
+        const key = event.key;
+        if(key === "ArrowUp" || key === "ArrowDown" || key === "ArrowLeft" || key === "ArrowRight") {
+            move(key.replace('Arrow', '').toLowerCase());
+        }
+    });
+
+    initializeLevel();
+</script>
+</body>
+</html>

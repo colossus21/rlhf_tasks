@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Color Reaction</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; display: flex; flex-direction: column; align-items: center; background-color: #f0f0f0; }
+        #gameBoard { display: grid; grid-template-columns: repeat(6, 50px); gap: 2px; margin-top: 20px; }
+        .cell { width: 50px; height: 50px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color 0.3s; }
+        #playerInfo { margin: 10px 0; font-size: 1.2em; font-weight: bold; }
+        .colorRef { width: 20px; height: 20px; display: inline-block; margin: 0 5px; }
+        #restartBtn { margin-top: 20px; padding: 10px 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div id="playerInfo">Player 1's Turn</div>
+<div id="gameBoard"></div>
+<div>
+    <span>Player 1: </span><div class="colorRef" style="background-color: #ffcccc;"></div><div class="colorRef" style="background-color: #ff9999;"></div><div class="colorRef" style="background-color: #ff6666;"></div>
+    <span>Player 2: </span><div class="colorRef" style="background-color: #ccccff;"></div><div class="colorRef" style="background-color: #9999ff;"></div><div class="colorRef" style="background-color: #6666ff;"></div>
+</div>
+<button id="restartBtn">Restart Game</button>
+
+<script>
+    const board = document.getElementById('gameBoard');
+    const playerInfo = document.getElementById('playerInfo');
+    const restartBtn = document.getElementById('restartBtn');
+    let currentPlayer = 1;
+    let turns = 0;
+    let cells = [];
+
+    function createBoard() {
+        for(let i = 0; i < 36; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.dataset.index = i;
+            cell.addEventListener('click', () => placeColor(i));
+            board.appendChild(cell);
+            cells.push({level: 0, player: 0});
+        }
+    }
+
+    function placeColor(index) {
+        if(cells[index].level === 0 || cells[index].player === currentPlayer) {
+            turns++;
+            cells[index].level = cells[index].level === 3 ? 3 : (cells[index].level + 1);
+            cells[index].player = currentPlayer;
+            updateBoard();
+            if(turns > 2) checkReactions();
+            switchPlayer();
+        }
+    }
+
+    function updateBoard() {
+        cells.forEach((cell, i) => {
+            const boardCell = board.children[i];
+            if(cell.level > 0) {
+                boardCell.textContent = cell.level;
+                boardCell.style.backgroundColor = getColor(cell.player, cell.level);
+            } else {
+                boardCell.textContent = '';
+                boardCell.style.backgroundColor = '#fff';
+            }
+        });
+    }
+
+    function getColor(player, level) {
+        const colors = player === 1 ?
+            ['#ffcccc', '#ff9999', '#ff6666'] :
+            ['#ccccff', '#9999ff', '#6666ff'];
+        return colors[level - 1];
+    }
+
+    function switchPlayer() {
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+        playerInfo.textContent = `Player ${currentPlayer}'s Turn`;
+        playerInfo.style.color = currentPlayer === 1 ? 'red' : 'blue';
+    }
+
+    function checkReactions() {
+        let changes = false;
+        cells.forEach((cell, i) => {
+            if(cell.level === 4) {
+                explode(i);
+                changes = true;
+            }
+        });
+        if(changes) {
+            updateBoard();
+            setTimeout(checkReactions, 300); // Delay to show animation
+        }
+        checkWin();
+    }
+
+    function explode(index) {
+        const directions = [-1, 1, -6, 6]; // left, right, up, down
+        cells[index].level = 0;
+        cells[index].player = 0;
+        directions.forEach(dir => {
+            const newIndex = index + dir;
+            if(newIndex >= 0 && newIndex < 36 && (dir !== -1 || newIndex % 6 !== 5) && (dir !== 1 || newIndex % 6 !== 0)) {
+                if(cells[newIndex].player !== currentPlayer && cells[newIndex].level > 0) {
+                    cells[newIndex].player = currentPlayer;
+                }
+                cells[newIndex].level = cells[newIndex].level === 3 ? 3 : cells[newIndex].level + 1;
+            }
+        });
+    }
+
+    function checkWin() {
+        const player1Cells = cells.filter(c => c.player === 1 && c.level > 0).length;
+        const player2Cells = cells.filter(c => c.player === 2 && c.level > 0).length;
+        if(player1Cells === 0 || player2Cells === 0) {
+            playerInfo.textContent = `Player ${player1Cells === 0 ? '2' : '1'} Wins!`;
+            playerInfo.style.color = player1Cells === 0 ? 'blue' : 'red';
+            board.querySelectorAll('.cell').forEach(cell => cell.style.pointerEvents = 'none');
+        }
+    }
+
+    restartBtn.onclick = function() {
+        cells = [];
+        board.innerHTML = '';
+        createBoard();
+        currentPlayer = 1;
+        turns = 0;
+        playerInfo.textContent = `Player 1's Turn`;
+        playerInfo.style.color = 'red';
+        board.querySelectorAll('.cell').forEach(cell => cell.style.pointerEvents = 'auto');
+    };
+
+    createBoard();
+</script>
+</body>
+</html>
