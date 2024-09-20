@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Emoji Recipes</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f0f0; }
+        .game-container { text-align: center; }
+        .emoji-grid { display: grid; grid-template-columns: repeat(5, 50px); gap: 5px; margin: 20px auto; }
+        .emoji-cell { width: 50px; height: 50px; font-size: 24px; display: flex; align-items: center; justify-content: center; border: 2px solid #ddd; cursor: pointer; }
+        .emoji-cell.selected { background-color: #a0d8ef; }
+        #combineBtn { padding: 10px 20px; font-size: 16px; margin: 10px 0; cursor: pointer; }
+        .feedback, .discovered-recipes { margin-top: 20px; }
+        .recipe-found { color: green; }
+        .no-recipe { color: red; }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>Emoji Recipes</h1>
+    <div id="emojiGrid" class="emoji-grid"></div>
+    <button id="combineBtn">Combine</button>
+    <div class="feedback">Recipes found: <span id="recipesFound">0</span>/10</div>
+    <div class="discovered-recipes"></div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        const recipes = {
+            "🍕": ["🍞", "🍅", "🧀"], // Pizza
+            "🍔": ["🍞", "🥩", "🧀"], // Hamburger
+            "🌭": ["🥖", "🌭"], // Hot Dog
+            "🍿": ["🌽", "🍳"], // Popcorn
+            "🥗": ["🥬", "🥕", "🥒"], // Salad
+            "🥤": ["🍌", "🍓", "🥛"], // Milkshake
+            "🧁": ["🍰", "🍫", "🍓"], // Cupcake
+            "🍟": ["🥔", "🔪", "🧂"], // French Fries
+            "🍨": ["🍦", "🍫", "🍒"], // Ice Cream Sundae
+            "🍣": ["🐟", "🍚", "🥒"]  // Sushi
+        };
+
+        let selectedEmojis = [];
+        const grid = $('#emojiGrid');
+        const recipesFound = new Set();
+
+        // Populate grid with random emojis from recipes
+        function populateGrid() {
+            grid.empty();
+            let allEmojis = Object.values(recipes).flat();
+            for(let i = 0; i < 25; i++) {
+                let emoji = allEmojis[Math.floor(Math.random() * allEmojis.length)];
+                grid.append(`<div class="emoji-cell">${emoji}</div>`);
+            }
+        }
+
+        populateGrid();
+
+        $('.emoji-cell').click(function() {
+            $(this).toggleClass('selected');
+            let emoji = $(this).text();
+            if($(this).hasClass('selected')) {
+                selectedEmojis.push(emoji);
+            } else {
+                selectedEmojis = selectedEmojis.filter(e => e !== emoji);
+            }
+        });
+
+        $('#combineBtn').click(function() {
+            let result = checkRecipe(selectedEmojis);
+            if(result.found) {
+                if(!recipesFound.has(result.recipe)) {
+                    recipesFound.add(result.recipe);
+                    $('.discovered-recipes').append(`<div class="recipe-found">Recipe found: ${result.recipe} - ${result.name}</div>`);
+                    $('#recipesFound').text(recipesFound.size);
+                }
+            } else {
+                $('.feedback').append('<div class="no-recipe">No recipe found. Try again!</div>');
+                setTimeout(() => $('.no-recipe').remove(), 2000);
+            }
+
+            if(recipesFound.size === Object.keys(recipes).length) {
+                alert('Congratulations! You found all the recipes!');
+            }
+
+            $('.emoji-cell').removeClass('selected');
+            selectedEmojis = [];
+        });
+
+        function checkRecipe(emojis) {
+            for(let [recipeEmoji, ingredients] of Object.entries(recipes)) {
+                if(JSON.stringify(ingredients.sort()) === JSON.stringify(emojis.sort())) {
+                    return { found: true, recipe: recipeEmoji, name: Object.keys(recipes).find(key => recipes[key] === ingredients) };
+                }
+            }
+            return { found: false };
+        }
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rick & Morty Quiz Game</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #1a1a1a;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        #quiz-container {
+            background: #3c3e44;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        #question-img {
+            max-width: 100%;
+            border-radius: 5px;
+        }
+        #options button {
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #00b5cc;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        #progress {
+            width: 100%;
+            background-color: #ddd;
+            margin-top: 20px;
+        }
+        #bar {
+            width: 0%;
+            height: 30px;
+            background-color: #4CAF50;
+            text-align: center;
+            line-height: 30px;
+            color: white;
+        }
+        #loading {
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .loader {
+            border: 16px solid #f3f3f3;
+            border-top: 16px solid #3498db;
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+<div id="quiz-container">
+    <h1>Rick & Morty Quiz Game</h1>
+    <div id="loading">
+        <div class="loader"></div>
+        <p>Talking to Rick to fetch information...</p>
+    </div>
+    <img id="question-img" src="" alt="Character Image" style="display:none;">
+    <div id="options"></div>
+    <div id="feedback"></div>
+    <div id="progress"><div id="bar">0%</div></div>
+    <button id="play-again" style="display:none;">Play Again</button>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    let characters = [];
+    let currentQuestion = 0;
+    let score = 0;
+    const totalQuestions = 10;
+
+    async function fetchCharacters() {
+        $('#loading').css('display', 'flex');
+        let response = await fetch('https://rickandmortyapi.com/api/character');
+        let data = await response.json();
+        characters = data.results;
+        // Fetch all pages
+        while (data.info.next) {
+            response = await fetch(data.info.next);
+            data = await response.json();
+            characters = characters.concat(data.results);
+        }
+        $('#loading').hide();
+        startQuiz();
+    }
+
+    function startQuiz() {
+        currentQuestion = 0;
+        score = 0;
+        updateProgress();
+        nextQuestion();
+    }
+
+    function nextQuestion() {
+        if (currentQuestion >= totalQuestions) {
+            endQuiz();
+            return;
+        }
+        const questionChar = characters[Math.floor(Math.random() * characters.length)];
+        const options = [questionChar.name];
+        while (options.length < 4) {
+            let randomChar = characters[Math.floor(Math.random() * characters.length)];
+            if (!options.includes(randomChar.name)) options.push(randomChar.name);
+        }
+        options.sort(() => Math.random() - 0.5);
+
+        $('#question-img').attr('src', questionChar.image).show();
+        $('#options').html(options.map(option => `<button onclick="checkAnswer('${option}')">${option}</button>`).join(''));
+        currentQuestion++;
+    }
+
+    function checkAnswer(answer) {
+        const correctAnswer = characters.find(char => char.name === answer);
+        if (correctAnswer && currentQuestion <= totalQuestions) {
+            $('#feedback').html('<i class="fas fa-check" style="color:green;"></i> Correct!').show();
+            if (answer === document.querySelector('#options button').textContent) score++;
+        } else {
+            $('#feedback').html('<i class="fas fa-times" style="color:red;"></i> Incorrect!').show();
+        }
+        updateProgress();
+        setTimeout(nextQuestion, 1000);
+    }
+
+    function updateProgress() {
+        const progress = (currentQuestion / totalQuestions) * 100;
+        $('#bar').css('width', progress + '%').text(progress + '%');
+    }
+
+    function endQuiz() {
+        const message = score === totalQuestions ? "Perfect score! You're a true fan!" :
+            (score > 7 ? "Great job! You know your Rick and Morty!" :
+                (score > 4 ? "Not bad, but you could do better!" : "Time to rewatch the series!"));
+        $('#feedback').html(`Final Score: ${score}/${totalQuestions}. ${message}`);
+        $('#play-again').show();
+        $('#play-again').on('click', startQuiz);
+    }
+
+    // Initialize
+    fetchCharacters();
+</script>
+</body>
+</html>

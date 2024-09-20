@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dog Breed Quiz Game</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f8f9fa; }
+        #quiz-container { width: 90%; max-width: 600px; text-align: center; }
+        .loading-spinner { border: 16px solid #f3f3f3; border-top: 16px solid #3498db; border-radius: 50%; width: 120px; height: 120px; animation: spin 2s linear infinite; margin: 20px auto; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .progress { margin: 20px 0; }
+        .answer-btn { margin: 5px; }
+    </style>
+</head>
+<body>
+<div id="quiz-container">
+    <h1>Dog Breed Quiz Game</h1>
+    <div class="loading-spinner"></div>
+    <div id="quiz"></div>
+    <div class="progress">
+        <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+    <div id="feedback"></div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const quizContainer = document.getElementById('quiz');
+        const feedbackDiv = document.getElementById('feedback');
+        const spinner = document.querySelector('.loading-spinner');
+        const progressBar = document.querySelector('.progress-bar');
+        let questions = [], currentQuestion = 0, score = 0;
+
+        // Show spinner
+        spinner.style.display = 'block';
+
+        // Fetch dog images
+        fetch('https://dog.ceo/api/breeds/image/random/10')
+            .then(response => response.json())
+            .then(data => {
+                spinner.style.display = 'none';
+                questions = data.message.map(url => {
+                    const breed = url.split('/')[4].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    return {
+                        image: url,
+                        breed: breed,
+                        options: [] // Will be filled with one correct and three incorrect options
+                    };
+                });
+
+                // Generate incorrect options
+                questions.forEach(q => {
+                    while (q.options.length < 3) {
+                        const randomBreed = questions[Math.floor(Math.random() * questions.length)].breed;
+                        if (!q.options.includes(randomBreed) && randomBreed !== q.breed) {
+                            q.options.push(randomBreed);
+                        }
+                    }
+                    q.options.push(q.breed);
+                    q.options.sort(() => Math.random() - 0.5); // Shuffle options
+                });
+
+                loadQuestion();
+            });
+
+        function loadQuestion() {
+            if (currentQuestion < questions.length) {
+                const q = questions[currentQuestion];
+                quizContainer.innerHTML = `
+                    <img src="${q.image}" alt="Dog" style="max-width: 100%; height: auto; margin-bottom: 20px;">
+                    ${q.options.map(opt => `<button class="btn btn-outline-primary answer-btn" onclick="checkAnswer(this, '${q.breed}')">${opt}</button>`).join('')}
+                `;
+                updateProgress();
+            } else {
+                endGame();
+            }
+        }
+
+        function checkAnswer(btn, correctBreed) {
+            if (btn.textContent === correctBreed) {
+                btn.classList.replace('btn-outline-primary', 'btn-success');
+                score++;
+                feedbackDiv.innerHTML = `<p style="color: green;">Correct! It's a ${correctBreed}.</p>`;
+            } else {
+                btn.classList.replace('btn-outline-primary', 'btn-danger');
+                feedbackDiv.innerHTML = `<p style="color: red;">Wrong! The correct answer was ${correctBreed}.</p>`;
+            }
+            setTimeout(nextQuestion, 1500);
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            feedbackDiv.innerHTML = '';
+            loadQuestion();
+        }
+
+        function updateProgress() {
+            const percent = (currentQuestion / questions.length) * 100;
+            progressBar.style.width = percent + '%';
+            progressBar.setAttribute('aria-valuenow', percent);
+        }
+
+        function endGame() {
+            const message = score > 7 ? "Amazing! You really know your dogs!" :
+                (score > 4 ? "Good job, but there's room for improvement." : "Keep learning about dog breeds!");
+            quizContainer.innerHTML = `<h2>Your Score: ${score} out of ${questions.length}</h2>
+                                       <p>${message}</p>
+                                       <button class="btn btn-primary" onclick="location.reload()">Play Again</button>`;
+        }
+    });
+</script>
+</body>
+</html>

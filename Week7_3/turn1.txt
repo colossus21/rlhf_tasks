@@ -1,7 +1,0 @@
-Create a mystery detective game in javascript called "Murder Story" in which the detective has to find 3 hidden items: the murderer, the murder weapon and the victim's body on a 9x9 grid with the following features:
-1. Clues are based on 9 items in the city each having an emoji: School, Hotel, Bank, Park, Tower, Bridge, Police Car, Fountain, Metro. Each 3x3 grid has these items at random location in one of the 9 places.
-2. The player clicks on cells in the grid to uncover clues and try to find the 3 hidden items. Place a cross if the item is not there, else, highlight the item and strikethrough the clue.
-3. Each hidden item can have clues i.e. Victim (use emoji) is hidden North of School (emoji), South of Hospital (emoji). Don't use same direction more than once. For all 3 items there should be 3 clues. Place the clues below the game grid.
-4. Use emojis for 3 items (murderer, weapon, victim) including the landmarks.
-5. If the player finds all 3 items, player wins the game, show a story in a modal such as: "Mr.X was killed by Mr.Y with a Rope. The body was found North of Hospital (emoji), the weapon was found south of Police (emoji)". The murderer, victim, weapon name can be crafted from 5 random names each.
-6. Make the color and layout suitable for a mystery game. Add a new game button below the game. Also show the restart button under story.

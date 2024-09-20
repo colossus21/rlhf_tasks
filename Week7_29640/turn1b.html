@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dog Breed Quiz Game</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f0f0; margin: 0; }
+        .quiz-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); text-align: center; width: 80%; max-width: 500px; }
+        #questionImage { max-width: 100%; height: auto; margin: 20px 0; }
+        .options button { display: block; width: 100%; margin: 10px 0; padding: 10px; border: none; background: #e0e0e0; cursor: pointer; }
+        .options button:hover { background: #d0d0d0; }
+        #feedback { margin: 20px 0; font-weight: bold; }
+        #progressBar { width: 100%; background-color: #ddd; }
+        #progress { height: 20px; background-color: #4CAF50; width: 0%; }
+        #score, #endMessage { margin-top: 20px; }
+        .loader { border: 16px solid #f3f3f3; border-top: 16px solid #3498db; border-radius: 50%; width: 120px; height: 120px; animation: spin 2s linear infinite; margin: 20px auto; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <h1>Dog Breed Quiz Game</h1>
+    <div id="loader" class="loader"></div>
+    <div id="gameContent" style="display: none;">
+        <img id="questionImage" src="" alt="Dog">
+        <div class="options" id="options"></div>
+        <div id="feedback"></div>
+        <div id="progressBar"><div id="progress"></div></div>
+        <div id="score">Score: 0/10</div>
+        <div id="endMessage"></div>
+        <button id="playAgain" style="display: none;">Play Again</button>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        let questions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        const gameContent = document.getElementById('gameContent');
+        const loader = document.getElementById('loader');
+        const optionsContainer = document.getElementById('options');
+        const feedback = document.getElementById('feedback');
+        const progress = document.getElementById('progress');
+        const scoreDisplay = document.getElementById('score');
+        const endMessage = document.getElementById('endMessage');
+        const playAgainButton = document.getElementById('playAgain');
+
+        function capitalizeWords(str) {
+            return str.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        }
+
+        function fetchQuestions() {
+            loader.style.display = 'block';
+            gameContent.style.display = 'none';
+            fetch('https://dog.ceo/api/breeds/image/random/10')
+                .then(response => response.json())
+                .then(data => {
+                    questions = data.message.map(url => {
+                        const breed = capitalizeWords(url.split('/')[4]);
+                        return {
+                            image: url,
+                            breed: breed,
+                            options: []
+                        };
+                    });
+                    questions.forEach(q => {
+                        while(q.options.length < 3) {
+                            const randomBreed = capitalizeWords(questions[Math.floor(Math.random() * questions.length)].breed);
+                            if(!q.options.includes(randomBreed) && randomBreed !== q.breed) {
+                                q.options.push(randomBreed);
+                            }
+                        }
+                        q.options.push(q.breed);
+                        q.options.sort(() => Math.random() - 0.5); // Shuffle options
+                    });
+                    loader.style.display = 'none';
+                    gameContent.style.display = 'block';
+                    displayQuestion();
+                });
+        }
+
+        function displayQuestion() {
+            if(currentQuestionIndex < questions.length) {
+                const q = questions[currentQuestionIndex];
+                document.getElementById('questionImage').src = q.image;
+                optionsContainer.innerHTML = '';
+                q.options.forEach(option => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.onclick = () => checkAnswer(option, q.breed);
+                    optionsContainer.appendChild(button);
+                });
+                updateProgress();
+            } else {
+                endGame();
+            }
+        }
+
+        function checkAnswer(selected, correct) {
+            if(selected === correct) {
+                feedback.textContent = "Correct!";
+                feedback.style.color = 'green';
+                score++;
+            } else {
+                feedback.textContent = `Wrong! The correct answer was ${correct}.`;
+                feedback.style.color = 'red';
+            }
+            scoreDisplay.textContent = `Score: ${score}/${questions.length}`;
+            currentQuestionIndex++;
+            setTimeout(displayQuestion, 1500);
+        }
+
+        function updateProgress() {
+            const percent = ((currentQuestionIndex + 1) / questions.length) * 100;
+            progress.style.width = `${percent}%`;
+        }
+
+        function endGame() {
+            gameContent.style.display = 'block';
+            feedback.textContent = '';
+            optionsContainer.innerHTML = '';
+            document.getElementById('questionImage').style.display = 'none';
+            const message = score > 7 ? "Great job, dog expert!" :
+                score > 4 ? "Nice try, but keep learning!" :
+                    "Maybe spend more time with dogs?";
+            endMessage.textContent = `You scored ${score} out of ${questions.length}. ${message}`;
+            playAgainButton.style.display = 'inline-block';
+        }
+
+        playAgainButton.onclick = () => {
+            currentQuestionIndex = 0;
+            score = 0;
+            playAgainButton.style.display = 'none';
+            endMessage.textContent = '';
+            document.getElementById('questionImage').style.display = 'block';
+            fetchQuestions();
+        };
+
+        fetchQuestions();
+    });
+</script>
+
+</body>
+</html>

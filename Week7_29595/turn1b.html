@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dragon Treasure Hunt</title>
+    <style>
+        body {
+            background: #2c3e50;
+            color: #ecf0f1;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #gameBoard {
+            background: #34495e;
+            display: grid;
+            grid-template-columns: repeat(9, 60px);
+            grid-gap: 2px;
+            border: 4px solid #7f8c8d;
+        }
+        .cell {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+        }
+        #wizard { color: #2ecc71; }
+        .dragon { color: #e74c3c; }
+        .treasure { color: #f1c40f; }
+        .fire { background: #e74c3c; animation: flicker 0.5s infinite alternate; }
+        @keyframes flicker {
+            0% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        #status, #gameOver {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        #gameOver {
+            display: none;
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        button {
+            padding: 10px 20px;
+            background: #3498db;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div id="status">Treasures: <span id="collected">0</span>/<span id="total">9</span></div>
+<div id="gameBoard"></div>
+<div id="gameOver">Game Over! <br><button onclick="restartGame()">Restart</button></div>
+<script>
+    const board = document.getElementById('gameBoard');
+    const status = document.getElementById('status');
+    const gameOverDiv = document.getElementById('gameOver');
+    let wizardPos = {x: 0, y: 0};
+    let treasures = [];
+    let dragons = [{x: 4, y: 4}];
+    let fireCells = [];
+    const totalTreasures = 9;
+    let collectedTreasures = 0;
+
+    function createBoard() {
+        for(let y = 0; y < 9; y++) {
+            for(let x = 0; x < 9; x++) {
+                let cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.x = x;
+                cell.dataset.y = y;
+                board.appendChild(cell);
+            }
+        }
+    }
+
+    function placeTreasures() {
+        while(treasures.length < totalTreasures) {
+            let x = Math.floor(Math.random() * 9);
+            let y = Math.floor(Math.random() * 9);
+            if((x !== 0 || y !== 0) && !dragons.some(d => d.x === x && d.y === y)) {
+                treasures.push({x, y});
+            }
+        }
+        treasures.forEach(t => {
+            board.children[t.y * 9 + t.x].classList.add('treasure');
+        });
+    }
+
+    function placeWizard() {
+        board.children[wizardPos.y * 9 + wizardPos.x].id = 'wizard';
+    }
+
+    function moveWizard(e) {
+        let newX = wizardPos.x, newY = wizardPos.y;
+        switch(e.key) {
+            case 'ArrowUp': newY--; break;
+            case 'ArrowDown': newY++; break;
+            case 'ArrowLeft': newX--; break;
+            case 'ArrowRight': newX++; break;
+        }
+        if(newX >= 0 && newY >= 0 && newX < 9 && newY < 9) {
+            document.getElementById('wizard').id = '';
+            wizardPos = {x: newX, y: newY};
+            let cell = board.children[newY * 9 + newX];
+            if(cell.classList.contains('fire')) {
+                gameOver();
+                return;
+            }
+            if(cell.classList.contains('treasure')) {
+                cell.classList.remove('treasure');
+                collectedTreasures++;
+                document.getElementById('collected').textContent = collectedTreasures;
+                if(collectedTreasures === totalTreasures) winGame();
+            }
+            cell.id = 'wizard';
+        }
+    }
+
+    function dragonFire() {
+        fireCells = [];
+        dragons.forEach(dragon => {
+            for(let dy = -1; dy <= 1; dy++) {
+                for(let dx = -1; dx <= 1; dx++) {
+                    let x = dragon.x + dx, y = dragon.y + dy;
+                    if(x >= 0 && y >= 0 && x < 9 && y < 9) {
+                        board.children[y * 9 + x].classList.add('fire');
+                        fireCells.push({x, y});
+                    }
+                }
+            }
+        });
+        setTimeout(clearFire, 2000);
+    }
+
+    function clearFire() {
+        fireCells.forEach(cell => {
+            board.children[cell.y * 9 + cell.x].classList.remove('fire');
+        });
+    }
+
+    function gameOver() {
+        gameOverDiv.style.display = 'block';
+        document.removeEventListener('keydown', moveWizard);
+    }
+
+    function winGame() {
+        alert('You Win!'); // Simple alert for winning, could be improved with DOM manipulation
+        gameOverDiv.textContent = 'You Win!';
+        gameOverDiv.style.display = 'block';
+    }
+
+    function restartGame() {
+        location.reload();
+    }
+
+    // Initialize game
+    createBoard();
+    placeTreasures();
+    placeWizard();
+    document.addEventListener('keydown', moveWizard);
+    setInterval(dragonFire, 3000); // Fire every 3 seconds
+</script>
+</body>
+</html>

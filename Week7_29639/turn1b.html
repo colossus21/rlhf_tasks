@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar Dash</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; }
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; max-width: 700px; margin: 20px auto; }
+        .day { border: 1px solid #ccc; padding: 10px; text-align: center; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; }
+        .day.current { background-color: #e0f7fa; }
+        button { padding: 10px 20px; margin: 10px; font-size: 16px; cursor: pointer; }
+        #gameInfo { margin-top: 20px; text-align: center; }
+        .modal {
+            display: none; position: fixed; z-index: 1; left: 0; top: 0;
+            width: 100%; height: 100%; overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe; margin: 15% auto; padding: 20px;
+            border: 1px solid #888; width: 80%; max-width: 300px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game">
+    <div class="calendar" id="calendar"></div>
+    <button id="rollDice">Roll Dice</button>
+    <div id="gameInfo"></div>
+    <div id="result" style="text-align: center;"></div>
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <p id="modalText"></p>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        const events = [
+            { emoji: '🎂', name: "Joe's Birthday", points: 10, description: "You attended Joe's birthday party. Gain 10 points for celebrating with friends!" },
+            { emoji: '🚗', name: "Traffic Jam", points: -5, description: "Stuck in a traffic jam. Lose 5 points due to wasted time." },
+            // Add 29 more events here...
+        ];
+
+        let players = [{name: 'Player 1', position: 1, score: 0}, {name: 'Player 2', position: 1, score: 0}];
+        let currentPlayer = 0;
+        let daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+        let gameEnded = false;
+
+        function generateCalendar() {
+            for(let day = 1; day <= daysInMonth; day++) {
+                let dayDiv = $('<div class="day"><span>' + day + '</span></div>');
+                $('#calendar').append(dayDiv);
+            }
+        }
+
+        function rollDice() {
+            if(gameEnded) return;
+            let dice = Math.floor(Math.random() * 6) + 1;
+            updatePlayerPosition(dice);
+        }
+
+        function updatePlayerPosition(move) {
+            let player = players[currentPlayer];
+            player.position = Math.min(player.position + move, daysInMonth);
+            $('.day').removeClass('current');
+            $('.day:nth-child(' + (player.position + 1) + ')').addClass('current');
+            checkEvent(player);
+            if(player.position === daysInMonth) {
+                if(!gameEnded) endGame();
+            } else {
+                currentPlayer = 1 - currentPlayer; // Switch player
+            }
+        }
+
+        function checkEvent(player) {
+            let event = events[Math.floor(Math.random() * events.length)];
+            player.score += event.points;
+            $('#gameInfo').html(`<p>${player.name} moved to day ${player.position}. ${event.description}</p>`);
+            showModal(player.name, event.name);
+        }
+
+        function showModal(playerName, eventName) {
+            $('#modalText').text(`${playerName} encountered: ${eventName}`);
+            $('#eventModal').fadeIn(400).delay(1000).fadeOut(400);
+        }
+
+        function endGame() {
+            gameEnded = true;
+            let winner = players[0].score > players[1].score ? players[0] : players[1];
+            $('#result').html(`<h2>${winner.name} wins with ${winner.score} points!</h2>`);
+        }
+
+        $('#rollDice').on('click', rollDice);
+        generateCalendar();
+    });
+</script>
+
+</body>
+</html>

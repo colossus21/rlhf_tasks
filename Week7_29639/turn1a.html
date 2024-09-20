@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Calendar Dash Game</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body { font-family: 'Arial', sans-serif; padding: 20px; }
+        .calendar-day {
+            width: 14.28%; /* For a 7-day week */
+            height: 100px;
+            border: 1px solid #ddd;
+            text-align: center;
+            vertical-align: middle;
+            line-height: 100px;
+            font-size: 2em;
+            cursor: pointer;
+            user-select: none;
+        }
+        .player1 { background-color: #e6f3ff; }
+        .player2 { background-color: #ffe6e6; }
+        #feedbackModal .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Calendar Dash Game</h1>
+    <div id="calendar"></div>
+    <button id="rollDice" class="btn btn-primary">Roll Dice</button>
+    <div id="gameInfo" class="mt-3"></div>
+
+    <!-- Feedback Modal -->
+    <div class="modal fade" id="feedbackModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body" id="modalBody"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const events = [
+        {emoji: '🎂', name: "Joe's Birthday", points: 10, description: "Celebrate!"},
+        {emoji: '🚗', name: "Traffic Jam", points: -5, description: "Stuck in traffic."},
+        // ... [Add 29 more events here for a total of 31]
+        {emoji: '🌞', name: "Sunny Day", points: 5, description: "Enjoy the sun!"},
+        {emoji: '💼', name: "Work Day", points: 0, description: "Just another workday."}
+    ];
+
+    let currentPlayer = 1;
+    let playerPositions = {1: 0, 2: 0};
+    let playerScores = {1: 0, 2: 0};
+
+    function buildCalendar() {
+        const now = new Date();
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        const calendar = document.getElementById('calendar');
+        for(let day = 1; day <= daysInMonth; day++) {
+            let div = document.createElement('div');
+            div.className = 'calendar-day';
+            div.textContent = day;
+            calendar.appendChild(div);
+        }
+    }
+
+    function rollDice() {
+        const roll = Math.floor(Math.random() * 6) + 1;
+        movePlayer(roll);
+    }
+
+    function movePlayer(steps) {
+        const maxDays = document.querySelectorAll('.calendar-day').length;
+        playerPositions[currentPlayer] += steps;
+        if (playerPositions[currentPlayer] >= maxDays) {
+            playerPositions[currentPlayer] = maxDays;
+            endGameCheck();
+            return;
+        }
+        updateBoard();
+        const event = events[Math.floor(Math.random() * events.length)];
+        playerScores[currentPlayer] += event.points;
+        showFeedback(event, currentPlayer);
+        document.getElementById('gameInfo').innerHTML = `Player ${currentPlayer} moved to day ${playerPositions[currentPlayer]}. ${event.description} Score: ${playerScores[currentPlayer]}`;
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+    }
+
+    function updateBoard() {
+        document.querySelectorAll('.calendar-day').forEach((day, index) => {
+            day.className = 'calendar-day';
+            if (index + 1 === playerPositions[1]) day.classList.add('player1');
+            if (index + 1 === playerPositions[2]) day.classList.add('player2');
+        });
+    }
+
+    function showFeedback(event, player) {
+        document.getElementById('modalBody').innerHTML = `Player ${player} encountered: ${event.name}`;
+        $('#feedbackModal').modal('show');
+        setTimeout(() => $('#feedbackModal').modal('hide'), 1000);
+    }
+
+    function endGameCheck() {
+        if (playerPositions[1] === document.querySelectorAll('.calendar-day').length &&
+            playerPositions[2] === document.querySelectorAll('.calendar-day').length) {
+            let winner = playerScores[1] > playerScores[2] ? 'Player 1' : 'Player 2';
+            if (playerScores[1] === playerScores[2]) winner = 'It\'s a tie!';
+            document.getElementById('gameInfo').innerHTML += `<br><br>Game Over! ${winner} wins with ${Math.max(playerScores[1], playerScores[2])} points!`;
+            document.getElementById('rollDice').disabled = true;
+        }
+    }
+
+    document.getElementById('rollDice').addEventListener('click', rollDice);
+    buildCalendar();
+</script>
+
+</body>
+</html>

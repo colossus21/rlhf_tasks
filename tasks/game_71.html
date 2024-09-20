@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar Dash</title>
+    <style>
+        /* Base styles for the body and main container */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            padding: 20px;
+        }
+        #game-container {
+            text-align: center;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        /* Styles for the game board (calendar) */
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+        .space {
+            width: 60px;
+            height: 60px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .space:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+        .space .date {
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+        .space .emoji {
+            font-size: 20px;
+        }
+        .player-token {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 2px;
+        }
+        .player1 { background-color: #ff5757; right: 2px; }
+        .player2 { background-color: #57ff57; left: 2px; }
+        .day-name {
+            font-size: 12px;
+            color: #777;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        /* Styles for buttons and game information */
+        button {
+            font-size: 16px;
+            padding: 10px 20px;
+            margin: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #game-info {
+            margin-top: 20px;
+            font-size: 18px;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Styles for player information cards */
+        .player-info {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .player-card {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            width: 45%;
+        }
+        .current-player {
+            border: 2px solid #4CAF50;
+        }
+
+        /* Styles for the feedback modal */
+        #feedback-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        #feedback-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 80%;
+        }
+    </style>
+</head>
+<body>
+<div id="game-container">
+    <h1>Calendar Dash</h1>
+    <div class="player-info">
+        <div id="player1-info" class="player-card">
+            <h3>Player 1</h3>
+            <p>Points: <span id="player1-points">0</span></p>
+        </div>
+        <div id="player2-info" class="player-card">
+            <h3>Player 2</h3>
+            <p>Points: <span id="player2-points">0</span></p>
+        </div>
+    </div>
+    <div id="game-board"></div>
+    <button id="roll-dice">Roll Dice</button>
+    <div id="game-info"></div>
+</div>
+
+<!-- Feedback modal -->
+<div id="feedback-modal">
+    <div id="feedback-content"></div>
+</div>
+
+<script>
+    // Array of game events with emojis, names, points, and descriptions
+    const events = [
+        { emoji: '🎂', name: "Joe's Birthday", points: 10, description: "You attended Joe's birthday party. Gain 10 points for celebrating with friends!" },
+        { emoji: '🚗', name: "Traffic Jam", points: -5, description: "Stuck in a traffic jam. Lose 5 points due to wasted time." },
+        { emoji: '💼', name: "Work Anniversary", points: 15, description: "Congratulations on your work anniversary! Gain 15 points." },
+        { emoji: '👛', name: "Lost Wallet", points: -10, description: "You lost your wallet. Lose 10 points while sorting things out." },
+        { emoji: '🤝', name: "Community Service", points: 12, description: "Volunteered at a local shelter. Gain 12 points for your good deed." },
+        { emoji: '☔', name: "Caught in the Rain", points: -4, description: "Forgot your umbrella and got soaked. Lose 4 points." },
+        { emoji: '💍', name: "Marriage Ceremony", points: 20, description: "Attended a beautiful wedding. Gain 20 points for sharing the joy." },
+        { emoji: '📈', name: "Promotion at Work", points: 25, description: "Received a promotion! Gain 25 points for your achievement." },
+        { emoji: '📚', name: "Finished a Book", points: 8, description: "Completed reading a novel. Gain 8 points for expanding your knowledge." },
+        { emoji: '🏆', name: "Won a Competition", points: 18, description: "First place in a local contest. Gain 18 points for your victory!" },
+        { emoji: '🎭', name: "Theater Performance", points: 15, description: "Enjoyed a captivating play. Gain 15 points for cultural enrichment." },
+        { emoji: '🍳', name: "Cooking Class", points: 10, description: "Learned to make a gourmet dish. Gain 10 points for your new skill." },
+        { emoji: '🎨', name: "Art Exhibition", points: 12, description: "Visited an inspiring art show. Gain 12 points for artistic appreciation." },
+        { emoji: '🏃', name: "Charity Run", points: 20, description: "Completed a 5K for a good cause. Gain 20 points for fitness and philanthropy." },
+        { emoji: '🐶', name: "Adopted a Pet", points: 22, description: "Welcomed a furry friend to your home. Gain 22 points for your new companion." },
+        { emoji: '🌱', name: "Started a Garden", points: 15, description: "Planted your first vegetables. Gain 15 points for going green." },
+        { emoji: '🎸', name: "Music Festival", points: 18, description: "Rocked out at an all-day concert. Gain 18 points for musical memories." },
+        { emoji: '✈️', name: "Vacation Start", points: 20, description: "Embarked on a dream holiday. Gain 20 points for adventure!" },
+        { emoji: '🍽️', name: "Dinner Party", points: 14, description: "Hosted friends for a lovely meal. Gain 14 points for hospitality." },
+        { emoji: '🚲', name: "Bike Ride", points: 10, description: "Enjoyed a scenic cycling route. Gain 10 points for outdoor activity." },
+        { emoji: '🎓', name: "Graduation Day", points: 25, description: "Celebrated academic success. Gain 25 points for your achievement!" },
+        { emoji: '🌟', name: "Random Act of Kindness", points: 15, description: "Helped a stranger in need. Gain 15 points for compassion." },
+        { emoji: '🍀', name: "Lucky Find", points: 8, description: "Found money on the street. Gain 8 points for your good fortune." },
+        { emoji: '🎉', name: "Surprise Party", points: 16, description: "Threw a successful surprise party. Gain 16 points for your planning skills." },
+        { emoji: '📅', name: "Productive Day", points: 12, description: "Checked everything off your to-do list. Gain 12 points for efficiency." },
+        { emoji: '🌈', name: "Overcame a Challenge", points: 20, description: "Successfully navigated a tough situation. Gain 20 points for resilience." },
+        { emoji: '🎁', name: "Unexpected Gift", points: 10, description: "Received a thoughtful present. Gain 10 points for joy and gratitude." },
+        { emoji: '🌺', name: "Garden Bloomed", points: 8, description: "Your plants flowered beautifully. Gain 8 points for your green thumb." },
+        { emoji: '🏆', name: "Personal Best", points: 15, description: "Achieved a personal record in your hobby. Gain 15 points for self-improvement." },
+        { emoji: '🎨', name: "Created Artwork", points: 12, description: "Finished a personal art project. Gain 12 points for creativity." },
+        { emoji: '🍳', name: "Cooked a Feast", points: 14, description: "Prepared a multi-course meal for family. Gain 14 points for culinary skills." }
+    ];
+
+    // Player data
+    const players = [
+        { name: "Player 1", position: 0, points: 0 },
+        { name: "Player 2", position: 0, points: 0 }
+    ];
+
+    let currentPlayer = 0;
+    let gameEnded = false;
+
+    // Function to get the number of days in the current month
+    function getCurrentMonthDays() {
+        const now = new Date();
+        return new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    }
+
+    // Function to create the game board (calendar)
+    function createGameBoard() {
+        const gameBoard = document.getElementById('game-board');
+        const daysInMonth = getCurrentMonthDays();
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const currentDate = new Date();
+        const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
+
+        // Add day name headers
+        dayNames.forEach(day => {
+            const dayHeader = document.createElement('div');
+            dayHeader.className = 'day-name';
+            dayHeader.textContent = day;
+            gameBoard.appendChild(dayHeader);
+        });
+
+        // Add empty spaces for days before the 1st of the month
+        for (let i = 0; i < firstDayOfMonth; i++) {
+            const emptySpace = document.createElement('div');
+            emptySpace.className = 'space';
+            gameBoard.appendChild(emptySpace);
+        }
+
+        // Create spaces for each day of the month
+        for (let i = 1; i <= daysInMonth; i++) {
+            const space = document.createElement('div');
+            space.className = 'space';
+            const dateSpan = document.createElement('span');
+            dateSpan.className = 'date';
+            dateSpan.textContent = i;
+            const emojiSpan = document.createElement('span');
+            emojiSpan.className = 'emoji';
+            emojiSpan.textContent = events[i - 1].emoji;
+            space.appendChild(dateSpan);
+            space.appendChild(emojiSpan);
+            gameBoard.appendChild(space);
+        }
+    }
+
+    // Function to simulate rolling a 6-sided die
+    function rollDice() {
+        return Math.floor(Math.random() * 6) + 1;
+    }
+
+    // Function to move a player on the board
+    function movePlayer(player, spaces) {
+        const oldPosition = player.position;
+        const daysInMonth = getCurrentMonthDays();
+        player.position = Math.min(player.position + spaces, daysInMonth - 1);
+        updatePlayerPosition(player, oldPosition);
+        return player.position;
+    }
+
+    // Function to update the visual representation of a player's position
+    function updatePlayerPosition(player, oldPosition) {
+        const spaces = document.querySelectorAll('.space');
+        if (oldPosition > 0) {
+            const oldToken = spaces[oldPosition].querySelector(`.player${currentPlayer + 1}`);
+            if (oldToken) oldToken.remove();
+        }
+        const newToken = document.createElement('div');
+        newToken.className = `player-token player${currentPlayer + 1}`;
+        spaces[player.position].appendChild(newToken);
+    }
+
+    // Function to update the game information display
+    function updateGameInfo(message) {
+        document.getElementById('game-info').innerHTML = message;
+    }
+
+    // Function to update the player information cards
+    function updatePlayerInfo() {
+        document.getElementById('player1-points').textContent = players[0].points;
+        document.getElementById('player2-points').textContent = players[1].points;
+        document.getElementById('player1-info').classList.toggle('current-player', currentPlayer === 0);
+        document.getElementById('player2-info').classList.toggle('current-player', currentPlayer === 1);
+    }
+
+    // Function to end the current player's turn
+    function endTurn() {
+        currentPlayer = (currentPlayer + 1) % 2;
+        updatePlayerInfo();
+        const daysInMonth = getCurrentMonthDays();
+        if (players.every(p => p.position === daysInMonth - 1)) {
+            endGame();
+        }
+    }
+
+    // Function to end the game
+    function endGame() {
+        gameEnded = true;
+        const winner = players[0].points > players[1].points ? players[0] :
+            (players[1].points > players[0].points ? players[1] : null);
+        let message = winner ?
+            `Game Over! ${winner.name} wins with ${winner.points} points!` :
+            "Game Over! It's a tie!";
+        updateGameInfo(message);
+        showFeedback(message);
+        document.getElementById('roll-dice').disabled = true;
+    }
+
+    // Function to show feedback in the modal
+    function showFeedback(message) {
+        const modal = document.getElementById('feedback-modal');
+        const content = document.getElementById('feedback-content');
+        content.innerHTML = message;
+        modal.style.display = 'flex';
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 1000);
+    }
+
+    // Event listener for the roll dice button
+    document.getElementById('roll-dice').addEventListener('click', () => {
+        if (gameEnded) return;
+
+        const player = players[currentPlayer];
+        const roll = rollDice();
+        const newPosition = movePlayer(player, roll);
+        const event = events[newPosition];
+        player.points += event.points;
+
+        const feedbackMessage =
+            `${player.name} rolled a ${roll} and landed on day ${newPosition + 1}.<br>
+            Event: ${event.emoji} ${event.name}<br>
+            ${event.description}<br>
+            Points change: ${event.points > 0 ? '+' : ''}${event.points}<br>
+            Total points: ${player.points}`;
+
+        updateGameInfo(feedbackMessage);
+        showFeedback(`${player.name} rolled <strong>${roll}</strong>!: ${event.emoji} ${event.name}`);
+
+        updatePlayerInfo();
+        endTurn();
+    });
+
+    // Initialize the game
+    createGameBoard();
+    updateGameInfo("Game started! Player 1's turn.");
+    updatePlayerInfo();
+</script>
+</body>
+</html>

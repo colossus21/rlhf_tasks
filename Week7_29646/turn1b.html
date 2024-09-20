@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USGS Earthquakes - Last 3 Days</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; }
+        #map { height: 100%; }
+        .legend, .controls {
+            position: absolute;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+            z-index: 1000;
+        }
+        .legend { bottom: 30px; left: 10px; }
+        .controls { top: 10px; right: 10px; }
+        .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1001; background: white; padding: 20px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<div id="loading" class="loading">Loading Earthquake Data...</div>
+<div class="legend" id="legend"></div>
+<div class="controls">
+    <label>Magnitude: <span id="magValue"></span></label><br>
+    <input type="range" id="magFilter" min="0" max="10" step="0.1" value="0" oninput="updateMagnitudeFilter(this.value)"><br>
+    <label>Time: <span id="timeValue"></span></label><br>
+    <input type="range" id="timeFilter" min="0" max="3" step="1" value="0" oninput="updateTimeFilter(this.value)"><br>
+    <button onclick="toggleDepth()">Toggle Depth</button>
+    <button onclick="togglePlates()">Toggle Plates</button>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    let map, earthquakesLayer, depthView = false, plateLayer;
+    const now = new Date();
+    const threeDaysAgo = new Date(now);
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+    function initMap() {
+        map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>',
+            subdomains: ['a', 'b', 'c']
+        }).addTo(map);
+    }
+
+    function fetchEarthquakes() {
+        document.getElementById('loading').style.display = 'block';
+        const url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${threeDaysAgo.toISOString().split('T')[0]}&endtime=${now.toISOString().split('T')[0]}`;
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                displayEarthquakes(data);
+            });
+    }
+
+    function displayEarthquakes(data) {
+        if (earthquakesLayer) map.removeLayer(earthquakesLayer);
+        earthquakesLayer = L.geoJSON(data, {
+            pointToLayer: function(feature, latlng) {
+                const mag = feature.properties.mag;
+                const depth = feature.geometry.coordinates[2];
+                const color = depthView ? getDepthColor(depth) : getMagnitudeColor(mag);
+                return L.circleMarker(latlng, {
+                    radius: mag * 3,
+                    fillColor: color,
+                    color: "#000",
+                    weight: 1,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).bindPopup(`Magnitude: ${mag}<br>Location: ${feature.properties.place}<br>Time: ${new Date(feature.properties.time).toLocaleString()}`);
+            }
+        }).addTo(map);
+        updateLegend();
+    }
+
+    function getMagnitudeColor(mag) {
+        return mag > 7 ? '#800026' :
+            mag > 6  ? '#BD0026' :
+                mag > 5  ? '#E31A1C' :
+                    mag > 4  ? '#FC4E2A' :
+                        mag > 3   ? '#FD8D3C' :
+                            mag > 2   ? '#FEB24C' :
+                                mag > 1   ? '#FED976' :
+                                    '#FFEDA0';
+    }
+
+    function getDepthColor(depth) {
+        return depth > 300 ? '#FF0000' :
+            depth > 70  ? '#FFFF00' :
+                '#00FF00';
+    }
+
+    function updateLegend() {
+        const legend = document.getElementById('legend');
+        legend.innerHTML = depthView ?
+            '<b>Depth:</b><br>0-70km: <span style="background:#00FF00;">&nbsp;&nbsp;</span><br>70-300km: <span style="background:#FFFF00;">&nbsp;&nbsp;</span><br>300km+: <span style="background:#FF0000;">&nbsp;&nbsp;</span>' :
+            '<b>Magnitude:</b><br>' + [1,2,3,4,5,6,7].map(m => `<span style="background:${getMagnitudeColor(m)};">&nbsp;&nbsp;</span> ${m}+`).join('<br>');
+    }
+
+    function updateMagnitudeFilter(value) {
+        document.getElementById('magValue').innerText = `Min: ${value}`;
+        if (earthquakesLayer) {
+            earthquakesLayer.eachLayer(function(layer) {
+                layer.setStyle({fillOpacity: layer.feature.properties.mag >= parseFloat(value) ? 0.8 : 0});
+            });
+        }
+    }
+
+    function updateTimeFilter(value) {
+        // Here you would typically adjust the time filter, but for simplicity, this example doesn't filter by time after initial load.
+        document.getElementById('timeValue').innerText = `Last ${3 - value} days`;
+    }
+
+    function toggleDepth() {
+        depthView = !depthView;
+        displayEarthquakes();
+    }
+
+    function togglePlates() {
+        if (!plateLayer) {
+            // Assuming you have a GeoJSON or similar for plate boundaries
+            // Here's a placeholder for where you would load and add the layer
+            plateLayer = L.geoJSON(/* your plate data */).addTo(map);
+        } else {
+            map.removeLayer(plateLayer);
+            plateLayer = null;
+        }
+    }
+
+    initMap();
+    fetchEarthquakes();
+</script>
+</body>
+</html>

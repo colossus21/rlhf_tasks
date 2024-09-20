@@ -1,0 +1,11 @@
+I want to visualize earthquakes from the data from USGS API. Can you create an interactive widget with the following features:
+1. Let's use the Leaflet library for map. Fetch 3 days data from the USGS API.
+2. API URL: https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2023-03-01&endtime=2023-03-02. Modify the starttime and endtime to reflect last 3 days (including current day).
+3. Sample response: {"type":"FeatureCollection","metadata":{"generated":1726822071000,"url":"https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2023-03-01&endtime=2023-03-02&minmagnitude=6","title":"USGS Earthquakes","status":200,"api":"1.14.1","count":1},"features":[{"type":"Feature","properties":{"mag":6.6,"place":"106 km NW of Kimbe, Papua New Guinea","time":1677648974834,"updated":1683511204040,"tz":null,"url":"https://earthquake.usgs.gov/earthquakes/eventpage/us7000jgfd","detail":"https://earthquake.usgs.gov/fdsnws/event/1/query?eventid=us7000jgfd&format=geojson","felt":4,"cdi":4.1,"mmi":2.354,"alert":"green","status":"reviewed","tsunami":1,"sig":672,"net":"us","code":"7000jgfd","ids":",us7000jgfd,pt23060000,at00rqtu8d,usauto7000jgfd,","sources":",us,pt,at,usauto,","types":",dyfi,ground-failure,impact-link,internal-moment-tensor,internal-origin,losspager,moment-tensor,origin,phase-data,shakemap,","nst":156,"dmin":2.725,"rms":0.76,"gap":11,"magType":"mww","type":"earthquake","title":"M 6.6 - 106 km NW of Kimbe, Papua New Guinea"},"geometry":{"type":"Point","coordinates":[149.5041,-4.8255,600.933]},"id":"us7000jgfd"}]}
+4. Different intensities of red colored circles should show the magnitude in different areas in the map. Show a popup when circles are clicked with detailed information.
+5. Include a legend explaining the color coding of earthquake magnitudes.
+6. Add a magnitude filter using a range slider. Display the current minimum and maximum magnitude values.
+7. Add a time filter using another range slider showing the selected start and end times.
+8. Add a toggle for visualizing earthquake depth using color coding - green for shallow, yellow for intermediate and red for deep earthquakes
+9. Also add option to display tectonic plate boundaries on the map.
+10. Please show a loading indicator while fetching data. The title could be 'USGS Earthquakes - Last 3 Days'. Make the widget full screen.

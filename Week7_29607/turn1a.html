@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Space Othello</title>
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        #game-container {
+            text-align: center;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(6, 50px);
+            gap: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #666;
+            margin: 20px auto;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            background: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        .piece {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+        .black { background: #000; box-shadow: 0 0 10px #00f, 0 0 20px #00f; }
+        .white { background: #fff; box-shadow: 0 0 10px #800080, 0 0 20px #800080; }
+        .valid-move {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            width: 10px;
+            height: 10px;
+        }
+        #starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+        }
+        button {
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            transition: background 0.3s;
+        }
+        button:hover { background: #555; }
+    </style>
+</head>
+<body>
+<div id="game-container">
+    <h1>Space Othello</h1>
+    <div id="info">Score: <span id="score">2 - 2</span> | Current Player: <span id="currentPlayer">Black</span></div>
+    <div id="board"></div>
+    <div>
+        <button onclick="usePower('teleport')">Teleport</button>
+        <button onclick="usePower('fortify')">Fortify</button>
+        <button onclick="usePower('doubleFlip')">Double Flip</button>
+        <button onclick="restartGame()">Restart</button>
+    </div>
+</div>
+<div id="starfield"></div>
+
+<script>
+    const board = document.getElementById('board');
+    const scoreDisplay = document.getElementById('score');
+    const currentPlayerDisplay = document.getElementById('currentPlayer');
+    let currentPlayer = 'black';
+    let gameState = Array(36).fill(null);
+    let powers = {teleport: 1, fortify: 1, doubleFlip: 1};
+    let specialMove = null;
+    let fortified = [];
+
+    function createStarfield() {
+        const starfield = document.getElementById('starfield');
+        for(let i = 0; i < 200; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.width = `${Math.random() * 3}px`;
+            star.style.height = star.style.width;
+            star.style.left = `${Math.random() * 100}vw`;
+            star.style.top = `${Math.random() * 100}vh`;
+            star.style.animation = `twinkle ${Math.random() * 5 + 2}s linear infinite`;
+            starfield.appendChild(star);
+        }
+    }
+
+    function initializeGame() {
+        const startPositions = [15, 16, 21, 22];
+        startPositions.forEach((pos, i) => {
+            gameState[pos] = i < 2 ? 'white' : 'black';
+        });
+        renderBoard();
+        updateScore();
+    }
+
+    function renderBoard() {
+        board.innerHTML = '';
+        gameState.forEach((cell, index) => {
+            const div = document.createElement('div');
+            div.className = 'cell';
+            div.onclick = () => placePiece(index);
+            if (cell) {
+                const piece = document.createElement('div');
+                piece.className = `piece ${cell}`;
+                div.appendChild(piece);
+            } else if (isValidMove(index)) {
+                div.classList.add('valid-move');
+            }
+            board.appendChild(div);
+        });
+    }
+
+    function placePiece(index) {
+        if (!isValidMove(index)) return;
+        if (specialMove === 'doubleFlip') {
+            flipPieces(index, true);
+            specialMove = null;
+        } else {
+            flipPieces(index);
+        }
+        gameState[index] = currentPlayer;
+        if (specialMove === 'teleport') {
+            teleportPiece();
+            specialMove = null;
+        }
+        switchTurns();
+        renderBoard();
+        updateScore();
+        if (!hasValidMoves()) {
+            switchTurns();
+            if (!hasValidMoves()) endGame();
+        }
+    }
+
+    function isValidMove(index) {
+        if (gameState[index]) return false;
+        for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+                if (dx === 0 && dy === 0) continue;
+                if (checkDirection(index, dx, dy)) return true;
+            }
+        }
+        return false;
+    }
+
+    function checkDirection(index, dx, dy) {
+        let x = index % 6 + dx, y = Math.floor(index / 6) + dy;
+        let foundOpponent = false;
+        while (x >= 0 && x < 6 && y >= 0 && y < 6) {
+            if (!gameState[y * 6 + x]) return false;
+            if (gameState[y * 6 + x] === currentPlayer) return foundOpponent;
+            foundOpponent = true;
+            x += dx; y += dy;
+        }
+        return false;
+    }
+
+    function flipPieces(index, double = false) {
+        for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+                if (dx === 0 && dy === 0) continue;
+                if (double) flipInDirection(index, dx, dy, 2);
+                else flipInDirection(index, dx, dy);
+            }
+        }
+    }
+
+    function flipInDirection(index, dx, dy, lines = 1) {
+        let x = index % 6 + dx, y = Math.floor(index / 6) + dy;
+        let toFlip = [];
+        while (x >= 0 && x < 6 && y >= 0 && y < 6 && gameState[y * 6 + x] !== currentPlayer && gameState[y * 6 + x] && lines > 0) {
+            toFlip.push(y * 6 + x);
+            x += dx; y += dy;
+            if (dx !== 0 || dy !== 0) lines--;
+        }
+        if (x >= 0 && x < 6 && y >= 0 && y < 6 && gameState[y * 6 + x] === currentPlayer) {
+            toFlip.forEach(i => gameState[i] = currentPlayer);
+        }
+    }
+
+    function switchTurns() {
+        currentPlayer = currentPlayer === 'black' ? 'white' : 'black';
+        currentPlayerDisplay.textContent = currentPlayer === 'black' ? 'Black' : 'White';
+    }
+
+    function hasValidMoves() {
+        return gameState.some((_, i) => isValidMove(i));
+    }
+
+    function updateScore() {
+        const black = gameState.filter(p => p === 'black').length;
+        const white = gameState.filter(p => p === 'white').length;
+        scoreDisplay.textContent = `${black} - ${white}`;
+    }
+
+    function endGame() {
+        const blackScore = gameState.filter(p => p === 'black').length;
+        const whiteScore = gameState.filter(p => p === 'white').length;
+        alert(`Game Over! ${blackScore > whiteScore ? 'Black Wins!' : (whiteScore > blackScore ? 'White Wins!' : 'It\'s a Tie!')}`);
+    }
+
+    function usePower(power) {
+        if (powers[power] > 0) {
+            specialMove = power;
+            powers[power]--;
+        } else {
+            alert("Power already used!");
+        }
+    }
+
+    function teleportPiece() {
+        // Simplified: let player choose where to move a piece
+        alert("Choose a piece to teleport, then choose an empty space.");
+    }
+
+    function restartGame() {
+        gameState = Array(36).fill(null);
+        currentPlayer = 'black';
+        powers = {teleport: 1, fortify: 1, doubleFlip: 1};
+        specialMove = null;
+        fortified = [];
+        initializeGame();
+    }
+
+    createStarfield();
+    initializeGame();
+</script>
+</body>
+</html>

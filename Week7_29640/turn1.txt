@@ -1,0 +1,12 @@
+Create an interactive game named "Dog Breed Quiz Game" in javascript. This game uses a public API for generating the question:
+1. First, fetch 10 random responses (https://dog.ceo/api/breeds/image/random). Each response looks like this:
+{
+    "message": "https://images.dog.ceo/breeds/frise-bichon/jh-ezio-1.jpg",
+    "status": "success"
+}
+2. Then you can parse the breed name from the url. For example, from url '/breeds/frise-bichon/' the breed would be Frise Bichon. Make sure you split the names by "-" and capitalize first letters of each word.
+3. Create a quiz game with 10 questions. Show one image of a dog, player has to guess the breed. There would be 1 correct option and rest incorrect ones. Use red/green background for feedback.
+3. Show a progress bard and keep track of the user's score out of 10.
+4. Add feedback on correct/incorrect answers below the quiz as well.
+6. After game ends, display a final score and message at the end of the quiz. Message could be dynamic based on the score. Also add a play again button.
+7. Make sure the layout is centered and responsiveness is optional. While you're fetching the data from API, show a loading spinner using CSS with a message - "Fetching adorable dogs...".

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dragon Treasure Hunt</title>
+    <style>
+        body {
+            background: #333;
+            color: #daa520;
+            font-family: 'MedievalSharp', cursive;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #gameBoard {
+            display: grid;
+            grid-template-columns: repeat(9, 60px);
+            gap: 2px;
+            background: #2c3e50;
+            border: 4px solid #8b4513;
+        }
+        .cell {
+            width: 60px;
+            height: 60px;
+            background: #2c3e50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+        }
+        .player { color: #2ecc71; }
+        .dragon { color: #e74c3c; }
+        .treasure { color: #f1c40f; }
+        .fire { background: #e74c3c; animation: burn 0.5s infinite; }
+        @keyframes burn { 0% {opacity: 0.5;} 50% {opacity: 1;} 100% {opacity: 0.5;} }
+        #score, #gameOver, #winMessage {
+            margin: 10px 0;
+            font-size: 1.5em;
+        }
+        button {
+            padding: 10px;
+            background: #8b4513;
+            color: #daa520;
+            border: none;
+            cursor: pointer;
+            font-family: 'MedievalSharp', cursive;
+            font-size: 1em;
+        }
+    </style>
+</head>
+<body>
+<div id="score">Treasures: <span id="treasuresCollected">0</span>/<span id="totalTreasures">9</span></div>
+<div id="gameBoard"></div>
+<div id="gameOver" style="display: none;">Game Over</div>
+<div id="winMessage" style="display: none;">You Win!</div>
+<button id="restartBtn" style="display: none;" onclick="restartGame()">Restart Game</button>
+<script>
+    const board = document.getElementById('gameBoard');
+    const scoreDisplay = document.getElementById('treasuresCollected');
+    const gameOverDisplay = document.getElementById('gameOver');
+    const winDisplay = document.getElementById('winMessage');
+    const restartBtn = document.getElementById('restartBtn');
+    let playerPos = {x: 0, y: 0};
+    let treasures = [];
+    let dragons = [{x: 1, y: 1}, {x: 4, y: 4}, {x: 7, y: 7}];
+    let gameInterval;
+    const totalTreasures = 9;
+
+    function createBoard() {
+        for(let y = 0; y < 9; y++) {
+            for(let x = 0; x < 9; x++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.x = x;
+                cell.dataset.y = y;
+                board.appendChild(cell);
+            }
+        }
+    }
+
+    function placeItems() {
+        placePlayer();
+        placeDragons();
+        placeTreasures();
+    }
+
+    function placePlayer() {
+        const cell = document.querySelector(`[data-x="${playerPos.x}"][data-y="${playerPos.y}"]`);
+        cell.innerHTML = '🧙';
+        cell.classList.add('player');
+    }
+
+    function placeDragons() {
+        dragons.forEach(dragon => {
+            const cell = document.querySelector(`[data-x="${dragon.x}"][data-y="${dragon.y}"]`);
+            cell.innerHTML = '🐉';
+            cell.classList.add('dragon');
+        });
+    }
+
+    function placeTreasures() {
+        for(let i = 0; i < totalTreasures; i++) {
+            let x, y;
+            do {
+                x = Math.floor(Math.random() * 9);
+                y = Math.floor(Math.random() * 9);
+            } while(board.querySelector(`[data-x="${x}"][data-y="${y}"]`).textContent);
+            const cell = board.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+            cell.innerHTML = '💎';
+            cell.classList.add('treasure');
+            treasures.push({x, y});
+        }
+    }
+
+    function movePlayer(e) {
+        const cell = document.querySelector(`[data-x="${playerPos.x}"][data-y="${playerPos.y}"]`);
+        cell.innerHTML = '';
+        cell.classList.remove('player');
+
+        switch(e.key) {
+            case 'ArrowUp': if(playerPos.y > 0) playerPos.y--; break;
+            case 'ArrowDown': if(playerPos.y < 8) playerPos.y++; break;
+            case 'ArrowLeft': if(playerPos.x > 0) playerPos.x--; break;
+            case 'ArrowRight': if(playerPos.x < 8) playerPos.x++; break;
+        }
+        placePlayer();
+        checkCollision();
+    }
+
+    function checkCollision() {
+        const currentCell = document.querySelector(`[data-x="${playerPos.x}"][data-y="${playerPos.y}"]`);
+        if(currentCell.classList.contains('fire')) {
+            gameOver();
+        } else if(currentCell.classList.contains('treasure')) {
+            currentCell.classList.remove('treasure');
+            currentCell.innerHTML = '';
+            scoreDisplay.textContent = parseInt(scoreDisplay.textContent) + 1;
+            if(scoreDisplay.textContent == totalTreasures) {
+                winGame();
+            }
+        }
+    }
+
+    function dragonFire() {
+        const fireSpread = [-1, 0, 1];
+        dragons.forEach(dragon => {
+            fireSpread.forEach(dx => {
+                fireSpread.forEach(dy => {
+                    if(dx === 0 && dy === 0) return;
+                    let nx = dragon.x + dx, ny = dragon.y + dy;
+                    if(nx >= 0 && nx < 9 && ny >= 0 && ny < 9) {
+                        const cell = document.querySelector(`[data-x="${nx}"][data-y="${ny}"]`);
+                        if(!cell.classList.contains('dragon')) {
+                            cell.classList.add('fire');
+                            setTimeout(() => cell.classList.remove('fire'), 500);
+                        }
+                    }
+                });
+            });
+        });
+    }
+
+    function gameOver() {
+        clearInterval(gameInterval);
+        gameOverDisplay.style.display = 'block';
+        restartBtn.style.display = 'block';
+    }
+
+    function winGame() {
+        clearInterval(gameInterval);
+        winDisplay.style.display = 'block';
+        restartBtn.style.display = 'block';
+    }
+
+    function restartGame() {
+        board.innerHTML = '';
+        playerPos = {x: 0, y: 0};
+        treasures = [];
+        gameOverDisplay.style.display = 'none';
+        winDisplay.style.display = 'none';
+        restartBtn.style.display = 'none';
+        startGame();
+    }
+
+    function startGame() {
+        createBoard();
+        placeItems();
+        gameInterval = setInterval(dragonFire, 3000);
+        document.addEventListener('keydown', movePlayer);
+    }
+
+    startGame();
+</script>
+</body>
+</html>

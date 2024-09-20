@@ -1,0 +1,8 @@
+Can you create this interesting game called "Calendar Dash game", I will explain the features below:
+1. The game board is basically a calendar replicating the number of days in the current month. 2 players play this game in alternating turns.
+2. Players take turns rolling the dice by clicking the "Roll Dice" button. Each day has an event, the calendar shows an emoji based on that event. Here are samples how events should look like:
+{ emoji: '🎂', name: "Joe's Birthday", points: 10, description: "You attended Joe's birthday party. Gain 10 points for celebrating with friends!" }, { emoji: '🚗', name: "Traffic Jam", points: -5, description: "Stuck in a traffic jam. Lose 5 points due to wasted time." }
+3. Below the game there should be game info section. The event details and point changes are displayed in the game info section. A feedback modal is centered in the board horizontally and vertically available shown for 1 second after each turn to show the player name and event name.
+4. Generate at least 31 random events for the game. Each calendar day should have an emoji icon relative to the day.
+5. The game continues until both players reach the end of the calendar. One players wait if the other player has finished reaching the end of the calendar.
+6. After game ends, show the winner and the winner's points below the game.

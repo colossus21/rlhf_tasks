@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Murder Story</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background-color: #2c3e50; color: #ecf0f1; }
+        .game-container { max-width: 600px; margin: 20px auto; text-align: center; }
+        .grid { display: grid; grid-template-columns: repeat(9, 30px); gap: 2px; margin: 20px auto; }
+        .cell { width: 30px; height: 30px; background: #34495e; border: 1px solid #2c3e50; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .cell:hover { background: #2980b9; }
+        .clue { margin: 5px 0; color: #bdc3c7; }
+        .found { background: #27ae60; }
+        .not-found { text-decoration: line-through; }
+        .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4); }
+        .modal-content { background-color: #34495e; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 500px; }
+        button { padding: 10px; margin: 10px; background: #e74c3c; color: white; border: none; cursor: pointer; }
+        button:hover { background: #c0392b; }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div class="grid" id="gameGrid"></div>
+    <div id="clues"></div>
+    <button onclick="newGame()">New Game</button>
+</div>
+
+<div id="winModal" class="modal">
+    <div class="modal-content">
+        <p id="story"></p>
+        <button onclick="document.getElementById('winModal').style.display='none'; newGame();">Restart</button>
+    </div>
+</div>
+
+<script>
+    const gridSize = 9;
+    const emojis = {
+        murderer: '🕵️‍♂️', weapon: '🔪', victim: '🧍',
+        school: '🏫', hotel: '🏨', bank: '🏦', park: '🌳', tower: '🗼', bridge: '🌉', police: '🚔', fountain: '⛲', metro: '🚇'
+    };
+
+    let gameState = {
+        grid: [],
+        murderer: null,
+        weapon: null,
+        victim: null,
+        clues: []
+    };
+
+    function initializeGame() {
+        gameState.grid = Array(gridSize * gridSize).fill(null);
+        placeItems();
+        generateClues();
+        renderGrid();
+        renderClues();
+    }
+
+    function placeItems() {
+        const items = ['murderer', 'weapon', 'victim'];
+        for (let item of items) {
+            let position;
+            do {
+                position = Math.floor(Math.random() * gameState.grid.length);
+            } while (gameState.grid[position] !== null);
+            gameState.grid[position] = item;
+        }
+    }
+
+    function generateClues() {
+        gameState.clues = [];
+        const directions = ['North', 'South', 'East', 'West'];
+        const landmarks = Object.keys(emojis).slice(3); // From school onwards
+        const items = ['murderer', 'weapon', 'victim'];
+
+        for (let item of items) {
+            const itemPos = gameState.grid.findIndex(i => i === item);
+            const itemRow = Math.floor(itemPos / gridSize);
+            const itemCol = itemPos % gridSize;
+
+            let clueSet = new Set();
+            while (clueSet.size < 3) {
+                let landmark = landmarks[Math.floor(Math.random() * landmarks.length)];
+                let direction = directions[Math.floor(Math.random() * directions.length)];
+                if (!clueSet.has(direction)) {
+                    clueSet.add(direction);
+                    gameState.clues.push(`${emojis[item]} is ${direction} of ${emojis[landmark]}`);
+                }
+            }
+        }
+    }
+
+    function renderGrid() {
+        const gridDiv = document.getElementById('gameGrid');
+        gridDiv.innerHTML = '';
+        gameState.grid.forEach((cell, index) => {
+            const div = document.createElement('div');
+            div.className = 'cell';
+            div.onclick = () => clickCell(index);
+            div.textContent = cell ? emojis[cell] : '';
+            gridDiv.appendChild(div);
+        });
+    }
+
+    function renderClues() {
+        const cluesDiv = document.getElementById('clues');
+        cluesDiv.innerHTML = gameState.clues.map(clue => `<div class="clue">${clue}</div>`).join('');
+    }
+
+    function clickCell(index) {
+        if (gameState.grid[index] === null) {
+            gameState.grid[index] = 'not';
+        } else if (['murderer', 'weapon', 'victim'].includes(gameState.grid[index])) {
+            document.querySelector(`#gameGrid .cell:nth-child(${index + 1})`).classList.add('found');
+            updateClues(gameState.grid[index]);
+            checkWin();
+        }
+        renderGrid();
+    }
+
+    function updateClues(foundItem) {
+        gameState.clues = gameState.clues.map(clue =>
+            clue.includes(emojis[foundItem]) ? `<s>${clue}</s>` : clue);
+        renderClues();
+    }
+
+    function checkWin() {
+        if (gameState.clues.every(clue => clue.includes('<s>'))) {
+            showStory();
+        }
+    }
+
+    function showStory() {
+        const names = ['Mr. X', 'Ms. Y', 'Dr. Z', 'Prof. A', 'Mrs. B'];
+        const murdererName = names[Math.floor(Math.random() * names.length)];
+        const victimName = names.filter(name => name !== murdererName)[Math.floor(Math.random() * (names.length - 1))];
+        const weapon = gameState.weapon === 'weapon' ? 'a Rope' : 'an unknown object';
+
+        document.getElementById('story').textContent = `${victimName} was killed by ${murdererName} with ${weapon}. ${gameState.clues.join('. ')}.`;
+        document.getElementById('winModal').style.display = 'block';
+    }
+
+    function newGame() {
+        initializeGame();
+    }
+
+    initializeGame();
+</script>
+
+</body>
+</html>

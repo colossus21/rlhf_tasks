@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Murder Story</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            text-align: center;
+        }
+        #gameBoard {
+            display: grid;
+            grid-template-columns: repeat(9, 40px);
+            grid-gap: 2px;
+            margin: 20px auto;
+            width: fit-content;
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            background: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .cell:hover {
+            background: #555;
+        }
+        .clue, .itemFound {
+            margin: 5px 0;
+            font-style: italic;
+        }
+        #modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            color: #1a1a1a;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div id="gameContainer">
+    <div id="gameBoard"></div>
+    <div id="clues"></div>
+    <button onclick="newGame()">New Game</button>
+</div>
+<div id="modal">
+    <div class="modal-content">
+        <p id="story"></p>
+        <button onclick="restartGame()">Restart</button>
+    </div>
+</div>
+
+<script>
+    const emojis = {
+        school: '🏫', hotel: '🏨', bank: '🏦', park: '🌳', tower: '🗼', bridge: '🌉',
+        policeCar: '🚔', fountain: '⛲', metro: '🚇',
+        murderer: '🕵️‍♂️', weapon: '🔪', victim: '💀'
+    };
+    const names = ['Mr. X', 'Mrs. Y', 'Dr. Z', 'Miss A', 'Prof. B'];
+    let gameState = {grid: [], murderer: null, weapon: null, victim: null, foundItems: 0};
+
+    function initializeGame() {
+        gameState.grid = Array(9).fill().map(() => Array(9).fill(null));
+        ['murderer', 'weapon', 'victim'].forEach(item => {
+            let x, y;
+            do {
+                x = Math.floor(Math.random() * 9);
+                y = Math.floor(Math.random() * 9);
+            } while(gameState.grid[x][y] !== null);
+            gameState.grid[x][y] = item;
+            gameState[item] = {x, y};
+        });
+        generateClues();
+        renderBoard();
+    }
+
+    function generateClues() {
+        const directions = ['North', 'South', 'East', 'West'];
+        const clues = [];
+        ['murderer', 'weapon', 'victim'].forEach(item => {
+            let clue = `${emojis[item]} is hidden `;
+            directions.forEach(dir => {
+                if (Math.random() > 0.5) { // Randomly choose to include this direction
+                    let landmark = Object.keys(emojis).filter(k => k !== item)[Math.floor(Math.random() * 9)];
+                    clue += `${dir} of ${emojis[landmark]} `;
+                }
+            });
+            clues.push(clue);
+        });
+        document.getElementById('clues').innerHTML = clues.map((clue, i) => `<p class="clue">${clue}</p>`).join('');
+    }
+
+    function renderBoard() {
+        const board = document.getElementById('gameBoard');
+        board.innerHTML = '';
+        for(let i = 0; i < 9; i++) {
+            for(let j = 0; j < 9; j++) {
+                let cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.onclick = () => checkCell(i, j);
+                board.appendChild(cell);
+            }
+        }
+    }
+
+    function checkCell(x, y) {
+        const item = gameState.grid[x][y];
+        const cell = document.querySelector(`#gameBoard .cell:nth-child(${x * 9 + y + 1})`);
+        if (item) {
+            cell.innerHTML = emojis[item];
+            cell.style.background = 'green';
+            document.querySelector(`#clues .clue:nth-child(${['murderer', 'weapon', 'victim'].indexOf(item) + 1})`).classList.add('itemFound');
+            if (++gameState.foundItems === 3) showWin();
+        } else {
+            cell.innerHTML = '❌';
+        }
+    }
+
+    function showWin() {
+        const story = `${names[Math.floor(Math.random() * 5)]} was killed by ${names[Math.floor(Math.random() * 5)]} with a ${['Rope', 'Knife', 'Gun'][Math.floor(Math.random() * 3)]}.`;
+        document.getElementById('story').textContent = story;
+        document.getElementById('modal').style.display = 'block';
+    }
+
+    function restartGame() {
+        document.getElementById('modal').style.display = 'none';
+        initializeGame();
+    }
+
+    function newGame() {
+        restartGame();
+    }
+
+    initializeGame();
+</script>
+</body>
+</html>

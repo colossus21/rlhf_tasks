@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Space Othello</title>
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        #game-container {
+            text-align: center;
+            position: relative;
+        }
+        #starfield {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #444;
+            display: inline-block;
+            margin: 2px;
+            border-radius: 50%;
+        }
+        .piece {
+            width: 40px;
+            height: 40px;
+            margin: 5px;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+        .black { background: #000; box-shadow: 0 0 10px #00f, 0 0 20px #00f; }
+        .white { background: #fff; box-shadow: 0 0 10px #800080, 0 0 20px #800080; }
+        .valid {
+            background: rgba(0, 255, 0, 0.3);
+            box-shadow: 0 0 10px #0f0;
+        }
+        .power-btn {
+            margin: 10px;
+            padding: 10px 20px;
+            background: #333;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        #game-info {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<div id="game-container">
+    <div id="starfield"></div>
+    <h1>Space Othello</h1>
+    <div id="game-info">Score: <span id="score"></span> | Turn: <span id="turn"></span></div>
+    <div id="board"></div>
+    <div>
+        <button class="power-btn" onclick="usePower('teleport')">Teleport</button>
+        <button class="power-btn" onclick="usePower('fortify')">Fortify</button>
+        <button class="power-btn" onclick="usePower('doubleFlip')">Double Flip</button>
+        <button class="power-btn" onclick="restartGame()">Restart</button>
+    </div>
+</div>
+
+<script>
+    // Game logic would go here
+    const board = document.getElementById('board');
+    const scoreDisplay = document.getElementById('score');
+    const turnDisplay = document.getElementById('turn');
+    let gameBoard = Array(6).fill().map(() => Array(6).fill(null));
+    let currentPlayer = 'black';
+    let canUsePower = { teleport: true, fortify: true, doubleFlip: true };
+    let powers = { teleport: null, fortify: null, doubleFlip: false };
+
+    // Initialize board
+    function initBoard() {
+        for(let i = 0; i < 6; i++) {
+            for(let j = 0; j < 6; j++) {
+                let cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.onclick = () => makeMove(i, j);
+                board.appendChild(cell);
+            }
+        }
+        // Initial pieces
+        gameBoard[2][2] = gameBoard[3][3] = 'white';
+        gameBoard[2][3] = gameBoard[3][2] = 'black';
+        updateBoardDisplay();
+    }
+
+    // Starfield background animation
+    function createStarfield() {
+        const starfield = document.getElementById('starfield');
+        for (let i = 0; i < 200; i++) {
+            let star = document.createElement('div');
+            star.style.position = 'absolute';
+            star.style.width = '1px';
+            star.style.height = '1px';
+            star.style.background = 'white';
+            star.style.left = `${Math.random() * 100}vw`;
+            star.style.top = `${Math.random() * 100}vh`;
+            starfield.appendChild(star);
+        }
+    }
+
+    // Game functions like makeMove, checkValidMove, updateBoardDisplay, usePower, etc., would be defined here
+
+    function restartGame() {
+        // Reset game state
+        currentPlayer = 'black';
+        gameBoard = Array(6).fill().map(() => Array(6).fill(null));
+        canUsePower = { teleport: true, fortify: true, doubleFlip: true };
+        powers = { teleport: null, fortify: null, doubleFlip: false };
+        initBoard();
+    }
+
+    // Initial setup
+    createStarfield();
+    initBoard();
+
+    // Placeholder for other game logic functions
+</script>
+</body>
+</html>

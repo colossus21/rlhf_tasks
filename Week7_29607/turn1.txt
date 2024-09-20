@@ -1,0 +1,7 @@
+Create a 6x6 othello game called "Space Othello" with the following features and twists:
+1. The game should have a dark background with a starfield animation at back to create a space atmosphere.
+2. Make the game pieces (black and white) have a neon glow effect like stars. Black pieces can have blue glow and white can have purple.
+3. Add 3 special powers: Teleport: move one of the pieces to any empty cell, Fortify: make a piece immune to being flipped for one round and Double Flip: flip two lines instead of one on the next move.
+4. Above the board provide game title, the current score of two players in a line then current player indicator.
+5. Show valid moves on the board by showing elegant dots.
+6. Show winner after game over. Add a restart button as well. The font can be futuristic in space theme, also make sure no external image or alerts ar eused.

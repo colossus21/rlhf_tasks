@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rick & Morty Quiz Game</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+        #game-container {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .character-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+        .options button {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            border: none;
+            background: #00b5cc;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .options button:hover {
+            background: #0097a7;
+        }
+        #progress, #score {
+            margin-top: 20px;
+        }
+        .loader {
+            border: 16px solid #f3f3f3;
+            border-top: 16px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 2s linear infinite;
+            display: none;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <h1>Rick & Morty Quiz Game</h1>
+    <div id="loader" class="loader"></div>
+    <div id="game-content" style="display:none;">
+        <img id="character-image" class="character-image" src="" alt="Character Image">
+        <div class="options" id="options"></div>
+        <div id="feedback"></div>
+        <div id="progress">Question: <span id="current-question">0</span>/10</div>
+        <div id="score">Score: <span id="current-score">0</span></div>
+        <button id="next-btn" style="display:none;">Next</button>
+        <button id="play-again-btn" style="display:none;">Play Again</button>
+    </div>
+</div>
+
+<script>
+    let characters = [];
+    let currentQuestion = 0;
+    let score = 0;
+    let totalQuestions = 10;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const loader = document.getElementById('loader');
+        const gameContent = document.getElementById('game-content');
+        const optionsDiv = document.getElementById('options');
+        const nextBtn = document.getElementById('next-btn');
+        const playAgainBtn = document.getElementById('play-again-btn');
+
+        async function fetchCharacters() {
+            loader.style.display = 'block';
+            gameContent.style.display = 'none';
+            document.body.style.backgroundColor = '#e0e0e0';
+            try {
+                let response = await fetch('https://rickandmortyapi.com/api/character');
+                let data = await response.json();
+                characters = data.results;
+                while(data.info.next) {
+                    response = await fetch(data.info.next);
+                    data = await response.json();
+                    characters = characters.concat(data.results);
+                }
+                startGame();
+            } catch (error) {
+                console.error('Failed to fetch characters:', error);
+            } finally {
+                loader.style.display = 'none';
+                document.body.style.backgroundColor = '#f0f0f0';
+            }
+        }
+
+        function startGame() {
+            gameContent.style.display = 'block';
+            currentQuestion = 0;
+            score = 0;
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            if (currentQuestion >= totalQuestions) {
+                endGame();
+                return;
+            }
+            currentQuestion++;
+            document.getElementById('current-question').textContent = currentQuestion;
+            let correctCharacter = characters[Math.floor(Math.random() * characters.length)];
+            let options = [correctCharacter.name];
+            while(options.length < 4) {
+                let randomChar = characters[Math.floor(Math.random() * characters.length)];
+                if(!options.includes(randomChar.name)) options.push(randomChar.name);
+            }
+            options.sort(() => Math.random() - 0.5); // Shuffle options
+
+            document.getElementById('character-image').src = correctCharacter.image;
+            optionsDiv.innerHTML = '';
+            options.forEach(option => {
+                let button = document.createElement('button');
+                button.innerText = option;
+                button.onclick = () => checkAnswer(option, correctCharacter.name);
+                optionsDiv.appendChild(button);
+            });
+            nextBtn.style.display = 'none';
+        }
+
+        function checkAnswer(selected, correct) {
+            let feedback = document.getElementById('feedback');
+            if (selected === correct) {
+                score++;
+                feedback.textContent = "Correct!";
+                feedback.style.color = 'green';
+            } else {
+                feedback.textContent = `Wrong! The correct answer was ${correct}.`;
+                feedback.style.color = 'red';
+            }
+            document.getElementById('current-score').textContent = score;
+            nextBtn.style.display = 'block';
+        }
+
+        function endGame() {
+            let message = "";
+            if (score === 10) message = "Perfect score! You're a true Rick and Morty expert!";
+            else if (score > 7) message = "Great job! You know your Rick and Morty characters!";
+            else if (score > 4) message = "Not bad, but you could do better. Wubba Lubba Dub Dub!";
+            else message = "You might need to watch more episodes!";
+
+            document.getElementById('feedback').textContent = `Game Over! You scored ${score} out of ${totalQuestions}. ${message}`;
+            document.getElementById('feedback').style.color = 'black';
+            nextBtn.style.display = 'none';
+            playAgainBtn.style.display = 'block';
+        }
+
+        nextBtn.onclick = nextQuestion;
+        playAgainBtn.onclick = startGame;
+
+        fetchCharacters();
+    });
+</script>
+</body>
+</html>

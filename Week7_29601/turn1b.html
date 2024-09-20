@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emoji Recipes</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 50px);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+            background-color: white;
+        }
+        .cell.selected {
+            background-color: #ffff99;
+        }
+        #combineBtn {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            margin: 10px 0;
+        }
+        #feedback, #recipesFound, #discoveredRecipes {
+            margin: 10px 0;
+            font-size: 18px;
+        }
+        #discoveredRecipes div {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div id="gameContainer">
+    <div class="grid" id="emojiGrid"></div>
+    <button id="combineBtn">Combine</button>
+    <div id="feedback"></div>
+    <div id="recipesFound">Recipes Found: 0/10</div>
+    <div id="discoveredRecipes"></div>
+</div>
+
+<script>
+    const emojis = {
+        'Burger bread': '🍔', 'Tomato': '🍅', 'Cheese': '🧀', 'Bread': '🍞',
+        'Beef': '🥩', 'Baguette': '🥖', 'Sausage': '🌭', 'Corn': '🌽',
+        'Frying Pan': '🍳', 'Lettuce': '🥬', 'Carrot': '🥕', 'Cucumber': '🥒',
+        'Banana': '🍌', 'Strawberry': '🍓', 'Milk': '🥛', 'Cake': '🍰',
+        'Chocolate': '🍫', 'Cherry': '🍒', 'Potato': '🥔', 'Knife': '🔪',
+        'Salt': '🧂', 'Ice Cream': '🍦', 'Fish': '🐟', 'Rice': '🍚'
+    };
+
+    const recipes = {
+        'Pizza': ['Burger bread', 'Tomato', 'Cheese'],
+        'Hamburger': ['Bread', 'Beef', 'Cheese'],
+        'Hot Dog': ['Baguette', 'Sausage'],
+        'Popcorn': ['Corn', 'Frying Pan'],
+        'Salad': ['Lettuce', 'Carrot', 'Cucumber'],
+        'Milkshake': ['Banana', 'Strawberry', 'Milk'],
+        'Cupcake': ['Cake', 'Chocolate', 'Strawberry'],
+        'French Fries': ['Potato', 'Knife', 'Salt'],
+        'Ice Cream Sundae': ['Ice Cream', 'Chocolate', 'Cherry'],
+        'Sushi': ['Fish', 'Rice', 'Cucumber']
+    };
+
+    let selectedEmojis = [];
+    let recipesFound = new Set();
+    const grid = document.getElementById('emojiGrid');
+    const combineBtn = document.getElementById('combineBtn');
+    const feedback = document.getElementById('feedback');
+    const recipesCounter = document.getElementById('recipesFound');
+    const discoveredRecipesDiv = document.getElementById('discoveredRecipes');
+
+    function setupGame() {
+        for(let i = 0; i < 25; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            const randomEmoji = Object.keys(emojis)[Math.floor(Math.random() * Object.keys(emojis).length)];
+            cell.textContent = emojis[randomEmoji];
+            cell.dataset.ingredient = randomEmoji;
+            cell.onclick = () => toggleSelection(cell);
+            grid.appendChild(cell);
+        }
+    }
+
+    function toggleSelection(cell) {
+        cell.classList.toggle('selected');
+        const index = selectedEmojis.indexOf(cell.dataset.ingredient);
+        if(index > -1) {
+            selectedEmojis.splice(index, 1);
+        } else {
+            selectedEmojis.push(cell.dataset.ingredient);
+        }
+    }
+
+    function checkRecipe() {
+        let found = false;
+        for(const [recipe, ingredients] of Object.entries(recipes)) {
+            if(ingredients.every(ing => selectedEmojis.includes(ing)) && ingredients.length === selectedEmojis.length) {
+                if(!recipesFound.has(recipe)) {
+                    recipesFound.add(recipe);
+                    feedback.textContent = `Recipe found: ${recipe} ${ingredients.map(ing => emojis[ing]).join('')}`;
+                    updateRecipesFound();
+                    updateDiscoveredRecipes();
+                    found = true;
+                    if(recipesFound.size === 10) {
+                        feedback.textContent += " Congratulations! You've found all the recipes!";
+                    }
+                }
+                break;
+            }
+        }
+        if(!found) {
+            feedback.textContent = "No recipe found. Try again!";
+        }
+        resetSelection();
+    }
+
+    function updateRecipesFound() {
+        recipesCounter.textContent = `Recipes Found: ${recipesFound.size}/10`;
+    }
+
+    function updateDiscoveredRecipes() {
+        discoveredRecipesDiv.innerHTML = '';
+        for(let recipe of recipesFound) {
+            let recipeEmojis = recipes[recipe].map(ing => emojis[ing]).join('');
+            discoveredRecipesDiv.innerHTML += `<div>${recipe}: ${recipeEmojis}</div>`;
+        }
+    }
+
+    function resetSelection() {
+        selectedEmojis = [];
+        document.querySelectorAll('.selected').forEach(cell => cell.classList.remove('selected'));
+    }
+
+    combineBtn.onclick = checkRecipe;
+    setupGame();
+</script>
+
+</body>
+</html>

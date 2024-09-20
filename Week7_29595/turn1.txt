@@ -1,0 +1,8 @@
+Can you create a javascript game called "Dragon Treasure Hunt" in which:
+i) The game board is a 9x9 grid where each cell is 60x60 pixels.
+ii) The player is a green wizard emoji that starts at top-left corner and can move using the arrow keys (up, down, left, right).
+iii) Dragons are placed at center of each 3x3 sections, and each dragon periodically shoots fire around 9 cells every few seconds.
+iv) Player wins by collecting 9 treasures (randomly placed) which is a gem icon. Show the number of treasures collected and treasures left at the top of the screen.
+v) Player dies touching the fire cells, show "Game Over" message with a restart button. Restart button is placed after win as well below the board.
+vi) The game should have a medieval theme with dark background.
+vii) Include feedback or animation wherever proper. No alerts and external images please.
