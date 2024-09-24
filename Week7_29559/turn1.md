@@ -27,277 +27,292 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forest Keeper</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #e6f7e6;
-        }
-        .game-container {
-            text-align: center;
-        }
-        .grid {
-            display: inline-grid;
-            grid-template-columns: repeat(6, 50px);
-            gap: 2px;
-            background-color: #9ed49e;
-            padding: 10px;
-            border-radius: 10px;
-        }
-        .cell {
-            width: 50px;
-            height: 50px;
-            font-size: 30px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #c2e8c2;
-            border-radius: 5px;
-            transition: all 0.3s ease;
-        }
-        .cell.filled {
-            box-shadow: inset 0 0 0 3px #4CAF50;
-        }
-        .controls {
-            margin-top: 20px;
-        }
-        button {
-            font-size: 20px;
-            margin: 5px;
-            padding: 10px 20px;
-            cursor: pointer;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        #message {
-            margin-top: 20px;
-            font-size: 24px;
-            font-weight: bold;
-            color: #4CAF50;
-        }
-        .fade-in {
-            animation: fadeIn 0.5s;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .bounce {
-            animation: bounce 0.5s;
-        }
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-    </style>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Forest Keeper</title>
+   <style>
+      body {
+         font-family: Arial, sans-serif;
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         height: 100vh;
+         margin: 0;
+         background-color: #e6f7e6;
+      }
+      .game-container {
+         text-align: center;
+      }
+      .grid {
+         display: inline-grid;
+         grid-template-columns: repeat(6, 50px);
+         gap: 2px;
+         background-color: #9ed49e;
+         padding: 10px;
+         border-radius: 10px;
+      }
+      .cell {
+         width: 50px;
+         height: 50px;
+         font-size: 30px;
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         background-color: #c2e8c2;
+         border-radius: 5px;
+         transition: all 0.3s ease;
+      }
+      .cell.filled {
+         box-shadow: inset 0 0 0 3px #4CAF50;
+      }
+      .controls {
+         margin-top: 20px;
+      }
+      button {
+         font-size: 20px;
+         margin: 5px;
+         padding: 10px 20px;
+         cursor: pointer;
+         background-color: #4CAF50;
+         color: white;
+         border: none;
+         border-radius: 5px;
+         transition: background-color 0.3s ease;
+      }
+      button:hover {
+         background-color: #45a049;
+      }
+
+      #restart-button {
+         background-color: #e32631;
+         color: white;
+      }
+
+      #restart-button:hover {
+         background-color: #f85959;
+      }
+
+      #message {
+         margin-top: 20px;
+         font-size: 24px;
+         font-weight: bold;
+         color: #4CAF50;
+      }
+      .fade-in {
+         animation: fadeIn 0.5s;
+      }
+      @keyframes fadeIn {
+         from { opacity: 0; }
+         to { opacity: 1; }
+      }
+      .bounce {
+         animation: bounce 0.5s;
+      }
+      @keyframes bounce {
+         0%, 100% { transform: translateY(0); }
+         50% { transform: translateY(-10px); }
+      }
+   </style>
 </head>
 <body>
 <div class="game-container">
-    <h1>Forest Keeper</h1>
-    <div id="moves">Moves: 0</div>
-    <div id="level">Level: 1</div>
-    <div id="grid" class="grid"></div>
-    <div class="controls">
-        <button onclick="move('up')">⬆️</button><br>
-        <button onclick="move('left')">⬅️</button>
-        <button onclick="move('right')">➡️</button><br>
-        <button onclick="move('down')">⬇️</button>
-    </div>
-    <div id="message"></div>
-    <button id="nextLevel" style="display: none;" onclick="loadNextLevel()">Next Level</button>
+   <h1>Forest Keeper</h1>
+   <div id="moves">Moves: 0</div>
+   <div id="level">Level: 1</div>
+   <div id="grid" class="grid"></div>
+   <div class="controls">
+      <button onclick="move('up')">⬆️</button><br>
+      <button onclick="move('left')">⬅️</button>
+      <button onclick="move('right')">➡️</button><br>
+      <button onclick="move('down')">⬇️</button>
+   </div>
+   <div id="message"></div>
+   <button id="restart-button" onclick="restartGame()">New Game</button>
+   <button id="nextLevel" style="display: none;" onclick="loadNextLevel()">Next Level</button>
 </div>
 
 <script>
-    const GRID_SIZE = 6;
-    const WALL = '🌳';
-    const ROCK = '🪨';
-    const HOLE = '🕳️';
-    const PLAYER = '🧑';
-    const EMPTY = '　';
+   const GRID_SIZE = 6;
+   const WALL = '🌳';
+   const ROCK = '🪨';
+   const HOLE = '🕳️';
+   const PLAYER = '🧑';
+   const EMPTY = '　';
 
-    const levels = [
-        [
-            [EMPTY, EMPTY, WALL, EMPTY, EMPTY, EMPTY],
-            [EMPTY, ROCK, EMPTY, EMPTY, HOLE, EMPTY],
-            [WALL, EMPTY, EMPTY, ROCK, EMPTY, EMPTY],
-            [EMPTY, EMPTY, WALL, EMPTY, EMPTY, EMPTY],
-            [EMPTY, HOLE, EMPTY, EMPTY, ROCK, EMPTY],
-            [EMPTY, EMPTY, EMPTY, WALL, EMPTY, PLAYER]
-        ],
-        [
-            [WALL, EMPTY, EMPTY, WALL, EMPTY, EMPTY],
-            [EMPTY, PLAYER, EMPTY, ROCK, EMPTY, HOLE],
-            [EMPTY, ROCK, EMPTY, EMPTY, WALL, EMPTY],
-            [HOLE, EMPTY, EMPTY, EMPTY, ROCK, EMPTY],
-            [WALL, EMPTY, EMPTY, EMPTY, HOLE, EMPTY],
-            [EMPTY, EMPTY, WALL, EMPTY, EMPTY, WALL]
-        ],
-        [
-            [WALL, WALL, EMPTY, EMPTY, EMPTY, WALL],
-            [WALL, EMPTY, EMPTY, ROCK, EMPTY, EMPTY],
-            [EMPTY, PLAYER, ROCK, HOLE, HOLE, EMPTY],
-            [EMPTY, EMPTY, EMPTY, ROCK, EMPTY, EMPTY],
-            [WALL, EMPTY, EMPTY, EMPTY, EMPTY, WALL],
-            [WALL, WALL, EMPTY, EMPTY, WALL, WALL]
-        ],
-        [
-            [WALL, WALL, EMPTY, EMPTY, WALL, WALL],
-            [WALL, EMPTY, EMPTY, EMPTY, EMPTY, WALL],
-            [EMPTY, ROCK, HOLE, PLAYER, ROCK, EMPTY],
-            [EMPTY, HOLE, ROCK, EMPTY, HOLE, EMPTY],
-            [WALL, EMPTY, EMPTY, EMPTY, EMPTY, WALL],
-            [WALL, WALL, EMPTY, EMPTY, WALL, WALL]
-        ],
-        [
-            [WALL, WALL, EMPTY, EMPTY, EMPTY, PLAYER],
-            [WALL, EMPTY, EMPTY, ROCK, ROCK, EMPTY],
-            [EMPTY, EMPTY, WALL, HOLE, HOLE, EMPTY],
-            [EMPTY, ROCK, EMPTY, EMPTY, HOLE, EMPTY],
-            [WALL, EMPTY, EMPTY, EMPTY, EMPTY, WALL],
-            [WALL, WALL, EMPTY, EMPTY, WALL, WALL]
-        ]
-    ];
+   const levels = [
+      [
+         [EMPTY, EMPTY, WALL, EMPTY, EMPTY, EMPTY],
+         [EMPTY, ROCK, EMPTY, EMPTY, HOLE, EMPTY],
+         [WALL, EMPTY, EMPTY, ROCK, EMPTY, EMPTY],
+         [EMPTY, EMPTY, WALL, EMPTY, EMPTY, EMPTY],
+         [EMPTY, HOLE, EMPTY, EMPTY, ROCK, EMPTY],
+         [EMPTY, EMPTY, EMPTY, WALL, EMPTY, PLAYER]
+      ],
+      [
+         [WALL, EMPTY, EMPTY, WALL, EMPTY, EMPTY],
+         [EMPTY, PLAYER, EMPTY, ROCK, EMPTY, HOLE],
+         [EMPTY, ROCK, EMPTY, EMPTY, WALL, EMPTY],
+         [HOLE, EMPTY, EMPTY, EMPTY, ROCK, EMPTY],
+         [WALL, EMPTY, EMPTY, EMPTY, HOLE, EMPTY],
+         [EMPTY, EMPTY, WALL, EMPTY, EMPTY, WALL]
+      ],
+      [
+         [WALL, WALL, EMPTY, EMPTY, EMPTY, WALL],
+         [WALL, EMPTY, EMPTY, ROCK, EMPTY, EMPTY],
+         [EMPTY, PLAYER, ROCK, HOLE, HOLE, EMPTY],
+         [EMPTY, EMPTY, EMPTY, ROCK, EMPTY, EMPTY],
+         [WALL, EMPTY, EMPTY, EMPTY, EMPTY, WALL],
+         [WALL, WALL, EMPTY, EMPTY, WALL, WALL]
+      ],
+      [
+         [WALL, WALL, EMPTY, EMPTY, WALL, WALL],
+         [WALL, EMPTY, EMPTY, EMPTY, EMPTY, WALL],
+         [EMPTY, ROCK, HOLE, PLAYER, ROCK, EMPTY],
+         [EMPTY, HOLE, ROCK, EMPTY, HOLE, EMPTY],
+         [WALL, EMPTY, EMPTY, EMPTY, EMPTY, WALL],
+         [WALL, WALL, EMPTY, EMPTY, WALL, WALL]
+      ],
+      [
+         [WALL, WALL, EMPTY, EMPTY, EMPTY, PLAYER],
+         [WALL, EMPTY, EMPTY, ROCK, ROCK, EMPTY],
+         [EMPTY, EMPTY, WALL, HOLE, HOLE, EMPTY],
+         [EMPTY, ROCK, EMPTY, EMPTY, HOLE, EMPTY],
+         [WALL, EMPTY, EMPTY, EMPTY, EMPTY, WALL],
+         [WALL, WALL, EMPTY, EMPTY, WALL, WALL]
+      ]
+   ];
 
-    let currentLevel = 0;
-    let grid = [];
-    let playerPos = [0, 0];
-    let moves = 0;
+   let currentLevel = 0;
+   let grid = [];
+   let playerPos = [0, 0];
+   let moves = 0;
 
-    function initLevel(levelIndex) {
-        grid = JSON.parse(JSON.stringify(levels[levelIndex]));
-        moves = 0;
-        updateMoves();
-        document.getElementById('level').textContent = `Level: ${levelIndex + 1}`;
-        document.getElementById('message').textContent = '';
-        document.getElementById('nextLevel').style.display = 'none';
-        findPlayer();
-        renderGrid();
-    }
+   function initLevel(levelIndex) {
+      grid = JSON.parse(JSON.stringify(levels[levelIndex]));
+      moves = 0;
+      updateMoves();
+      document.getElementById('level').textContent = `Level: ${levelIndex + 1}`;
+      document.getElementById('message').textContent = '';
+      document.getElementById('nextLevel').style.display = 'none';
+      findPlayer();
+      renderGrid();
+   }
 
-    function findPlayer() {
-        for (let i = 0; i < GRID_SIZE; i++) {
-            for (let j = 0; j < GRID_SIZE; j++) {
-                if (grid[i][j] === PLAYER) {
-                    playerPos = [i, j];
-                    return;
-                }
+   function findPlayer() {
+      for (let i = 0; i < GRID_SIZE; i++) {
+         for (let j = 0; j < GRID_SIZE; j++) {
+            if (grid[i][j] === PLAYER) {
+               playerPos = [i, j];
+               return;
             }
-        }
-    }
+         }
+      }
+   }
 
-    function renderGrid() {
-        const gridElement = document.getElementById('grid');
-        gridElement.innerHTML = '';
-        for (let i = 0; i < GRID_SIZE; i++) {
-            for (let j = 0; j < GRID_SIZE; j++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.textContent = grid[i][j];
-                if (grid[i][j] === ROCK && levels[currentLevel][i][j] === HOLE) {
-                    cell.classList.add('filled');
-                }
-                gridElement.appendChild(cell);
+   function renderGrid() {
+      const gridElement = document.getElementById('grid');
+      gridElement.innerHTML = '';
+      for (let i = 0; i < GRID_SIZE; i++) {
+         for (let j = 0; j < GRID_SIZE; j++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.textContent = grid[i][j];
+            if (grid[i][j] === ROCK && levels[currentLevel][i][j] === HOLE) {
+               cell.classList.add('filled');
             }
-        }
-    }
+            gridElement.appendChild(cell);
+         }
+      }
+   }
 
-    function updateMoves() {
-        document.getElementById('moves').textContent = `Moves: ${moves}`;
-    }
+   function updateMoves() {
+      document.getElementById('moves').textContent = `Moves: ${moves}`;
+   }
 
-    function isValidMove(row, col) {
-        return row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE && grid[row][col] !== WALL;
-    }
+   function isValidMove(row, col) {
+      return row >= 0 && row < GRID_SIZE && col >= 0 && col < GRID_SIZE && grid[row][col] !== WALL;
+   }
 
-    function move(direction) {
-        let [rowDiff, colDiff] = [0, 0];
-        switch (direction) {
-            case 'up': rowDiff = -1; break;
-            case 'down': rowDiff = 1; break;
-            case 'left': colDiff = -1; break;
-            case 'right': colDiff = 1; break;
-        }
+   function move(direction) {
+      let [rowDiff, colDiff] = [0, 0];
+      switch (direction) {
+         case 'up': rowDiff = -1; break;
+         case 'down': rowDiff = 1; break;
+         case 'left': colDiff = -1; break;
+         case 'right': colDiff = 1; break;
+      }
 
-        const newRow = playerPos[0] + rowDiff;
-        const newCol = playerPos[1] + colDiff;
+      const newRow = playerPos[0] + rowDiff;
+      const newCol = playerPos[1] + colDiff;
 
-        if (isValidMove(newRow, newCol)) {
-            if (grid[newRow][newCol] === ROCK) {
-                const newRockRow = newRow + rowDiff;
-                const newRockCol = newCol + colDiff;
-                if (isValidMove(newRockRow, newRockCol) && grid[newRockRow][newRockCol] !== ROCK) {
-                    grid[newRockRow][newRockCol] = ROCK;
-                    grid[newRow][newCol] = PLAYER;
-                    grid[playerPos[0]][playerPos[1]] = levels[currentLevel][playerPos[0]][playerPos[1]] === HOLE ? HOLE : EMPTY;
-                    playerPos = [newRow, newCol];
-                    moves++;
-                    animateElement(newRockRow, newRockCol, 'bounce');
-                }
-            } else {
-                grid[newRow][newCol] = PLAYER;
-                grid[playerPos[0]][playerPos[1]] = levels[currentLevel][playerPos[0]][playerPos[1]] === HOLE ? HOLE : EMPTY;
-                playerPos = [newRow, newCol];
-                moves++;
+      if (isValidMove(newRow, newCol)) {
+         if (grid[newRow][newCol] === ROCK) {
+            const newRockRow = newRow + rowDiff;
+            const newRockCol = newCol + colDiff;
+            if (isValidMove(newRockRow, newRockCol) && grid[newRockRow][newRockCol] !== ROCK) {
+               grid[newRockRow][newRockCol] = ROCK;
+               grid[newRow][newCol] = PLAYER;
+               grid[playerPos[0]][playerPos[1]] = levels[currentLevel][playerPos[0]][playerPos[1]] === HOLE ? HOLE : EMPTY;
+               playerPos = [newRow, newCol];
+               moves++;
+               animateElement(newRockRow, newRockCol, 'bounce');
             }
-            renderGrid();
-            updateMoves();
-            animateElement(newRow, newCol, 'fade-in');
-            checkCompletion();
-        }
-    }
+         } else {
+            grid[newRow][newCol] = PLAYER;
+            grid[playerPos[0]][playerPos[1]] = levels[currentLevel][playerPos[0]][playerPos[1]] === HOLE ? HOLE : EMPTY;
+            playerPos = [newRow, newCol];
+            moves++;
+         }
+         renderGrid();
+         updateMoves();
+         animateElement(newRow, newCol, 'fade-in');
+         checkCompletion();
+      }
+   }
 
-    function animateElement(row, col, animationClass) {
-        const index = row * GRID_SIZE + col;
-        const element = document.getElementsByClassName('cell')[index];
-        element.classList.add(animationClass);
-        setTimeout(() => {
-            element.classList.remove(animationClass);
-        }, 500);
-    }
+   function animateElement(row, col, animationClass) {
+      const index = row * GRID_SIZE + col;
+      const element = document.getElementsByClassName('cell')[index];
+      element.classList.add(animationClass);
+      setTimeout(() => {
+         element.classList.remove(animationClass);
+      }, 500);
+   }
 
-    function checkCompletion() {
-        const completed = levels[currentLevel].every((row, i) =>
-            row.every((cell, j) => cell !== HOLE || (cell === HOLE && grid[i][j] === ROCK))
-        );
-        if (completed) {
-            if (currentLevel < levels.length - 1) {
-                document.getElementById('message').textContent = 'Level Complete! Great job!';
-                document.getElementById('nextLevel').style.display = 'inline-block';
-            } else {
-                document.getElementById('message').textContent = 'Congratulations! You have completed all levels!';
-            }
-            document.getElementById('message').classList.add('fade-in');
-        }
-    }
+   function checkCompletion() {
+      const completed = levels[currentLevel].every((row, i) =>
+              row.every((cell, j) => cell !== HOLE || (cell === HOLE && grid[i][j] === ROCK))
+      );
+      if (completed) {
+         if (currentLevel < levels.length - 1) {
+            document.getElementById('message').textContent = 'Level Complete! Great job!';
+            document.getElementById('nextLevel').style.display = 'inline-block';
+         } else {
+            document.getElementById('message').textContent = 'Congratulations! You have completed all levels!';
+         }
+         document.getElementById('message').classList.add('fade-in');
+      }
+   }
 
-    function loadNextLevel() {
-        currentLevel++;
-        initLevel(currentLevel);
-    }
+   function loadNextLevel() {
+      currentLevel++;
+      initLevel(currentLevel);
+   }
 
-    document.addEventListener('keydown', (e) => {
-        switch (e.key) {
-            case 'ArrowUp': move('up'); break;
-            case 'ArrowDown': move('down'); break;
-            case 'ArrowLeft': move('left'); break;
-            case 'ArrowRight': move('right'); break;
-        }
-    });
+   function restartGame() {
+      window.location.reload();
+   }
 
-    initLevel(0);
+   document.addEventListener('keydown', (e) => {
+      switch (e.key) {
+         case 'ArrowUp': move('up'); break;
+         case 'ArrowDown': move('down'); break;
+         case 'ArrowLeft': move('left'); break;
+         case 'ArrowRight': move('right'); break;
+      }
+   });
+
+   initLevel(0);
 </script>
 </body>
 </html>

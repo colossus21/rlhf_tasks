@@ -56,6 +56,16 @@
         button:hover {
             background-color: #45a049;
         }
+
+        #restart-button {
+            background-color: #e32631;
+            color: white;
+        }
+
+        #restart-button:hover {
+            background-color: #f85959;
+        }
+
         #message {
             margin-top: 20px;
             font-size: 24px;
@@ -91,6 +101,7 @@
         <button onclick="move('down')">⬇️</button>
     </div>
     <div id="message"></div>
+    <button id="restart-button" onclick="restartGame()">New Game</button>
     <button id="nextLevel" style="display: none;" onclick="loadNextLevel()">Next Level</button>
 </div>
 
@@ -260,6 +271,10 @@
     function loadNextLevel() {
         currentLevel++;
         initLevel(currentLevel);
+    }
+
+    function restartGame() {
+        window.location.reload();
     }
 
     document.addEventListener('keydown', (e) => {
