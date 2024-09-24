@@ -254,15 +254,17 @@
                 const { selectedRow, selectedCol } = gameState.selectedUnit;
                 const selectedUnit = gameState.grid[selectedRow][selectedCol];
 
-                if (selectedUnit.type === 'Healer') {
-                    handleHealerAction(selectedRow, selectedCol, row, col);
-                } else {
-                    if (isValidMove(selectedRow, selectedCol, row, col)) {
-                        moveUnit(selectedRow, selectedCol, row, col);
-                    } else if (isValidAttack(selectedRow, selectedCol, row, col)) {
-                        attackUnit(selectedRow, selectedCol, row, col);
+                if (selectedUnit) {
+                    if (selectedUnit.type === 'Healer') {
+                        handleHealerAction(selectedRow, selectedCol, row, col);
                     } else {
-                        deselectUnit();
+                        if (isValidMove(selectedRow, selectedCol, row, col)) {
+                            moveUnit(selectedRow, selectedCol, row, col);
+                        } else if (isValidAttack(selectedRow, selectedCol, row, col)) {
+                            attackUnit(selectedRow, selectedCol, row, col);
+                        } else {
+                            deselectUnit();
+                        }
                     }
                 }
             } else if (clickedUnit && clickedUnit.player === gameState.currentPlayer) {
