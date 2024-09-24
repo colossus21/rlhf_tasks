@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Forest - Animal Chess</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0e68c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .game-container {
+            background: #8b4513;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        .title, .turn-indicator {
+            text-align: center;
+            color: white;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(6, 50px);
+            grid-gap: 2px;
+            margin: 20px 0;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            background: #deb887;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .cell:hover, .cell.highlight {
+            border: 2px solid yellow;
+        }
+        .legend {
+            color: white;
+            display: flex;
+            justify-content: space-around;
+        }
+        .button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background: #228b22;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .button:hover { background: #1e7a1e; }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <h1 class="title">The Forest</h1>
+    <div class="turn-indicator" id="turnIndicator">Red's Turn</div>
+    <div class="board" id="gameBoard"></div>
+    <div class="legend">
+        <div>🐘:8</div><div>🦁:7</div><div>🐯:6</div><div>🐆:5</div><div>🐺:4</div><div>🐀:1</div>
+    </div>
+    <button class="button" onclick="restartGame()">Restart Game</button>
+    <div id="winMessage"></div>
+</div>
+<script>
+    const board = document.getElementById('gameBoard');
+    const turnIndicator = document.getElementById('turnIndicator');
+    const winMessage = document.getElementById('winMessage');
+    let currentPlayer = 'red';
+    let selectedPiece = null;
+
+    const pieces = {
+        '🐘': 8, '🦁': 7, '🐯': 6, '🐆': 5, '🐺': 4, '🐀': 1
+    };
+
+    const initialBoard = [
+        ['🐀', '🐺', '🐆', '🐯', '🦁', '🐘'],
+        ['', '', '', '', '', ''],
+        ['', '', '', '', '', ''],
+        ['', '', '', '', '', ''],
+        ['', '', '', '', '', ''],
+        ['🐘', '🦁', '🐯', '🐆', '🐺', '🐀']
+    ];
+
+    let gameBoard = JSON.parse(JSON.stringify(initialBoard));
+
+    function createBoard() {
+        board.innerHTML = '';
+        gameBoard.forEach((row, y) => {
+            row.forEach((piece, x) => {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.textContent = piece;
+                if (piece) {
+                    cell.onclick = () => selectPiece(x, y);
+                    cell.style.color = piece === piece.toUpperCase() ? 'red' : 'blue';
+                }
+                board.appendChild(cell);
+            });
+        });
+    }
+
+    function selectPiece(x, y) {
+        const piece = gameBoard[y][x];
+        if (!piece && !selectedPiece) return;
+        if (piece && (piece === piece.toUpperCase() ? 'red' : 'blue') !== currentPlayer) return;
+
+        if (!selectedPiece) {
+            selectedPiece = {x, y};
+            highlightPossibleMoves(x, y);
+        } else if (selectedPiece.x === x && selectedPiece.y === y) {
+            resetHighlight();
+            selectedPiece = null;
+        } else {
+            movePiece(x, y);
+        }
+    }
+
+    function highlightPossibleMoves(x, y) {
+        const directions = [[0,1],[1,0],[0,-1],[-1,0]];
+        resetHighlight();
+        directions.forEach(([dx, dy]) => {
+            const newX = x + dx, newY = y + dy;
+            if (newX >= 0 && newX < 6 && newY >= 0 && newY < 6) {
+                const cell = board.children[newY * 6 + newX];
+                cell.classList.add('highlight');
+            }
+        });
+    }
+
+    function movePiece(x, y) {
+        const {x: oldX, y: oldY} = selectedPiece;
+        const piece = gameBoard[oldY][oldX];
+        const target = gameBoard[y][x];
+
+        if (!target || pieces[piece] >= pieces[target]) {
+            gameBoard[y][x] = piece;
+            gameBoard[oldY][oldX] = '';
+            updateBoard();
+            checkWin();
+            switchPlayer();
+        }
+        resetHighlight();
+        selectedPiece = null;
+    }
+
+    function updateBoard() {
+        createBoard();
+    }
+
+    function switchPlayer() {
+        currentPlayer = currentPlayer === 'red' ? 'blue' : 'red';
+        turnIndicator.textContent = `${currentPlayer === 'red' ? "Red" : "Blue"}'s Turn`;
+        turnIndicator.style.backgroundColor = currentPlayer;
+    }
+
+    function checkWin() {
+        if (!gameBoard.some(row => row.includes('🦁')) || !gameBoard.some(row => row.includes('🦁'.toLowerCase()))) {
+            winMessage.textContent = `${currentPlayer === 'red' ? 'Blue' : 'Red'} Wins!`;
+            winMessage.style.color = currentPlayer === 'red' ? 'blue' : 'red';
+            disableBoard();
+        }
+    }
+
+    function disableBoard() {
+        board.querySelectorAll('.cell').forEach(cell => cell.onclick = null);
+    }
+
+    function resetHighlight() {
+        document.querySelectorAll('.highlight').forEach(cell => cell.classList.remove('highlight'));
+    }
+
+    function restartGame() {
+        gameBoard = JSON.parse(JSON.stringify(initialBoard));
+        currentPlayer = 'red';
+        selectedPiece = null;
+        winMessage.textContent = '';
+        updateBoard();
+        switchPlayer();
+    }
+
+    createBoard();
+</script>
+</body>
+</html>

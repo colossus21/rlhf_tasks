@@ -1,0 +1,8 @@
+Can you create a strategic board game "The Forest" with the following features:
+1. Game is played in a 6x6 grid. Two players: Red and Blue alternates turn to play this game.
+2. Each player has 6 animal types with a power level.rank: Elephant (8), Lion (7), Tiger (6), Panther (5), Wolf (4), and Rat (1)
+4. Each animal has is represented by an emoji in the board
+5. Players take turns moving one animal per turn in left-right-up-down directions. Animals can eat opponent pieces of equal or lower rank. The game ends when a player's Lion is captured.
+6. Show the title above the game board, show the player turn indicator with red background for p1, blue for p2 (text is white). Highlight available moves with yellow border.
+7. Add a winning message after game ends, add a restart button. Add a legend showing the power level of the animals.
+8. Visually appealing layout and colors are appreciated. Make the game centered with a container.

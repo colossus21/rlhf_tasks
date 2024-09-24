@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The Forest</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            background: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        #gameBoard {
+            display: grid;
+            grid-template-columns: repeat(6, 50px);
+            grid-gap: 2px;
+            margin: 20px auto;
+            background-color: #8B4513;
+            padding: 10px;
+            border: 5px solid #556B2F;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            background: #F5DEB3;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+        }
+        .cell:hover {
+            border: 2px solid yellow;
+        }
+        #turnIndicator {
+            padding: 10px;
+            color: white;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .legend {
+            margin-top: 20px;
+            display: inline-block;
+            border: 2px solid #333;
+            padding: 10px;
+            background: #fff;
+        }
+        .legend span {
+            margin: 0 5px;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>The Forest</h1>
+    <div id="turnIndicator" style="background-color: red;">Red's Turn</div>
+    <div id="gameBoard"></div>
+    <div class="legend">
+        <span>🐘:8</span> <span>🦁:7</span> <span>🐯:6</span> <span>🐆:5</span> <span>🐺:4</span> <span>🐀:1</span>
+    </div>
+    <button onclick="restartGame()">Restart Game</button>
+    <div id="winMessage"></div>
+</div>
+
+<script>
+    const board = [
+        ['🐀', '🐺', '🐆', '🐯', '🦁', '🐘'],
+        [null, null, null, null, null, null],
+        [null, null, null, null, null, null],
+        [null, null, null, null, null, null],
+        [null, null, null, null, null, null],
+        ['🐘', '🦁', '🐯', '🐆', '🐺', '🐀']
+    ];
+    let currentPlayer = 'Red';
+    let gameActive = true;
+
+    function createBoard() {
+        const gameBoard = document.getElementById('gameBoard');
+        board.forEach((row, y) => {
+            row.forEach((cell, x) => {
+                let div = document.createElement('div');
+                div.className = 'cell';
+                div.innerHTML = cell || '';
+                div.onclick = () => cellClick(x, y);
+                gameBoard.appendChild(div);
+            });
+        });
+    }
+
+    function cellClick(x, y) {
+        if (!gameActive) return;
+        // Logic for moving and capturing would go here
+        // For simplicity, this example only toggles turns
+        togglePlayer();
+    }
+
+    function togglePlayer() {
+        currentPlayer = currentPlayer === 'Red' ? 'Blue' : 'Red';
+        document.getElementById('turnIndicator').textContent = `${currentPlayer}'s Turn`;
+        document.getElementById('turnIndicator').style.backgroundColor = currentPlayer === 'Red' ? 'red' : 'blue';
+    }
+
+    function checkWinCondition() {
+        // Check if Lion has been captured
+        if (!board.some(row => row.includes('🦁'))) {
+            endGame(currentPlayer === 'Red' ? 'Blue' : 'Red');
+        }
+    }
+
+    function endGame(winner) {
+        gameActive = false;
+        document.getElementById('winMessage').innerText = `${winner} wins!`;
+    }
+
+    function restartGame() {
+        // Reset board, player turn, and game state
+        location.reload();
+    }
+
+    // Initialize the game
+    createBoard();
+</script>
+</body>
+</html>
