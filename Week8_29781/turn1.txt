@@ -1,0 +1,9 @@
+Can you create a web-based board game called 'Global Explorer' where players travel around the world with the following features:
+1. Create a 6x6 grid board with each cell having the image of a different country and an event. These countries and events should be unique, each event has a point.
+2. Use real country flags as icons for each space on the board. Use this url "https://flagsapi.com/:cc/flat/16.png" for flag images, :cc should be replaced by the country code.
+3. 2 players take alternating turns rolling a dice and move around the board.
+4. When a player lands on a cell, the player receives points and a message about a famous landmark or activity in that country.
+5. Use emojis to represent players🚶‍♂️and🚶
+6. Display a modal pop-up for 1.5 seconds when a player lands on a country, showing the event and points earned. Show current player's turn and each player's total points as well. The message should be shown below the board as well i.e. "Player 2 landed on Iceland. <some-emoji-here> Relaxed in the Blue Lagoon geothermal spa, you earn 30 points!".
+7. End the game when both players reach the end of the board. Declare the winner based on who has the most points at the end.
+8. Make the game visually appealing with centered.

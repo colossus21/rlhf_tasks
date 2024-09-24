@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Global Explorer</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        #board {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 5px;
+            width: 600px;
+            margin: 20px auto;
+        }
+        .cell {
+            width: 100%;
+            padding-top: 100%; /* 1:1 Aspect Ratio */
+            position: relative;
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+        }
+        .flag {
+            position: absolute;
+            top: 5px; left: 5px; right: 5px; bottom: 5px;
+            object-fit: cover;
+        }
+        .player {
+            position: absolute;
+            font-size: 20px;
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        #gameInfo, #modalContent {
+            text-align: center;
+            margin: 10px 0;
+        }
+        .modal-body {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div id="gameInfo"></div>
+<div id="board"></div>
+
+<div class="modal" tabindex="-1" role="dialog" id="eventModal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body" id="modalContent"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+    const countries = [
+        {code: "FR", event: "Visited the Eiffel Tower, +20 points!"},
+        // ... Add more countries and events here
+    ];
+
+    let players = [
+        {emoji: '🚶‍♂️', position: 0, points: 0},
+        {emoji: '🚶', position: 0, points: 0}
+    ];
+
+    let currentPlayer = 0;
+
+    function createBoard() {
+        const board = document.getElementById('board');
+        countries.forEach((country, index) => {
+            let cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.innerHTML = `<img src="https://flagsapi.com/${country.code}/flat/16.png" class="flag" alt="${country.code}">`;
+            cell.innerHTML += `<div class="player"></div>`;
+            board.appendChild(cell);
+        });
+    }
+
+    function rollDice() {
+        return Math.floor(Math.random() * 6) + 1;
+    }
+
+    function movePlayer(player, steps) {
+        player.position += steps;
+        if (player.position >= 36) player.position = 36; // End of board
+        updateBoard();
+    }
+
+    function updateBoard() {
+        document.querySelectorAll('.cell .player').forEach(p => p.textContent = '');
+        players.forEach((player, index) => {
+            const cell = document.querySelector(`#board .cell:nth-child(${player.position + 1}) .player`);
+            if (cell) cell.textContent += player.emoji;
+        });
+    }
+
+    function showEvent(event, points) {
+        document.getElementById('modalContent').innerText = event;
+        $('#eventModal').modal('show');
+        setTimeout(() => $('#eventModal').modal('hide'), 1500);
+        document.getElementById('gameInfo').innerText = event.replace('+', 'earned ') + ` Current turn: Player ${currentPlayer + 1}`;
+    }
+
+    function nextTurn() {
+        const diceRoll = rollDice();
+        movePlayer(players[currentPlayer], diceRoll);
+        const country = countries[players[currentPlayer].position];
+        if (country) {
+            players[currentPlayer].points += parseInt(country.event.match(/\+(\d+)/)[1], 10);
+            showEvent(`Player ${currentPlayer + 1} landed on ${country.code}. ${country.event}`, diceRoll);
+        }
+        if (players[currentPlayer].position === 36) {
+            endGame();
+            return;
+        }
+        currentPlayer = (currentPlayer + 1) % 2;
+    }
+
+    function endGame() {
+        let winner = players[0].points > players[1].points ? 'Player 1' : 'Player 2';
+        if (players[0].points === players[1].points) winner = 'It\'s a tie!';
+        alert(winner + " wins with " + Math.max(players[0].points, players[1].points) + " points!");
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        createBoard();
+        document.getElementById('gameInfo').innerText = "Game started! Player 1's turn.";
+        document.body.addEventListener('click', nextTurn);
+    });
+</script>
+
+</body>
+</html>
