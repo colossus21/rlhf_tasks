@@ -1,0 +1,348 @@
+### Code Plan:
+
+1. UI Components:
+    - 9x9 game board
+    - Player indicator
+    - Score display for both players
+    - Pattern cards display (3 for each player)
+    - Restart button
+
+2. Gameplay:
+    - Initialize the game board and pattern cards
+    - Implement turn-based gameplay
+    - Check for pattern matches after each move
+    - Update scores and check for win condition
+    - Implement game restart functionality
+
+### Code:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crystal Patterns</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #game-container {
+            text-align: center;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(9, 40px);
+            gap: 2px;
+            margin: 20px auto;
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+        .cell.red { background-color: #ff6b6b; }
+        .cell.blue { background-color: #4ecdc4; }
+        .cell.completed { opacity: 0.5; }
+        #patterns {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .pattern-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .pattern {
+            display: grid;
+            grid-template-columns: repeat(3, 20px);
+            gap: 1px;
+            margin: 5px;
+            border: 2px solid;
+            padding: 2px;
+        }
+        .red-pattern { border-color: #ff6b6b; }
+        .blue-pattern { border-color: #4ecdc4; }
+        .pattern-cell {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #ccc;
+        }
+        .pattern-filled { background-color: #333; }
+        #current-player, #score {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        #current-player.red { color: #ff6b6b; }
+        #current-player.blue { color: #4ecdc4; }
+        #restart-button {
+            font-size: 16px;
+            padding: 10px 20px;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+        .pattern-title-red { color: #ff6b6b; }
+        .pattern-title-blue { color: #4ecdc4; }
+        #modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div id="game-container">
+    <h1>Crystal Patterns</h1>
+    <div id="current-player">Player 1's turn!</div>
+    <div id="score">Red: 0 | Blue: 0</div>
+    <div id="board"></div>
+    <div id="patterns">
+        <div class="pattern-container">
+            <h3 class="pattern-title-red">Red Patterns</h3>
+            <div id="red-patterns"></div>
+        </div>
+        <div class="pattern-container">
+            <h3 class="pattern-title-blue">Blue Patterns</h3>
+            <div id="blue-patterns"></div>
+        </div>
+    </div>
+    <button id="restart-button">Restart Game</button>
+</div>
+
+<div id="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 id="congrats-message"></h2>
+        <p>Click anywhere to start a new game.</p>
+    </div>
+</div>
+
+<script>
+    const BOARD_SIZE = 9;
+    const PATTERN_SIZE = 3;
+    const PATTERNS_PER_PLAYER = 3;
+    const FILLED_CELLS_PER_PATTERN = 5;
+
+    let currentPlayer = 'red';
+    let board = [];
+    let patterns = { red: [], blue: [] };
+    let scores = { red: 0, blue: 0 };
+    let completedCells = new Set();
+
+    function initializeGame() {
+        currentPlayer = 'red';
+        board = [];
+        patterns = { red: [], blue: [] };
+        scores = { red: 0, blue: 0 };
+        completedCells.clear();
+
+        createBoard();
+        createPatterns();
+        updateDisplay();
+    }
+
+    function createBoard() {
+        board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
+        const boardElement = document.getElementById('board');
+        boardElement.innerHTML = '';
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            for (let j = 0; j < BOARD_SIZE; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.addEventListener('click', () => handleCellClick(i, j));
+                boardElement.appendChild(cell);
+            }
+        }
+    }
+
+    function createPatterns() {
+        patterns.red = generatePatterns();
+        patterns.blue = generatePatterns();
+        displayPatterns('red');
+        displayPatterns('blue');
+    }
+
+    function generatePatterns() {
+        return Array(PATTERNS_PER_PLAYER).fill().map(() => {
+            const pattern = Array(PATTERN_SIZE).fill().map(() => Array(PATTERN_SIZE).fill(false));
+            for (let i = 0; i < FILLED_CELLS_PER_PATTERN; i++) {
+                let row, col;
+                do {
+                    row = Math.floor(Math.random() * PATTERN_SIZE);
+                    col = Math.floor(Math.random() * PATTERN_SIZE);
+                } while (pattern[row][col]);
+                pattern[row][col] = true;
+            }
+            return pattern;
+        });
+    }
+
+    function displayPatterns(player) {
+        const containerElement = document.getElementById(`${player}-patterns`);
+        containerElement.innerHTML = '';
+        patterns[player].forEach((pattern, index) => {
+            const patternElement = document.createElement('div');
+            patternElement.className = `pattern ${player}-pattern`;
+            pattern.forEach(row => {
+                row.forEach(cell => {
+                    const cellElement = document.createElement('div');
+                    cellElement.className = `pattern-cell${cell ? ' pattern-filled' : ''}`;
+                    patternElement.appendChild(cellElement);
+                });
+            });
+            containerElement.appendChild(patternElement);
+        });
+    }
+
+    function handleCellClick(row, col) {
+        if (board[row][col] === null && !completedCells.has(row * BOARD_SIZE + col)) {
+            board[row][col] = currentPlayer;
+            updateDisplay();
+            checkPatterns();
+            switchPlayer();
+        }
+    }
+
+    function updateDisplay() {
+        const cells = document.querySelectorAll('.cell');
+        board.flat().forEach((cell, index) => {
+            cells[index].className = `cell${cell ? ` ${cell}` : ''}`;
+            if (completedCells.has(index)) {
+                cells[index].classList.add('completed');
+            }
+        });
+        const currentPlayerElement = document.getElementById('current-player');
+        currentPlayerElement.textContent = `Player ${currentPlayer === 'red' ? '1' : '2'}'s turn!`;
+        currentPlayerElement.className = currentPlayer;
+        document.getElementById('score').textContent = `Red: ${scores.red} | Blue: ${scores.blue}`;
+    }
+
+    function checkPatterns() {
+        patterns[currentPlayer].forEach((pattern, index) => {
+            for (let i = 0; i <= BOARD_SIZE - PATTERN_SIZE; i++) {
+                for (let j = 0; j <= BOARD_SIZE - PATTERN_SIZE; j++) {
+                    if (matchPattern(i, j, pattern)) {
+                        scores[currentPlayer]++;
+                        patterns[currentPlayer].splice(index, 1);
+                        displayPatterns(currentPlayer);
+                        markCompletedCells(i, j, pattern);
+                        if (scores[currentPlayer] === 2) {
+                            showCongratsModal();
+                            return;
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function matchPattern(startRow, startCol, pattern) {
+        for (let i = 0; i < PATTERN_SIZE; i++) {
+            for (let j = 0; j < PATTERN_SIZE; j++) {
+                if (pattern[i][j] && board[startRow + i][startCol + j] !== currentPlayer) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    function markCompletedCells(startRow, startCol, pattern) {
+        for (let i = 0; i < PATTERN_SIZE; i++) {
+            for (let j = 0; j < PATTERN_SIZE; j++) {
+                if (pattern[i][j]) {
+                    const index = (startRow + i) * BOARD_SIZE + (startCol + j);
+                    completedCells.add(index);
+                }
+            }
+        }
+    }
+
+    function switchPlayer() {
+        currentPlayer = currentPlayer === 'red' ? 'blue' : 'red';
+        updateDisplay();
+    }
+
+    function showCongratsModal() {
+        const modal = document.getElementById('modal');
+        const congratsMessage = document.getElementById('congrats-message');
+        congratsMessage.textContent = `Congratulations! Player ${currentPlayer === 'red' ? '1' : '2'} wins!`;
+        congratsMessage.style.color = currentPlayer === 'red' ? '#ff6b6b' : '#4ecdc4';
+        modal.style.display = 'block';
+    }
+
+    document.querySelector('.close').onclick = function() {
+        document.getElementById('modal').style.display = 'none';
+        initializeGame();rlhf
+    }
+
+    window.onclick = function(event) {
+        const modal = document.getElementById('modal');
+        if (event.target == modal) {
+            modal.style.display = 'none';
+            initializeGame();
+        }
+    }
+
+    document.getElementById('restart-button').addEventListener('click', initializeGame);
+
+    initializeGame();
+</script>
+</body>
+</html>
+```
+
+### Explanation:
+
+- The game uses a 9x9 grid for the main board and 3x3 grids for pattern cards.
+- Two players (Red and Blue) take turns placing their pieces on the board.
+- Each player has 3 randomly generated pattern cards with 5 filled cells each.
+- The game checks for pattern matches after each move.
+- The first player to match 2 of their patterns wins the game.
+- Key functions:
+  1. `initializeGame()`: Sets up the game board, generates patterns, and resets scores.
+  2. `createBoard()`: Creates the 9x9 game board and attaches click events to cells.
+  3. `createPatterns()`: Generates random patterns for both players.
+  4. `handleCellClick(row, col)`: Handles player moves, updates the board, and checks for matches.
+  5. `checkPatterns()`: Checks if the current player has matched any of their patterns.
+  6. `matchPattern(startRow, startCol, pattern)`: Checks if a specific pattern matches at a given position on the board.
+  7. `switchPlayer()`: Alternates turns between Red and Blue players.
+
+This plan implements an interactive puzzle game called "Crystal Patterns" in which the players create patterns to win the game.

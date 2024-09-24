@@ -323,7 +323,7 @@
 
     function handleCellClick(row, col) {
         const cellElement = document.querySelector(`#board > div:nth-child(${row * BOARD_SIZE + col + 1})`);
-        if (cellElement.textContent === '❌' || cellElement.textContent === '💎') return;
+        if (cellElement.textContent !== '') return;
 
         if (board[row][col] === '💎') {
             cellElement.textContent = '💎';

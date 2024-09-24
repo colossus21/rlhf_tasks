@@ -1,0 +1,28 @@
+Create an interactive quiz game named "Bob Burger's Quiz Game" in javascript. This game uses a public API for generating the question:
+1. First, fetch all characters from the API using GET: https://bobsburgers-api.herokuapp.com/characters/. Each response looks like this:
+[
+  {
+    "id": 1,
+    "name": "\"Dottie Minerva\"",
+    "relatives": [],
+    "wikiUrl": "https://bobs-burgers.fandom.com/wiki/%22Dottie_Minerva%22",
+    "image": "https://bobsburgers-api.herokuapp.com/images/characters/1.jpg",
+    "gender": "Female",
+    "hair": "Blonde",
+    "occupation": "Student at Wagstaff School",
+    "allOccupations": [
+      "Student at Wagstaff School"
+    ],
+    "firstEpisode": "\"The Kids Run the Restaurant\"",
+    "voicedBy": "Wendy Molyneux",
+    "url": "https://bobsburgers-api.herokuapp.com/characters/1"
+  },
+  ...
+]
+2. The API directly returns an array with the characters. Then you can parse the character name (name), occupation (occupation) and image (image) from the items.
+3. Create a quiz game with 10 questions. "Who is the character?" Show an image and provide 4 options.
+3. Show a progress bar and keep track of the user's score out of 10.
+4. Add feedback on correct/incorrect answers below the quiz as well.
+6. After game ends, display a final score and message at the end of the quiz. Message could be dynamic based on the score. Also add a play again button.
+7. Make sure the layout is centered and responsiveness is optional. While you're fetching the data from API, show a loading spinner using CSS with a message - "Talking to Bob, hold a minute...".
+8. Store the API response for future play again rounds. Also, show a gray background before the images are loaded, don't keep the same image from one question and show it on the other before loading.

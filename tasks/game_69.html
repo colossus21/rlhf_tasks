@@ -276,7 +276,8 @@
 
     function handleCellClick(row, col) {
         const cellElement = document.querySelector(`#board > div:nth-child(${row * BOARD_SIZE + col + 1})`);
-        if (cellElement.textContent === '❌' || foundItems.includes(board[row][col])) return;
+
+        if (cellElement.textContent !== '') return;
 
         if (HIDDEN_ITEMS.includes(board[row][col])) {
             cellElement.textContent = board[row][col];

@@ -1,0 +1,9 @@
+Create a 9x9 grid game called "Crystal Patterns" in which:
+i) Two players take turn to put pieces (color cells) - player 1 red and player 2 blue
+ii) Each player gets 3 pattern cards (3x3) with 5 filled cells.
+iii) A player if he is able to match 2 patterns first wins the game. So the game checks if 2 patters are matched assigned to the player. Player 1 and Player 2 will have random 3 pattern cards.
+iv) Show player indicator, score, add restart button.
+v) Show a congrats message after winning, modal centered to the board. Highlight current player
+vi) Patterns selected for the players should be outlined with the player's color. The pattern color should be dimmed if matched already.
+
+

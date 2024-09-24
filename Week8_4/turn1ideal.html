@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Towers</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #game-container {
+            text-align: center;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(6, 60px);
+            grid-template-rows: repeat(6, 60px);
+            gap: 2px;
+            margin: 20px auto;
+            background-color: #ddd;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        .cell {
+            width: 60px;
+            height: 60px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        .cell.p1 { background-color: #ffebee; }
+        .cell.p2 { background-color: #e3f2fd; }
+        .cell::after {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            bottom: 5px;
+            border-radius: 50%;
+        }
+        .cell.red::after { background-color: #ff4136; }
+        .cell.blue::after { background-color: #0074d9; }
+        .cell.green::after { background-color: #2ecc40; }
+        .cell.yellow::after {
+            background-color: #ffdc00;
+            color: #333;
+        }
+        .cell.highlight {
+            background-color: rgba(255, 255, 0, 0.3);
+        }
+        #dice {
+            width: 100px;
+            height: 100px;
+            border: 2px solid #333;
+            border-radius: 10px;
+            margin: 20px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 36px;
+        }
+        #message {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        #roll-button, #restart-button {
+            font-size: 18px;
+            padding: 10px 20px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        #restart-button {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div id="game-container">
+    <h1>Color Towers</h1>
+    <div id="message">Player 1's turn. Roll the dice!</div>
+    <div id="board"></div>
+    <button id="roll-button">Roll Dice</button>
+    <button id="restart-button">Restart Game</button>
+    <div id="dice"></div>
+</div>
+
+<script>
+    const COLORS = ['red', 'blue', 'green', 'yellow'];
+    const BOARD_SIZE = 6;
+    const SECTION_SIZE = 3;
+    let board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
+    let currentPlayer = 1;
+    let currentColor = null;
+    let gamePhase = 'roll';
+
+    function createBoard() {
+        const boardElement = document.getElementById('board');
+        boardElement.innerHTML = '';
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            for (let j = 0; j < BOARD_SIZE; j++) {
+                const cell = document.createElement('div');
+                cell.className = `cell ${j < SECTION_SIZE ? 'p1' : 'p2'}`;
+                cell.onclick = () => handleColumnClick(j);
+                cell.onmouseenter = () => highlightColumn(j);
+                cell.onmouseleave = () => removeHighlight(j);
+                boardElement.appendChild(cell);
+            }
+        }
+    }
+
+    function updateBoard() {
+        const cells = document.querySelectorAll('.cell');
+        board.forEach((row, i) => {
+            row.forEach((cell, j) => {
+                const index = i * BOARD_SIZE + j;
+                const cellElement = cells[index];
+                cellElement.className = `cell ${j < SECTION_SIZE ? 'p1' : 'p2'}`;
+                if (cell) {
+                    cellElement.classList.add(cell.color);
+                }
+            });
+        });
+    }
+
+    function rollDice() {
+        if (gamePhase !== 'roll') return;
+        currentColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+        const diceElement = document.getElementById('dice');
+        diceElement.className = currentColor;
+        diceElement.style.backgroundColor = currentColor;
+        diceElement.textContent = '';
+        gamePhase = 'place';
+        document.getElementById('message').textContent = `Player ${currentPlayer}, place the ${currentColor} piece!`;
+    }
+
+    function handleColumnClick(col) {
+        if (gamePhase !== 'place') return;
+        if ((currentPlayer === 1 && col >= SECTION_SIZE) || (currentPlayer === 2 && col < SECTION_SIZE)) {
+            return;
+        }
+        if (currentPlayer === 1) {
+            for (let row = BOARD_SIZE - 1; row >= 0; row--) {
+                if (!board[row][col]) {
+                    placeColor(row, col);
+                    break;
+                }
+            }
+        } else {
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                if (!board[row][col]) {
+                    placeColor(row, col);
+                    break;
+                }
+            }
+        }
+    }
+
+    function placeColor(row, col) {
+        if (!board[row][col]) {
+            board[row][col] = { color: currentColor };
+        } else if (board[row][col].color === currentColor) {
+            // Do nothing
+        } else {
+            board[row][col] = null;
+        }
+        updateBoard();
+        checkWin(row);
+        switchPlayer();
+    }
+
+    function checkWin(row) {
+        if ((currentPlayer === 1 && row === 0) || (currentPlayer === 2 && row === BOARD_SIZE - 1)) {
+            endGame();
+        }
+    }
+
+    function switchPlayer() {
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+        gamePhase = 'roll';
+        document.getElementById('message').textContent = `Player ${currentPlayer}'s turn. Roll the dice!`;
+        document.getElementById('dice').className = '';
+        document.getElementById('dice').style.backgroundColor = '#fff';
+        document.getElementById('dice').textContent = '';
+    }
+
+    function endGame() {
+        document.getElementById('message').textContent = `Player ${currentPlayer} wins!`;
+        document.getElementById('roll-button').disabled = true;
+        document.getElementById('restart-button').style.display = 'inline-block';
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.onclick = null;
+            cell.onmouseenter = null;
+            cell.onmouseleave = null;
+        });
+    }
+
+    function restartGame() {
+        board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
+        currentPlayer = 1;
+        currentColor = null;
+        gamePhase = 'roll';
+        document.getElementById('message').textContent = `Player ${currentPlayer}'s turn. Roll the dice!`;
+        document.getElementById('dice').className = '';
+        document.getElementById('dice').style.backgroundColor = '#fff';
+        document.getElementById('dice').textContent = '';
+        document.getElementById('roll-button').disabled = false;
+        document.getElementById('restart-button').style.display = 'none';
+        createBoard();
+        updateBoard();
+    }
+
+    function highlightColumn(col) {
+        if ((currentPlayer === 1 && col >= SECTION_SIZE) || (currentPlayer === 2 && col < SECTION_SIZE)) {
+            return;
+        }
+        const cells = document.querySelectorAll('.cell');
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            cells[i * BOARD_SIZE + col].classList.add('highlight');
+        }
+    }
+
+    function removeHighlight(col) {
+        const cells = document.querySelectorAll('.cell');
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            cells[i * BOARD_SIZE + col].classList.remove('highlight');
+        }
+    }
+
+    createBoard();
+    updateBoard();
+    document.getElementById('roll-button').onclick = rollDice;
+    document.getElementById('restart-button').onclick = restartGame;
+</script>
+</body>
+</html>

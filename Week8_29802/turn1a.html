@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bob Burger's Quiz Game</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #fff8e7; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; font-family: 'Arial', sans-serif; }
+        .quiz-container { background: #ff9800; padding: 20px; border-radius: 10px; text-align: center; max-width: 500px; width: 90%; }
+        .progress-bar { background-color: #ff5722; }
+        .btn { margin: 5px; }
+        .character-image { max-width: 100%; height: auto; background: #d3d3d3; }
+        .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <h1>Bob Burger's Quiz Game</h1>
+    <div id="loading" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>Talking to Bob, hold a minute...</p>
+    </div>
+    <div id="quiz" style="display: none;">
+        <div class="progress mb-3">
+            <div class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <img id="characterImage" src="" alt="Character Image" class="character-image mb-3">
+        <div id="options" class="btn-group-vertical w-100"></div>
+        <div id="feedback" class="mt-3"></div>
+    </div>
+    <div id="result" style="display: none;">
+        <h2>Your Score:</h2>
+        <p id="scoreDisplay"></p>
+        <button id="playAgain" class="btn btn-primary">Play Again</button>
+    </div>
+</div>
+
+<script>
+    let characters = [];
+    let currentQuestion = 0;
+    let score = 0;
+    const questionsToAsk = 10;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchCharacters();
+    });
+
+    function fetchCharacters() {
+        document.getElementById('loading').style.display = 'block';
+        fetch('https://bobsburgers-api.herokuapp.com/characters/')
+            .then(response => response.json())
+            .then(data => {
+                characters = data;
+                document.getElementById('loading').style.display = 'none';
+                startGame();
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function startGame() {
+        currentQuestion = 0;
+        score = 0;
+        document.getElementById('quiz').style.display = 'block';
+        document.getElementById('result').style.display = 'none';
+        nextQuestion();
+    }
+
+    function nextQuestion() {
+        if (currentQuestion >= questionsToAsk) {
+            endGame();
+            return;
+        }
+
+        const questionChar = characters[Math.floor(Math.random() * characters.length)];
+        const options = getOptions(questionChar);
+
+        document.getElementById('characterImage').src = questionChar.image;
+        const optionsDiv = document.getElementById('options');
+        optionsDiv.innerHTML = '';
+        options.forEach(option => {
+            const button = document.createElement('button');
+            button.textContent = option.name;
+            button.className = 'btn btn-outline-dark';
+            button.onclick = () => checkAnswer(option.id === questionChar.id, button);
+            optionsDiv.appendChild(button);
+        });
+
+        updateProgress();
+        document.getElementById('feedback').textContent = '';
+    }
+
+    function getOptions(correctChar) {
+        const options = [{name: correctChar.name, id: correctChar.id}];
+        while (options.length < 4) {
+            const randomChar = characters[Math.floor(Math.random() * characters.length)];
+            if (!options.find(opt => opt.id === randomChar.id)) {
+                options.push({name: randomChar.name, id: randomChar.id});
+            }
+        }
+        return options.sort(() => Math.random() - 0.5);
+    }
+
+    function checkAnswer(isCorrect, clickedButton) {
+        if (isCorrect) {
+            score++;
+            document.getElementById('feedback').textContent = 'Correct!';
+        } else {
+            document.getElementById('feedback').textContent = 'Wrong!';
+        }
+        Array.from(document.getElementById('options').children).forEach(btn => btn.disabled = true);
+        clickedButton.classList.add(isCorrect ? 'btn-success' : 'btn-danger');
+        currentQuestion++;
+        setTimeout(nextQuestion, 1500);
+    }
+
+    function updateProgress() {
+        const progress = (currentQuestion / questionsToAsk) * 100;
+        document.querySelector('.progress-bar').style.width = `${progress}%`;
+    }
+
+    function endGame() {
+        const message = score > 7 ? "Great job, you're a true fan!" :
+            (score > 4 ? "Not bad, but you could do better!" : "You need to watch more Bob's Burgers!");
+        document.getElementById('scoreDisplay').textContent = `${score} out of ${questionsToAsk}. ${message}`;
+        document.getElementById('quiz').style.display = 'none';
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('playAgain').onclick = startGame;
+    }
+</script>
+
+</body>
+</html>

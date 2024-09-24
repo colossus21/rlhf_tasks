@@ -29,384 +29,430 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grid Words</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            color: #333;
-        }
-        #game-container {
-            text-align: center;
-            background-color: white;
-            padding: 2rem 10rem;
-            border-radius: 15px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-            max-width: 600px;
-            width: 100%;
-            position: relative;
-        }
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 1rem;
-        }
-        #board {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 8px;
-            margin: 1rem auto;
-            max-width: 400px;
-        }
-        .cell {
-            aspect-ratio: 1;
-            border: 2px solid #3498db;
-            border-radius: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background-color: white;
-        }
-        .cell:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
-        }
-        .selected {
-            background-color: #f39c12;
-            color: white;
-        }
-        .found {
-            background-color: #2ecc71;
-            color: white;
-            cursor: not-allowed;
-        }
-        #word-display {
-            font-size: 1.5rem;
-            margin: 1rem 0;
-            min-height: 2rem;
-            color: #2c3e50;
-        }
-        #score-display {
-            font-size: 1.2rem;
-            margin: 1rem 0;
-            color: #2c3e50;
-        }
-        button {
-            margin: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            font-size: 1rem;
-            cursor: pointer;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-        }
-        button:hover {
-            background-color: #2980b9;
-        }
-        #message {
-            font-size: 1rem;
-            margin: 1rem 0;
-            min-height: 1.5rem;
-            color: #27ae60;
-        }
-        .loading {
-            display: inline-block;
-            width: 1.5rem;
-            height: 1.5rem;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        #word-info {
-            display: none;
-            margin-top: 2rem;
-            text-align: left;
-            background-color: #ecf0f1;
-            padding: 1rem;
-            border-radius: 8px;
-        }
-        #word-info h3 {
-            margin-top: 0;
-            color: #2c3e50;
-        }
-        #word-info p {
-            margin: 0.5rem 0;
-            font-size: 0.9rem;
-        }
-        .corner-button {
-            position: absolute;
-            top: 10px;
-            padding: 0.5rem;
-            font-size: 0.8rem;
-            background-color: #95a5a6;
-        }
-        #shuffle-button {
-            left: 10px;
-        }
-        #end-game-button {
-            right: 10px;
-        }
-        #game-over {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        #game-over-content {
-            background-color: white;
-            padding: 2rem;
-            border-radius: 15px;
-            text-align: center;
-        }
-        #found-words-list {
-            max-height: 150px;
-            overflow-y: auto;
-            margin: 1rem 0;
-            padding: 0.5rem;
-            background-color: #f8f9fa;
-            border-radius: 5px;
-        }
-        #meaning-carousel {
-            position: relative;
-        }
-        #meaning-content {
-            min-height: 60px;
-        }
-        .carousel-controls {
-            display: flex;
-            justify-content: center;
-            margin-top: 10px;
-        }
-        .carousel-button {
-            background-color: transparent;
-            color: #95a5a6;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0 10px;
-            transition: color 0.3s ease;
-        }
-        .carousel-button:hover {
-            color: #7f8c8d;
-        }
-        #meaning-counter {
-            font-size: 0.8rem;
-            color: #95a5a6;
-            margin: 0 10px;
-            padding-top: 13px;
-        }
-    </style>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Grid Words</title>
+   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+   <style>
+      :root {
+         --primary-color: #00ffff;
+         --secondary-color: #ff00ff;
+         --background-color: #000033;
+         --text-color: #ffffff;
+         --cell-bg-color: rgba(255, 255, 255, 0.1);
+         --cell-border-color: #00ffff;
+      }
+      body {
+         font-family: 'Roboto', sans-serif;
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         min-height: 100vh;
+         margin: 0;
+         background-color: var(--background-color);
+         background-image:
+                 radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
+                 radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px),
+                 radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 40px),
+                 radial-gradient(rgba(255,255,255,.4), rgba(255,255,255,.1) 2px, transparent 30px);
+         background-size: 550px 550px, 350px 350px, 250px 250px, 150px 150px;
+         background-position: 0 0, 40px 60px, 130px 270px, 70px 100px;
+         animation: backgroundScroll 60s linear infinite;
+         color: var(--text-color);
+      }
+      @keyframes backgroundScroll {
+         0% { background-position: 0 0, 40px 60px, 130px 270px, 70px 100px; }
+         100% { background-position: 550px 550px, 590px 610px, 680px 820px, 620px 650px; }
+      }
+      #game-container {
+         text-align: center;
+         background-color: rgba(0, 0, 51, 0.8);
+         padding: 2rem;
+         border-radius: 20px;
+         box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+         max-width: 600px;
+         width: 100%;
+         position: relative;
+         backdrop-filter: blur(5px);
+      }
+      h1 {
+         font-family: 'Orbitron', sans-serif;
+         color: var(--primary-color);
+         margin-bottom: 1.5rem;
+         font-weight: 700;
+         text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+      }
+      #board {
+         display: grid;
+         grid-template-columns: repeat(6, 1fr);
+         gap: 10px;
+         margin: 1.5rem auto;
+         max-width: 400px;
+      }
+      .cell {
+         aspect-ratio: 1;
+         border: 2px solid var(--cell-border-color);
+         border-radius: 12px;
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         font-size: 1.5rem;
+         font-weight: 700;
+         cursor: pointer;
+         transition: all 0.3s ease;
+         background-color: var(--cell-bg-color);
+         box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+         text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+      }
+      .cell:hover {
+         transform: translateY(-2px) scale(1.05);
+         box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+      }
+      .selected {
+         background-color: var(--secondary-color);
+         color: var(--text-color);
+         border-color: var(--secondary-color);
+         animation: pulse 1.5s infinite;
+      }
+      @keyframes pulse {
+         0% { box-shadow: 0 0 0 0 rgba(255, 0, 255, 0.7); }
+         70% { box-shadow: 0 0 0 10px rgba(255, 0, 255, 0); }
+         100% { box-shadow: 0 0 0 0 rgba(255, 0, 255, 0); }
+      }
+      .found {
+         background-color: rgba(0, 255, 0, 0.3);
+         color: #00ff00;
+         border-color: #00ff00;
+         cursor: not-allowed;
+      }
+      #word-display {
+         font-family: 'Orbitron', sans-serif;
+         font-size: 1.8rem;
+         margin: 1.5rem 0;
+         min-height: 2.5rem;
+         color: var(--primary-color);
+         font-weight: 700;
+         text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+      }
+      #score-display {
+         font-size: 1.4rem;
+         margin: 1rem 0;
+         color: var(--text-color);
+      }
+      button {
+         font-family: 'Orbitron', sans-serif;
+         margin: 0.5rem;
+         padding: 0.75rem 1.5rem;
+         font-size: 1rem;
+         cursor: pointer;
+         background-color: rgba(0, 255, 255, 0.2);
+         color: var(--primary-color);
+         border: 2px solid var(--primary-color);
+         border-radius: 8px;
+         transition: all 0.3s ease;
+         font-weight: 700;
+      }
+      button:hover {
+         background-color: rgba(0, 255, 255, 0.4);
+         transform: translateY(-2px);
+         box-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+      }
+      #message {
+         font-size: 1.1rem;
+         margin: 1rem 0;
+         min-height: 1.5rem;
+         color: #00ff00;
+      }
+      .loading {
+         display: inline-block;
+         width: 1.5rem;
+         height: 1.5rem;
+         border: 3px solid rgba(0, 255, 255, 0.3);
+         border-top: 3px solid var(--primary-color);
+         border-radius: 50%;
+         animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+         0% { transform: rotate(0deg); }
+         100% { transform: rotate(360deg); }
+      }
+      #word-info {
+         display: none;
+         margin-top: 2rem;
+         text-align: left;
+         background-color: rgba(255, 255, 255, 0.1);
+         padding: 1.5rem;
+         border-radius: 12px;
+         box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+      }
+      #word-info h3 {
+         margin-top: 0;
+         color: var(--primary-color);
+         font-family: 'Orbitron', sans-serif;
+      }
+      #word-info p {
+         margin: 0.5rem 0;
+         font-size: 1rem;
+      }
+      .corner-button {
+         position: absolute;
+         top: 20px;
+         padding: 0.5rem 1rem;
+         font-size: 0.9rem;
+         background-color: rgba(255, 255, 255, 0.1);
+      }
+      #shuffle-button {
+         left: 20px;
+      }
+      #end-game-button {
+         right: 20px;
+      }
+      #game-over {
+         position: fixed;
+         top: 0;
+         left: 0;
+         width: 100%;
+         height: 100%;
+         background-color: rgba(0, 0, 51, 0.9);
+         display: flex;
+         justify-content: center;
+         align-items: center;
+         z-index: 1000;
+      }
+      #game-over-content {
+         background-color: rgba(0, 0, 51, 0.8);
+         padding: 3rem;
+         border-radius: 20px;
+         text-align: center;
+         min-width: 300px;
+         box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+      }
+      #found-words-list {
+         max-height: 200px;
+         overflow-y: auto;
+         margin: 1.5rem 0;
+         padding: 1rem;
+         background-color: rgba(255, 255, 255, 0.1);
+         border-radius: 8px;
+      }
+      #meaning-carousel {
+         position: relative;
+      }
+      #meaning-content {
+         min-height: 80px;
+      }
+      .carousel-controls {
+         display: flex;
+         justify-content: center;
+         margin-top: 15px;
+      }
+      .carousel-button {
+         background-color: transparent;
+         color: var(--primary-color);
+         border: none;
+         font-size: 1.8rem;
+         cursor: pointer;
+         padding: 0 15px;
+         transition: color 0.3s ease;
+      }
+      .carousel-button:hover {
+         color: rgba(0, 255, 255, 0.7);
+      }
+      #meaning-counter {
+         font-size: 0.9rem;
+         color: rgba(255, 255, 255, 0.7);
+         margin: 0 15px;
+         padding-top: 13px;
+      }
+   </style>
 </head>
 <body>
 <div id="game-container">
-    <h1>Grid Words</h1>
-    <button id="shuffle-button" class="corner-button">Shuffle</button>
-    <button id="end-game-button" class="corner-button">End Game</button>
-    <div id="board"></div>
-    <div id="word-display"></div>
-    <div id="score-display">Score: 0</div>
-    <button id="confirm-button">Confirm Word</button>
-    <button id="clear-button">Clear Selection</button>
-    <div id="message"></div>
-    <div id="word-info">
-        <h3 id="word-title"></h3>
-        <p id="word-phonetic"></p>
-        <div id="meaning-carousel">
-            <div id="meaning-content"></div>
-            <div class="carousel-controls">
-                <button id="prev-meaning" class="carousel-button">&#8249;</button>
-                <span id="meaning-counter"></span>
-                <button id="next-meaning" class="carousel-button">&#8250;</button>
-            </div>
-        </div>
-    </div>
+   <h1>Grid Words</h1>
+   <button id="shuffle-button" class="corner-button">Shuffle</button>
+   <button id="end-game-button" class="corner-button">End Game</button>
+   <div id="board"></div>
+   <div id="word-display"></div>
+   <div id="score-display">Score: 0</div>
+   <button id="confirm-button">Confirm Word</button>
+   <button id="clear-button">Clear Selection</button>
+   <div id="message"></div>
+   <div id="word-info">
+      <h3 id="word-title"></h3>
+      <p id="word-phonetic"></p>
+      <div id="meaning-carousel">
+         <div id="meaning-content"></div>
+         <div class="carousel-controls">
+            <button id="prev-meaning" class="carousel-button">&#8249;</button>
+            <span id="meaning-counter"></span>
+            <button id="next-meaning" class="carousel-button">&#8250;</button>
+         </div>
+      </div>
+   </div>
 </div>
 
 <script>
-    const BOARD_SIZE = 6;
-    const LETTERS = 'AAABCDEEEEFGHIIIJKLMNOOOPQRSTUUVWXYZ';
-    let board = [];
-    let selectedCells = [];
-    let score = 0;
-    let foundWords = new Set();
-    let gameOver = false;
-    let currentMeaningIndex = 0;
-    let currentWordMeanings = [];
+   const BOARD_SIZE = 6;
+   const LETTERS = 'AAABCDEEEEFGHIIIJKLMNOOOPQRSTUUVWXYZ';
+   let board = [];
+   let selectedCells = [];
+   let score = 0;
+   let foundWords = new Set();
+   let gameOver = false;
+   let currentMeaningIndex = 0;
+   let currentWordMeanings = [];
 
-    function createBoard() {
-        const boardElement = document.getElementById('board');
-        boardElement.innerHTML = '';
-        for (let i = 0; i < BOARD_SIZE; i++) {
-            board[i] = [];
-            for (let j = 0; j < BOARD_SIZE; j++) {
-                const cell = document.createElement('div');
-                cell.className = 'cell';
-                cell.dataset.row = i;
-                cell.dataset.col = j;
-                cell.addEventListener('click', () => handleCellClick(i, j));
-                boardElement.appendChild(cell);
-                const letter = LETTERS[Math.floor(Math.random() * LETTERS.length)];
-                cell.textContent = letter;
-                board[i][j] = letter;
-            }
-        }
-    }
+   function createBoard() {
+      const boardElement = document.getElementById('board');
+      boardElement.innerHTML = '';
+      for (let i = 0; i < BOARD_SIZE; i++) {
+         board[i] = [];
+         for (let j = 0; j < BOARD_SIZE; j++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.dataset.row = i;
+            cell.dataset.col = j;
+            cell.addEventListener('click', () => handleCellClick(i, j));
+            boardElement.appendChild(cell);
+            const letter = LETTERS[Math.floor(Math.random() * LETTERS.length)];
+            cell.textContent = letter;
+            board[i][j] = letter;
+         }
+      }
+   }
 
-    function handleCellClick(row, col) {
-        if (gameOver) return;
-        const cellElement = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-        if (cellElement.classList.contains('found')) return;
+   function handleCellClick(row, col) {
+      if (gameOver) return;
+      const cellElement = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+      if (cellElement.classList.contains('found')) return;
 
-        const index = selectedCells.findIndex(cell => cell.row === row && cell.col === col);
+      const index = selectedCells.findIndex(cell => cell.row === row && cell.col === col);
 
-        if (index === -1) {
-            selectedCells.push({ row, col });
-            cellElement.classList.add('selected');
-        } else {
-            selectedCells.splice(index, 1);
-            cellElement.classList.remove('selected');
-        }
+      if (index === -1) {
+         selectedCells.push({ row, col });
+         cellElement.classList.add('selected');
+      } else {
+         selectedCells.splice(index, 1);
+         cellElement.classList.remove('selected');
+      }
 
-        updateWordDisplay();
-    }
+      updateWordDisplay();
+   }
 
-    function updateWordDisplay() {
-        const wordDisplay = document.getElementById('word-display');
-        const word = selectedCells.map(cell => board[cell.row][cell.col]).join('');
-        wordDisplay.textContent = word;
-    }
+   function updateWordDisplay() {
+      const wordDisplay = document.getElementById('word-display');
+      const word = selectedCells.map(cell => board[cell.row][cell.col]).join('');
+      wordDisplay.textContent = word;
+   }
 
-    async function confirmWord() {
-        if (gameOver) return;
-        const word = selectedCells.map(cell => board[cell.row][cell.col]).join('');
-        const messageElement = document.getElementById('message');
+   async function confirmWord() {
+      if (gameOver) return;
+      const word = selectedCells.map(cell => board[cell.row][cell.col]).join('');
+      const messageElement = document.getElementById('message');
 
-        if (word.length < 3) {
-            messageElement.textContent = 'Word must be at least 3 letters long.';
-            return;
-        }
+      if (word.length < 3) {
+         messageElement.textContent = 'Word must be at least 3 letters long.';
+         return;
+      }
 
-        if (foundWords.has(word)) {
-            messageElement.textContent = 'Word already found!';
-            return;
-        }
+      if (foundWords.has(word)) {
+         messageElement.textContent = 'Word already found!';
+         return;
+      }
 
-        messageElement.innerHTML = '<div class="loading"></div> Checking word...';
+      messageElement.innerHTML = '<div class="loading"></div> Checking word...';
 
-        try {
-            const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
-            const data = await response.json();
+      try {
+         const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+         const data = await response.json();
 
-            if (Array.isArray(data)) {
-                score += word.length;
-                updateScore();
-                messageElement.textContent = `Valid word! +${word.length} points.`;
-                foundWords.add(word);
-                highlightFoundWord();
-                displayWordInfo(data[0]);
-                checkGameEnd();
-            } else {
-                messageElement.textContent = 'Not a valid word. Try again.';
-            }
-        } catch (error) {
-            messageElement.textContent = 'Not a valid word or error occurred. Please try again.';
-        }
+         if (Array.isArray(data)) {
+            score += word.length;
+            updateScore();
+            messageElement.textContent = `Valid word! +${word.length} points.`;
+            foundWords.add(word);
+            highlightFoundWord();
+            displayWordInfo(data[0]);
+            checkGameEnd();
+         } else {
+            messageElement.textContent = 'Not a valid word. Try again.';
+         }
+      } catch (error) {
+         messageElement.textContent = 'Not a valid word or error occurred. Please try again.';
+      }
 
-        clearSelection();
-    }
+      clearSelection();
+   }
 
-    function highlightFoundWord() {
-        selectedCells.forEach(cell => {
-            const cellElement = document.querySelector(`[data-row="${cell.row}"][data-col="${cell.col}"]`);
-            cellElement.classList.add('found');
-        });
-    }
+   function highlightFoundWord() {
+      selectedCells.forEach(cell => {
+         const cellElement = document.querySelector(`[data-row="${cell.row}"][data-col="${cell.col}"]`);
+         cellElement.classList.add('found');
+      });
+   }
 
-    function displayWordInfo(wordData) {
-        const wordInfoElement = document.getElementById('word-info');
-        wordInfoElement.style.display = 'block';
+   function displayWordInfo(wordData) {
+      const wordInfoElement = document.getElementById('word-info');
+      wordInfoElement.style.display = 'block';
 
-        document.getElementById('word-title').textContent = wordData.word;
-        document.getElementById('word-phonetic').textContent = wordData.phonetic || '';
+      document.getElementById('word-title').textContent = wordData.word;
+      document.getElementById('word-phonetic').textContent = wordData.phonetic || '';
 
-        currentWordMeanings = wordData.meanings;
-        currentMeaningIndex = 0;
-        updateMeaningDisplay();
-    }
+      currentWordMeanings = wordData.meanings;
+      currentMeaningIndex = 0;
+      updateMeaningDisplay();
+   }
 
-    function updateMeaningDisplay() {
-        const meaningContent = document.getElementById('meaning-content');
-        const currentMeaning = currentWordMeanings[currentMeaningIndex];
-        meaningContent.innerHTML = `
+   function updateMeaningDisplay() {
+      const meaningContent = document.getElementById('meaning-content');
+      const currentMeaning = currentWordMeanings[currentMeaningIndex];
+      meaningContent.innerHTML = `
             <p><strong>${currentMeaning.partOfSpeech}:</strong> ${currentMeaning.definitions[0].definition}</p>
         `;
-        document.getElementById('meaning-counter').textContent = `${currentMeaningIndex + 1} / ${currentWordMeanings.length}`;
-    }
+      document.getElementById('meaning-counter').textContent = `${currentMeaningIndex + 1} / ${currentWordMeanings.length}`;
+   }
 
-    function clearSelection() {
-        selectedCells.forEach(cell => {
-            const cellElement = document.querySelector(`[data-row="${cell.row}"][data-col="${cell.col}"]`);
-            if (!cellElement.classList.contains('found')) {
-                cellElement.classList.remove('selected');
-            }
-        });
-        selectedCells = [];
-        updateWordDisplay();
-    }
+   function clearSelection() {
+      selectedCells.forEach(cell => {
+         const cellElement = document.querySelector(`[data-row="${cell.row}"][data-col="${cell.col}"]`);
+         if (!cellElement.classList.contains('found')) {
+            cellElement.classList.remove('selected');
+         }
+      });
+      selectedCells = [];
+      updateWordDisplay();
+   }
 
-    function updateScore() {
-        const scoreDisplay = document.getElementById('score-display');
-        scoreDisplay.textContent = `Score: ${score}`;
-    }
+   function updateScore() {
+      const scoreDisplay = document.getElementById('score-display');
+      scoreDisplay.textContent = `Score: ${score}`;
+   }
 
-    function shuffleBoard() {
-        const cells = document.querySelectorAll('.cell');
-        cells.forEach(cell => {
-            if (!cell.classList.contains('found')) {
-                const letter = LETTERS[Math.floor(Math.random() * LETTERS.length)];
-                cell.textContent = letter;
-                board[cell.dataset.row][cell.dataset.col] = letter;
-            }
-        });
-        clearSelection();
-    }
+   function shuffleBoard() {
+      const cells = document.querySelectorAll('.cell');
+      cells.forEach(cell => {
+         if (!cell.classList.contains('found')) {
+            const letter = LETTERS[Math.floor(Math.random() * LETTERS.length)];
+            cell.textContent = letter;
+            board[cell.dataset.row][cell.dataset.col] = letter;
+         }
+      });
+      clearSelection();
+   }
 
-    function checkGameEnd() {
-        const allCells = document.querySelectorAll('.cell');
-        const allFound = Array.from(allCells).every(cell => cell.classList.contains('found'));
-        if (allFound) {
-            endGame();
-        }
-    }
+   function checkGameEnd() {
+      const allCells = document.querySelectorAll('.cell');
+      const allFound = Array.from(allCells).every(cell => cell.classList.contains('found'));
+      if (allFound) {
+         endGame();
+      }
+   }
 
-    function endGame() {
-        gameOver = true;
-        const gameOverScreen = document.createElement('div');
-        gameOverScreen.id = 'game-over';
-        gameOverScreen.innerHTML = `
+   function endGame() {
+      gameOver = true;
+      const gameOverScreen = document.createElement('div');
+      gameOverScreen.id = 'game-over';
+      gameOverScreen.innerHTML = `
             <div id="game-over-content">
                 <h2>Game Over!</h2>
                 <p>Your final score: ${score}</p>
@@ -417,35 +463,35 @@
                 <button id="restart-button">Restart Game</button>
             </div>
         `;
-        document.body.appendChild(gameOverScreen);
-        document.getElementById('restart-button').addEventListener('click', restartGame);
-    }
+      document.body.appendChild(gameOverScreen);
+      document.getElementById('restart-button').addEventListener('click', restartGame);
+   }
 
-    function restartGame() {
-        document.body.removeChild(document.getElementById('game-over'));
-        gameOver = false;
-        score = 0;
-        foundWords.clear();
-        createBoard();
-        updateScore();
-        document.getElementById('word-info').style.display = 'none';
-        document.getElementById('message').textContent = '';
-    }
+   function restartGame() {
+      document.body.removeChild(document.getElementById('game-over'));
+      gameOver = false;
+      score = 0;
+      foundWords.clear();
+      createBoard();
+      updateScore();
+      document.getElementById('word-info').style.display = 'none';
+      document.getElementById('message').textContent = '';
+   }
 
-    document.getElementById('confirm-button').addEventListener('click', confirmWord);
-    document.getElementById('clear-button').addEventListener('click', clearSelection);
-    document.getElementById('shuffle-button').addEventListener('click', shuffleBoard);
-    document.getElementById('end-game-button').addEventListener('click', endGame);
-    document.getElementById('prev-meaning').addEventListener('click', () => {
-        currentMeaningIndex = (currentMeaningIndex - 1 + currentWordMeanings.length) % currentWordMeanings.length;
-        updateMeaningDisplay();
-    });
-    document.getElementById('next-meaning').addEventListener('click', () => {
-        currentMeaningIndex = (currentMeaningIndex + 1) % currentWordMeanings.length;
-        updateMeaningDisplay();
-    });
+   document.getElementById('confirm-button').addEventListener('click', confirmWord);
+   document.getElementById('clear-button').addEventListener('click', clearSelection);
+   document.getElementById('shuffle-button').addEventListener('click', shuffleBoard);
+   document.getElementById('end-game-button').addEventListener('click', endGame);
+   document.getElementById('prev-meaning').addEventListener('click', () => {
+      currentMeaningIndex = (currentMeaningIndex - 1 + currentWordMeanings.length) % currentWordMeanings.length;
+      updateMeaningDisplay();
+   });
+   document.getElementById('next-meaning').addEventListener('click', () => {
+      currentMeaningIndex = (currentMeaningIndex + 1) % currentWordMeanings.length;
+      updateMeaningDisplay();
+   });
 
-    createBoard();
+   createBoard();
 </script>
 </body>
 </html>
