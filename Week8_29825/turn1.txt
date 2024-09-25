@@ -1,0 +1,7 @@
+Create a 9x9 grid game in which 2 players can move over the board - P1 (red), P2 (blue) with the following features:
+i) P1 starts top left, P2 from bottom right. Players have a goal, they have to collect 5 different shapes/emojis in a sequence.
+ii) The game is turn based, player 1 moves using WASD, and player 2 using arrow keys - 1 move per turn.
+iii) Spawn 12 random shapes/emojis in the board and change (10 of which are player's goals) at random positions.
+iv) If a player collects the right shape, mark it as collected, if not resets the whole collection. Shuffle the positions every 10 turns.
+v) Player indicator (use color for distinction) and player collections are shown above the game grid (title as well - "Shape Chasers"). Shuffle timer goes below the grid.
+vi) Game ends when a player collects all 5 shapes in sequence. Show winner message and restart button.

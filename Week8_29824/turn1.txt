@@ -1,0 +1,15 @@
+Create a board game called "Harvest Haven" in javascript in which:
+i) Each player (Farmer Red and Farmer Blue) can have 3 types of vegetables: Spinach, Carrot and Pumpkin and a resource called Water Card. Game is played on a 6x6 grid, first 3 rows P1, next 3 for P2.
+ii) Spinach takes 1 Water Card to harvest, Carrot takes 2, Pumpkin takes 6
+iii) In phase 1 player can roll a dice, each dice side has a reward:
+a) 1 - Water Card x 1
+b) 2 - Water Card x 2
+c) 3 - Water Card x 3
+d) 4 - Spinach Seed x 1
+e) 5 - Carrot Seed x 1
+f) 6 - Pumpkin Seed x 1
+iv) In each turn - player starts by rolling a dice - he receives a reward. Player can take 2 types of actions: a) Player can place a crop on the board b) Player can water the crops based on the requirement. Only one action per turn. Player can end the turn pressing the End Turn button.
+v) Player who scores 20 points first wins the game
+vi) Use emojis for crops also caption.
+vii) when crops are fully watered, they are automatically harvested for points and add animations for harvesting crops
+viii) Players should have distinct colored grid sides based on their rows, turn indicator with inventory at the top. Add a restart button that appears after the game ends

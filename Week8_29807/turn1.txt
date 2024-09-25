@@ -1,0 +1,10 @@
+Can you create a 2 player space theme word game called 'Word Matchers' with the following features:
+1. Players take turns trying to form words from a grid with letters. Players click each letter to form a word then can confirm the submission.
+2. Each turn has a 15-second time limit. The player has to form a work within that time. Player can't play any more rounds if fails to submit the word.
+3. Score awarded is based on the number of letters - 3 points per letter.
+4. The game is over when all letters are used up or both players run out of time.
+5. If a player can't make a word within the time limit, the player is out for the rest of the game. If one player times out, the other can keep playing to try and beat their score.
+6. The player with the highest score at the end wins.
+7. Use a space theme for the design. You can import any font and change the background to add animations of stars moving.
+8. Use this API for word validation: https://api.dictionaryapi.dev/api/v2/entries/en/<word>. For correct words you'll receive a response like this: "[{"word":"poolside","phonetics":[],"meanings":[{"partOfSpeech":"noun","definitions":[{"definition":"The area beside a pool.","synonyms":[],"antonyms":[]}],"synonyms":[],"antonyms":[]},{"partOfSpeech":"adjective","definitions":[{"definition":"By the side of a pool.","synonyms":[],"antonyms":[],"example":"She was sunbathing on the poolside deckchair."}],"synonyms":[],"antonyms":[]},{"partOfSpeech":"adverb","definitions":[{"definition":"Beside a pool.","synonyms":[],"antonyms":[]}],"synonyms":[],"antonyms":[]}],"license":{"name":"CC BY-SA 3.0","url":"https://creativecommons.org/licenses/by-sa/3.0"},"sourceUrls":["https://en.wiktionary.org/wiki/poolside"]}]". You'll receive a 404 for incorrect words.
+9. For ui, add a play again button after game ends (in a modal maybe). Player indicator goes above the letters grid. Center the layout nicely. Use blue neon borders where applicable.

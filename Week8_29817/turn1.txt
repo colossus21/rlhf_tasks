@@ -1,0 +1,8 @@
+Can you implement this game called "Color Towers" with the following features:
+i) It's a 2 players game on a 6x6 grid, divided into two sections of 3x3 grid per player.
+ii) Players take turns to roll dice to get a color from 4 colors - red, blue, green, yellow and place a piece of that color in their own section i.e. pieces fall on one of the 3 columns the player has.
+iii) Players can only place pieces in their own sections. Hovering over a column should highlight the column where the piece will be placed.
+iv) So each piece have a color and a number, usually 1. If pieces of same color falls on same colored pieces the number increments by one. For example, if a 1 rank blue block falls on another, the blue block would have number 2 another one would make number 3.  
+v) Game ends when all spaces are filled, players points are counted as the summation of the numbers of the blocks. Player with the highest sum wins the game.
+vi) Make the game visually appealing with styling and animations. Place the dice below the grid. Add scores and feedback messages above the grid.
+vii) Include a restart button to allow players to restart the game after it ends.

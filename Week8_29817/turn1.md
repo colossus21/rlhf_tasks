@@ -1,0 +1,495 @@
+### Code Plan:
+
+UI Components:
+1. Game container
+2. Title
+3. Message display area
+4. Score display area
+5. Game board (6x6 grid)
+6. Dice display
+7. Roll dice button
+8. Restart button (hidden initially)
+9. End game modal
+
+Gameplay Components:
+1. Game state management
+2. Board representation
+3. Player turn management
+4. Dice rolling mechanism
+5. Piece placement logic
+6. Score calculation
+7. Win condition check
+8. Game reset functionality
+
+### Code:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Color Towers</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #2c3e50;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            color: #ecf0f1;
+        }
+        h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px #34495e;
+        }
+        #game-container {
+            display: inline-block;
+            margin-top: 20px;
+            position: relative;
+        }
+        /* Board Styles */
+        #board {
+            display: grid;
+            grid-template-columns: repeat(6, 80px);
+            grid-template-rows: repeat(6, 80px);
+            gap: 5px;
+            margin: 20px auto;
+            padding: 5px;
+            border-radius: 10px;
+            background-color: #34495e;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+        .cell {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            position: relative;
+            cursor: pointer;
+            background-color: #95a5a6;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+        }
+        .cell:hover {
+            transform: scale(1.05);
+        }
+        .cell.p1 { background-color: #bdc3c7; }
+        .cell.p2 { background-color: #bdc3c7; }
+        .cell.red { background-color: #e74c3c; }
+        .cell.blue { background-color: #3498db; }
+        .cell.green { background-color: #2ecc71; }
+        .cell.yellow { background-color: #f1c40f; }
+        .number-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 28px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+        }
+        .player-indicator {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 16px;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+        }
+        .cell.highlight {
+            background-color: rgba(241, 196, 15, 0.8);
+            border: 2px solid #f39c12;
+            box-shadow: 0 0 10px #f39c12;
+        }
+        #message {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 20px;
+            text-shadow: 1px 1px #34495e;
+        }
+        #scores {
+            font-size: 20px;
+            margin-top: 10px;
+        }
+        #scores span {
+            margin: 0 20px;
+        }
+        #roll-button, #restart-button {
+            font-size: 20px;
+            padding: 12px 25px;
+            margin-top: 15px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #2980b9;
+            color: #fff;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 5px #1c5980;
+        }
+        #roll-button:hover, #restart-button:hover {
+            background-color: #3498db;
+        }
+        #roll-button:active, #restart-button:active {
+            box-shadow: 0 2px #1c5980;
+            transform: translateY(3px);
+        }
+        #restart-button {
+            display: none;
+        }
+        #dice {
+            width: 100px;
+            height: 100px;
+            border: 2px solid #ecf0f1;
+            border-radius: 10px;
+            margin: 20px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 36px;
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        /* Modal Styles */
+        #modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(44, 62, 80, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        #modal {
+            background-color: #ecf0f1;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            width: 300px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+        #modal h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        #modal p {
+            color: #2c3e50;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        #modal button {
+            font-size: 20px;
+            padding: 12px 25px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #27ae60;
+            color: #fff;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 5px #1e8449;
+        }
+        #modal button:hover {
+            background-color: #2ecc71;
+        }
+        #modal button:active {
+            box-shadow: 0 2px #1e8449;
+            transform: translateY(3px);
+        }
+    </style>
+</head>
+<body>
+<div id="game-container">
+    <h1>Color Towers</h1>
+    <div id="message">Player 1's turn. Roll the dice to get a color!</div>
+    <div id="scores">
+        <span id="score-p1">Player 1 Score: 0</span> | <span id="score-p2">Player 2 Score: 0</span>
+    </div>
+    <div id="board"></div>
+    <button id="roll-button">Roll Dice</button>
+    <button id="restart-button">Restart Game</button>
+    <div id="dice"></div>
+    <!-- Modal -->
+    <div id="modal-overlay">
+        <div id="modal">
+            <h2 id="modal-message"></h2>
+            <p id="modal-scores"></p>
+            <button id="modal-restart-button">Play Again</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const COLORS = ['red', 'blue', 'green', 'yellow'];
+    const BOARD_SIZE = 6;
+    const SECTION_SIZE = 3;
+    let board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
+    let currentPlayer = 1;
+    let currentColor = null;
+    let gamePhase = 'roll';
+
+    function createBoard() {
+        const boardElement = document.getElementById('board');
+        boardElement.innerHTML = '';
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            for (let j = 0; j < BOARD_SIZE; j++) {
+                const cell = document.createElement('div');
+                cell.className = `cell ${j < SECTION_SIZE ? 'p1' : 'p2'}`;
+                cell.onclick = () => handleColumnClick(j);
+                cell.onmouseenter = () => highlightColumn(j);
+                cell.onmouseleave = () => removeHighlight(j);
+                cell.dataset.row = i;
+                cell.dataset.col = j;
+                boardElement.appendChild(cell);
+            }
+        }
+    }
+
+    function updateBoard() {
+        const cells = document.querySelectorAll('.cell');
+        board.forEach((row, i) => {
+            row.forEach((cellData, j) => {
+                const index = i * BOARD_SIZE + j;
+                const cellElement = cells[index];
+                cellElement.className = `cell ${j < SECTION_SIZE ? 'p1' : 'p2'}`;
+                cellElement.innerHTML = ''; // Clear cell content
+                if (cellData) {
+                    cellElement.classList.add(cellData.color);
+
+                    // Display the cumulative number
+                    const numberElement = document.createElement('div');
+                    numberElement.className = 'number-display';
+                    numberElement.textContent = cellData.number;
+                    cellElement.appendChild(numberElement);
+
+                    // Indicate the player who owns the cell
+                    const playerIndicator = document.createElement('div');
+                    playerIndicator.className = 'player-indicator';
+                    playerIndicator.textContent = `P${cellData.player}`;
+                    cellElement.appendChild(playerIndicator);
+                }
+            });
+        });
+    }
+
+    function rollDice() {
+        if (gamePhase !== 'roll') return;
+        currentColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+        const diceElement = document.getElementById('dice');
+        diceElement.className = currentColor;
+        diceElement.style.backgroundColor = getColorCode(currentColor);
+        diceElement.textContent = '';
+        gamePhase = 'place';
+        document.getElementById('message').textContent = `Player ${currentPlayer}, place the ${currentColor} piece!`;
+    }
+
+    function getColorCode(color) {
+        switch(color) {
+            case 'red': return '#e74c3c';
+            case 'blue': return '#3498db';
+            case 'green': return '#2ecc71';
+            case 'yellow': return '#f1c40f';
+            default: return '#ecf0f1';
+        }
+    }
+
+    function handleColumnClick(col) {
+        if (gamePhase !== 'place') return;
+        if ((currentPlayer === 1 && col >= SECTION_SIZE) || (currentPlayer === 2 && col < SECTION_SIZE)) {
+            return;
+        }
+
+        let rowToPlace = null;
+        if (currentPlayer === 1) {
+            for (let row = BOARD_SIZE - 1; row >= 0; row--) {
+                if (!board[row][col]) {
+                    rowToPlace = row;
+                    break;
+                }
+            }
+        } else {
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                if (!board[row][col]) {
+                    rowToPlace = row;
+                    break;
+                }
+            }
+        }
+
+        if (rowToPlace !== null) {
+            placeColor(rowToPlace, col);
+        }
+    }
+
+    function placeColor(row, col) {
+        let lastCell = null;
+
+        if (currentPlayer === 1 && row < BOARD_SIZE - 1) {
+            lastCell = board[row + 1][col];
+        } else if (currentPlayer === 2 && row > 0) {
+            lastCell = board[row - 1][col];
+        }
+
+        board[row][col] = {
+            color: currentColor,
+            number: 1,
+            player: currentPlayer
+        };
+
+        if (lastCell) {
+            if (lastCell.color === currentColor) {
+                board[row][col].number += lastCell.number;
+            }
+        }
+
+        updateBoard();
+        calculateScores();
+
+        if (!checkWin()) {
+            switchPlayer();
+        }
+    }
+
+    function calculateScores() {
+        let scoreP1 = 0;
+        let scoreP2 = 0;
+
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            for (let j = 0; j < BOARD_SIZE; j++) {
+                const cell = board[i][j];
+                if (cell) {
+                    if (cell.player === 1) {
+                        scoreP1 += cell.number;
+                    } else if (cell.player === 2) {
+                        scoreP2 += cell.number;
+                    }
+                }
+            }
+        }
+
+        // Update the scores in the UI
+        document.getElementById('score-p1').textContent = `Player 1 Score: ${scoreP1}`;
+        document.getElementById('score-p2').textContent = `Player 2 Score: ${scoreP2}`;
+
+        return { scoreP1, scoreP2 };
+    }
+
+    function checkWin() {
+        // Check if the board is full
+        let isFull = true;
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            for (let j = 0; j < BOARD_SIZE; j++) {
+                if (!board[i][j]) {
+                    isFull = false;
+                    break;
+                }
+            }
+            if (!isFull) break;
+        }
+
+        if (isFull) {
+            const { scoreP1, scoreP2 } = calculateScores();
+            let winner = '';
+            if (scoreP1 > scoreP2) {
+                winner = 'Player 1 wins!';
+            } else if (scoreP2 > scoreP1) {
+                winner = 'Player 2 wins!';
+            } else {
+                winner = 'It\'s a tie!';
+            }
+
+            showEndGameModal(winner, scoreP1, scoreP2);
+            return true; // Game ends
+        }
+
+        return false; // Game continues
+    }
+
+    function showEndGameModal(winner, scoreP1, scoreP2) {
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modalMessage = document.getElementById('modal-message');
+        const modalScores = document.getElementById('modal-scores');
+        modalMessage.textContent = winner;
+        modalScores.innerHTML = `Player 1 Score: ${scoreP1}<br>Player 2 Score: ${scoreP2}`;
+        modalOverlay.style.display = 'flex';
+        document.getElementById('roll-button').disabled = true;
+    }
+
+    function switchPlayer() {
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+        gamePhase = 'roll';
+        document.getElementById('message').textContent = `Player ${currentPlayer}'s turn. Roll the dice to get a color!`;
+        const diceElement = document.getElementById('dice');
+        diceElement.className = '';
+        diceElement.style.backgroundColor = '#ecf0f1';
+        diceElement.textContent = '';
+    }
+
+    function restartGame() {
+        board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
+        currentPlayer = 1;
+        currentColor = null;
+        gamePhase = 'roll';
+        document.getElementById('message').textContent = `Player ${currentPlayer}'s turn. Roll the dice to get a color!`;
+        const diceElement = document.getElementById('dice');
+        diceElement.className = '';
+        diceElement.style.backgroundColor = '#ecf0f1';
+        diceElement.textContent = '';
+        document.getElementById('roll-button').disabled = false;
+        document.getElementById('restart-button').style.display = 'none';
+        document.getElementById('modal-overlay').style.display = 'none';
+        document.getElementById('score-p1').textContent = `Player 1 Score: 0`;
+        document.getElementById('score-p2').textContent = `Player 2 Score: 0`;
+        createBoard();
+        updateBoard();
+    }
+
+    function highlightColumn(col) {
+        if ((currentPlayer === 1 && col >= SECTION_SIZE) || (currentPlayer === 2 && col < SECTION_SIZE)) {
+            return;
+        }
+        const cells = document.querySelectorAll(`.cell[data-col='${col}']`);
+        cells.forEach(cell => cell.classList.add('highlight'));
+    }
+
+    function removeHighlight(col) {
+        const cells = document.querySelectorAll(`.cell[data-col='${col}']`);
+        cells.forEach(cell => cell.classList.remove('highlight'));
+    }
+
+    createBoard();
+    updateBoard();
+    document.getElementById('roll-button').onclick = rollDice;
+    document.getElementById('restart-button').onclick = restartGame;
+    document.getElementById('modal-restart-button').onclick = restartGame;
+</script>
+</body>
+</html>
+```
+
+### Explanation:
+
+UI Implementation:
+1. Created a responsive layout using CSS Grid for the game board.
+2. Styled the cells to visually separate the two players' sections.
+3. Implemented hover effects on columns to highlight where pieces will be placed.
+4. Created a visually appealing dice representation below the grid.
+5. Added score displays and a message area above the grid for game feedback.
+6. Implemented a modal for displaying the end game result and restart option.
+7. Used CSS transitions and animations to make piece placements and dice rolls visually engaging.
+
+Gameplay Implementation:
+1. Initialized the game state, including the board, current player, and scores.
+2. Implemented the dice rolling mechanism to randomly select one of the four colors.
+3. Created the piece placement logic, ensuring pieces are only placed in the correct player's section and stack properly.
+4. Implemented the combining logic for same-colored pieces, incrementing the number when pieces stack.
+5. Developed the turn-switching mechanism after each successful piece placement.
+6. Created a score calculation function that sums the numbers on each player's pieces.
+7. Implemented a win condition check that triggers when the board is full.
+8. Developed a game reset function that clears the board and resets all game states.
+
+This implementation would create a visually appealing game called "Color Towers" in which the players fight by placing colored blocks strategically.

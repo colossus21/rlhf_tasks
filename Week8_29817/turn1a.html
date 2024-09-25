@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Towers</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background: #f4f4f4; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .game-container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .grid { display: grid; grid-template-columns: repeat(6, 50px); gap: 5px; margin-bottom: 20px; }
+        .cell { width: 50px; height: 50px; border: 1px solid #ddd; display: flex; justify-content: center; align-items: center; font-size: 18px; font-weight: bold; }
+        .player-section { border: 2px solid #000; }
+        .player1-section { border-color: #ff6347; }
+        .player2-section { border-color: #4169e1; }
+        .dice { width: 50px; height: 50px; background: #fff; border: 2px solid #333; border-radius: 5px; display: flex; justify-content: center; align-items: center; font-size: 24px; cursor: pointer; }
+        .highlight { background-color: rgba(255, 255, 0, 0.3); }
+        .message, .score { text-align: center; margin: 10px 0; }
+        .restart { display: block; margin: 20px auto; padding: 10px 20px; background-color: #5cb85c; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .block { transition: all 0.3s ease; }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <div class="score" id="score">Player 1: 0 | Player 2: 0</div>
+    <div class="message" id="message">Player 1's Turn</div>
+    <div class="grid" id="gameGrid"></div>
+    <div class="dice" id="dice" onclick="rollDice()">🎲</div>
+    <button class="restart" id="restart" onclick="restartGame()" style="display:none;">Restart Game</button>
+</div>
+
+<script>
+    const colors = ['#ff6347', '#4169e1', '#32cd32', '#ffff00']; // Red, Blue, Green, Yellow
+    let gameState = {
+        board: Array(36).fill(0),
+        currentPlayer: 1,
+        player1Score: 0,
+        player2Score: 0,
+        gameOver: false
+    };
+
+    const grid = document.getElementById('gameGrid');
+    const message = document.getElementById('message');
+    const scoreDisplay = document.getElementById('score');
+    const restartButton = document.getElementById('restart');
+
+    function createGrid() {
+        grid.innerHTML = '';
+        for(let i = 0; i < 36; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            if(i < 18) cell.classList.add('player1-section');
+            else cell.classList.add('player2-section');
+            cell.onmouseover = () => highlightColumn(i % 6);
+            cell.onmouseout = () => removeHighlight();
+            grid.appendChild(cell);
+        }
+    }
+
+    function highlightColumn(column) {
+        if(gameState.gameOver) return;
+        [...grid.children].forEach((cell, index) => {
+            if(index % 6 === column) cell.classList.add('highlight');
+        });
+    }
+
+    function removeHighlight() {
+        document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
+    }
+
+    function rollDice() {
+        if(gameState.gameOver) return;
+        const colorIndex = Math.floor(Math.random() * 4);
+        placeBlock(colors[colorIndex]);
+    }
+
+    function placeBlock(color) {
+        const column = Math.floor(Math.random() * 3) + (gameState.currentPlayer === 1 ? 0 : 3);
+        for(let row = 5; row >= 0; row--) {
+            const index = row * 6 + column;
+            if(!gameState.board[index]) {
+                gameState.board[index] = {color: color, rank: 1};
+                updateBoard();
+                checkAndStack(index);
+                if(checkGameEnd()) endGame();
+                else switchPlayer();
+                break;
+            }
+        }
+    }
+
+    function checkAndStack(index) {
+        const {color, rank} = gameState.board[index];
+        const belowIndex = index + 6;
+        if(belowIndex < gameState.board.length && gameState.board[belowIndex] && gameState.board[belowIndex].color === color) {
+            gameState.board[belowIndex].rank += rank;
+            gameState.board[index] = 0;
+            updateBoard();
+            updateScore();
+        }
+    }
+
+    function updateBoard() {
+        gameState.board.forEach((block, i) => {
+            const cell = grid.children[i];
+            if(block) {
+                cell.style.backgroundColor = block.color;
+                cell.textContent = block.rank;
+            } else {
+                cell.style.backgroundColor = '';
+                cell.textContent = '';
+            }
+        });
+    }
+
+    function switchPlayer() {
+        gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+        message.textContent = `Player ${gameState.currentPlayer}'s Turn`;
+    }
+
+    function updateScore() {
+        gameState.player1Score = gameState.board.slice(0, 18).reduce((sum, b) => sum + (b ? b.rank : 0), 0);
+        gameState.player2Score = gameState.board.slice(18).reduce((sum, b) => sum + (b ? b.rank : 0), 0);
+        scoreDisplay.textContent = `Player 1: ${gameState.player1Score} | Player 2: ${gameState.player2Score}`;
+    }
+
+    function checkGameEnd() {
+        return gameState.board.every(cell => cell !== 0);
+    }
+
+    function endGame() {
+        gameState.gameOver = true;
+        const winner = gameState.player1Score > gameState.player2Score ? 'Player 1' :
+            gameState.player1Score < gameState.player2Score ? 'Player 2' : 'It\'s a tie';
+        message.textContent = `${winner} wins!`;
+        restartButton.style.display = 'block';
+    }
+
+    function restartGame() {
+        gameState = {
+            board: Array(36).fill(0),
+            currentPlayer: 1,
+            player1Score: 0,
+            player2Score: 0,
+            gameOver: false
+        };
+        createGrid();
+        updateBoard();
+        message.textContent = "Player 1's Turn";
+        scoreDisplay.textContent = 'Player 1: 0 | Player 2: 0';
+        restartButton.style.display = 'none';
+    }
+
+    createGrid();
+</script>
+</body>
+</html>

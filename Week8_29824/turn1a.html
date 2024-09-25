@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harvest Haven</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(6, 50px);
+            grid-gap: 2px;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        .player1 { background-color: rgba(255, 0, 0, 0.1); }
+        .player2 { background-color: rgba(0, 0, 255, 0.1); }
+        #turnIndicator { font-weight: bold; }
+        #gameInfo { margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container mt-4">
+    <div id="turnIndicator"></div>
+    <div id="playerInventory" class="mb-3"></div>
+    <div class="grid" id="gameBoard"></div>
+    <button id="rollDice" class="btn btn-primary">Roll Dice</button>
+    <button id="endTurn" class="btn btn-secondary">End Turn</button>
+    <div id="gameInfo"></div>
+</div>
+
+<script>
+    const board = Array(6).fill().map(() => Array(6).fill(null));
+    const players = [
+        {name: 'Farmer Red', color: 'red', points: 0, water: 0, seeds: {spinach: 0, carrot: 0, pumpkin: 0}},
+        {name: 'Farmer Blue', color: 'blue', points: 0, water: 0, seeds: {spinach: 0, carrot: 0, pumpkin: 0}}
+    ];
+    let currentPlayer = 0;
+    let diceRolls = [1, 2, 3, 4, 5, 6];
+
+    function setupBoard() {
+        const gameBoard = document.getElementById('gameBoard');
+        board.forEach((row, i) => {
+            row.forEach((_, j) => {
+                let cell = document.createElement('div');
+                cell.className = 'cell ' + (i < 3 ? 'player1' : 'player2');
+                cell.dataset.row = i;
+                cell.dataset.col = j;
+                cell.onclick = function() { placeOrWater(i, j); };
+                gameBoard.appendChild(cell);
+            });
+        });
+        updateDisplay();
+    }
+
+    function rollDice() {
+        return diceRolls[Math.floor(Math.random() * diceRolls.length)];
+    }
+
+    function updateDisplay() {
+        document.getElementById('turnIndicator').innerText = `${players[currentPlayer].name}'s Turn`;
+        document.getElementById('playerInventory').innerHTML = `
+            Water: ${players[currentPlayer].water},
+            Spinach: ${players[currentPlayer].seeds.spinach},
+            Carrot: ${players[currentPlayer].seeds.carrot},
+            Pumpkin: ${players[currentPlayer].seeds.pumpkin}
+        `;
+        updateBoardDisplay();
+    }
+
+    function updateBoardDisplay() {
+        board.forEach((row, i) => {
+            row.forEach((crop, j) => {
+                const cell = document.querySelector(`[data-row="${i}"][data-col="${j}"]`);
+                if (crop) {
+                    cell.innerHTML = `${crop.emoji} ${crop.water}/${crop.requiredWater}`;
+                } else {
+                    cell.innerHTML = '';
+                }
+            });
+        });
+    }
+
+    function placeOrWater(i, j) {
+        let crop = board[i][j];
+        if (!crop && players[currentPlayer].seeds.spinach + players[currentPlayer].seeds.carrot + players[currentPlayer].seeds.pumpkin > 0) {
+            // Place crop logic here - simplified for brevity
+        } else if (crop) {
+            if (players[currentPlayer].water >= 1) {
+                crop.water += 1;
+                players[currentPlayer].water -= 1;
+                if (crop.water === crop.requiredWater) {
+                    harvest(i, j, crop.type);
+                }
+            }
+        }
+        updateDisplay();
+    }
+
+    function harvest(i, j, type) {
+        const points = {spinach: 1, carrot: 2, pumpkin: 6}[type];
+        players[currentPlayer].points += points;
+        board[i][j] = null;
+        // Animation could be triggered here
+        checkWin();
+    }
+
+    function checkWin() {
+        if (players[currentPlayer].points >= 20) {
+            alert(`${players[currentPlayer].name} wins!`);
+            // Show restart button
+        }
+    }
+
+    document.getElementById('rollDice').onclick = function() {
+        const roll = rollDice();
+        // Update player's inventory based on roll
+        if (roll <= 3) players[currentPlayer].water += roll;
+        else {
+            const seedType = ['spinach', 'carrot', 'pumpkin'][roll - 4];
+            players[currentPlayer].seeds[seedType] += 1;
+        }
+        updateDisplay();
+    };
+
+    document.getElementById('endTurn').onclick = function() {
+        currentPlayer = 1 - currentPlayer; // Switch player
+        updateDisplay();
+    };
+
+    setupBoard();
+</script>
+
+</body>
+</html>

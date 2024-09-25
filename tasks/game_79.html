@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Color Towers</title>
+    <title>Crystal Patterns</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -19,235 +19,292 @@
         }
         #board {
             display: grid;
-            grid-template-columns: repeat(6, 60px);
-            grid-template-rows: repeat(6, 60px);
+            grid-template-columns: repeat(9, 40px);
             gap: 2px;
             margin: 20px auto;
-            background-color: #ddd;
-            padding: 5px;
-            border-radius: 5px;
         }
         .cell {
-            width: 60px;
-            height: 60px;
+            width: 40px;
+            height: 40px;
+            background-color: #fff;
             border: 1px solid #ccc;
-            border-radius: 3px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            font-weight: bold;
-            color: #fff;
-            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
             cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.3s ease;
         }
-        .cell.p1 { background-color: #ffebee; }
-        .cell.p2 { background-color: #e3f2fd; }
-        .cell::after {
-            content: '';
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            right: 5px;
-            bottom: 5px;
-            border-radius: 50%;
-        }
-        .cell.red::after { background-color: #ff4136; }
-        .cell.blue::after { background-color: #0074d9; }
-        .cell.green::after { background-color: #2ecc40; }
-        .cell.yellow::after {
-            background-color: #ffdc00;
-            color: #333;
-        }
-        .cell.highlight {
-            background-color: rgba(255, 255, 0, 0.3);
-        }
-        #dice {
-            width: 100px;
-            height: 100px;
-            border: 2px solid #333;
-            border-radius: 10px;
-            margin: 20px auto;
+        .cell.red { background-color: #ff6b6b; }
+        .cell.blue { background-color: #4ecdc4; }
+        .cell.completed { opacity: 0.5; }
+        #patterns {
             display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 36px;
-        }
-        #message {
+            justify-content: space-around;
             margin-top: 20px;
-            font-size: 18px;
-            font-weight: bold;
         }
-        #roll-button, #restart-button {
+        .pattern-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .pattern {
+            display: grid;
+            grid-template-columns: repeat(3, 20px);
+            gap: 1px;
+            margin: 5px;
+            border: 2px solid;
+            padding: 2px;
+        }
+        .red-pattern { border-color: #ff6b6b; }
+        .blue-pattern { border-color: #4ecdc4; }
+        .pattern-cell {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #ccc;
+        }
+        .pattern-filled { background-color: #333; }
+        #current-player, #score {
             font-size: 18px;
+            margin: 10px 0;
+        }
+        #current-player.red { color: #ff6b6b; }
+        #current-player.blue { color: #4ecdc4; }
+        #restart-button {
+            font-size: 16px;
             padding: 10px 20px;
-            margin-top: 10px;
+            margin-top: 20px;
             cursor: pointer;
         }
-        #restart-button {
+        .pattern-title-red { color: #ff6b6b; }
+        .pattern-title-blue { color: #4ecdc4; }
+        #modal {
             display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
 <div id="game-container">
-    <h1>Color Towers</h1>
-    <div id="message">Player 1's turn. Roll the dice!</div>
+    <h1>Crystal Patterns</h1>
+    <div id="current-player">Player 1's turn!</div>
+    <div id="score">Red: 0 | Blue: 0</div>
     <div id="board"></div>
-    <button id="roll-button">Roll Dice</button>
+    <div id="patterns">
+        <div class="pattern-container">
+            <h3 class="pattern-title-red">Red Patterns</h3>
+            <div id="red-patterns"></div>
+        </div>
+        <div class="pattern-container">
+            <h3 class="pattern-title-blue">Blue Patterns</h3>
+            <div id="blue-patterns"></div>
+        </div>
+    </div>
     <button id="restart-button">Restart Game</button>
-    <div id="dice"></div>
+</div>
+
+<div id="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 id="congrats-message"></h2>
+        <p>Click anywhere to start a new game.</p>
+    </div>
 </div>
 
 <script>
-    const COLORS = ['red', 'blue', 'green', 'yellow'];
-    const BOARD_SIZE = 6;
-    const SECTION_SIZE = 3;
-    let board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
-    let currentPlayer = 1;
-    let currentColor = null;
-    let gamePhase = 'roll';
+    const BOARD_SIZE = 9;
+    const PATTERN_SIZE = 3;
+    const PATTERNS_PER_PLAYER = 3;
+    const FILLED_CELLS_PER_PATTERN = 5;
+
+    let currentPlayer = 'red';
+    let board = [];
+    let patterns = { red: [], blue: [] };
+    let scores = { red: 0, blue: 0 };
+    let completedCells = new Set();
+
+    function initializeGame() {
+        currentPlayer = 'red';
+        board = [];
+        patterns = { red: [], blue: [] };
+        scores = { red: 0, blue: 0 };
+        completedCells.clear();
+
+        createBoard();
+        createPatterns();
+        updateDisplay();
+    }
 
     function createBoard() {
+        board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
         const boardElement = document.getElementById('board');
         boardElement.innerHTML = '';
         for (let i = 0; i < BOARD_SIZE; i++) {
             for (let j = 0; j < BOARD_SIZE; j++) {
                 const cell = document.createElement('div');
-                cell.className = `cell ${j < SECTION_SIZE ? 'p1' : 'p2'}`;
-                cell.onclick = () => handleColumnClick(j);
-                cell.onmouseenter = () => highlightColumn(j);
-                cell.onmouseleave = () => removeHighlight(j);
+                cell.className = 'cell';
+                cell.addEventListener('click', () => handleCellClick(i, j));
                 boardElement.appendChild(cell);
             }
         }
     }
 
-    function updateBoard() {
-        const cells = document.querySelectorAll('.cell');
-        board.forEach((row, i) => {
-            row.forEach((cell, j) => {
-                const index = i * BOARD_SIZE + j;
-                const cellElement = cells[index];
-                cellElement.className = `cell ${j < SECTION_SIZE ? 'p1' : 'p2'}`;
-                if (cell) {
-                    cellElement.classList.add(cell.color);
-                }
-            });
+    function createPatterns() {
+        patterns.red = generatePatterns();
+        patterns.blue = generatePatterns();
+        displayPatterns('red');
+        displayPatterns('blue');
+    }
+
+    function generatePatterns() {
+        return Array(PATTERNS_PER_PLAYER).fill().map(() => {
+            const pattern = Array(PATTERN_SIZE).fill().map(() => Array(PATTERN_SIZE).fill(false));
+            for (let i = 0; i < FILLED_CELLS_PER_PATTERN; i++) {
+                let row, col;
+                do {
+                    row = Math.floor(Math.random() * PATTERN_SIZE);
+                    col = Math.floor(Math.random() * PATTERN_SIZE);
+                } while (pattern[row][col]);
+                pattern[row][col] = true;
+            }
+            return pattern;
         });
     }
 
-    function rollDice() {
-        if (gamePhase !== 'roll') return;
-        currentColor = COLORS[Math.floor(Math.random() * COLORS.length)];
-        const diceElement = document.getElementById('dice');
-        diceElement.className = currentColor;
-        diceElement.style.backgroundColor = currentColor;
-        diceElement.textContent = '';
-        gamePhase = 'place';
-        document.getElementById('message').textContent = `Player ${currentPlayer}, place the ${currentColor} piece!`;
+    function displayPatterns(player) {
+        const containerElement = document.getElementById(`${player}-patterns`);
+        containerElement.innerHTML = '';
+        patterns[player].forEach((pattern, index) => {
+            const patternElement = document.createElement('div');
+            patternElement.className = `pattern ${player}-pattern`;
+            pattern.forEach(row => {
+                row.forEach(cell => {
+                    const cellElement = document.createElement('div');
+                    cellElement.className = `pattern-cell${cell ? ' pattern-filled' : ''}`;
+                    patternElement.appendChild(cellElement);
+                });
+            });
+            containerElement.appendChild(patternElement);
+        });
     }
 
-    function handleColumnClick(col) {
-        if (gamePhase !== 'place') return;
-        if ((currentPlayer === 1 && col >= SECTION_SIZE) || (currentPlayer === 2 && col < SECTION_SIZE)) {
-            return;
+    function handleCellClick(row, col) {
+        if (board[row][col] === null && !completedCells.has(row * BOARD_SIZE + col)) {
+            board[row][col] = currentPlayer;
+            updateDisplay();
+            checkPatterns();
+            switchPlayer();
         }
-        if (currentPlayer === 1) {
-            for (let row = BOARD_SIZE - 1; row >= 0; row--) {
-                if (!board[row][col]) {
-                    placeColor(row, col);
-                    break;
+    }
+
+    function updateDisplay() {
+        const cells = document.querySelectorAll('.cell');
+        board.flat().forEach((cell, index) => {
+            cells[index].className = `cell${cell ? ` ${cell}` : ''}`;
+            if (completedCells.has(index)) {
+                cells[index].classList.add('completed');
+            }
+        });
+        const currentPlayerElement = document.getElementById('current-player');
+        currentPlayerElement.textContent = `Player ${currentPlayer === 'red' ? '1' : '2'}'s turn!`;
+        currentPlayerElement.className = currentPlayer;
+        document.getElementById('score').textContent = `Red: ${scores.red} | Blue: ${scores.blue}`;
+    }
+
+    function checkPatterns() {
+        patterns[currentPlayer].forEach((pattern, index) => {
+            for (let i = 0; i <= BOARD_SIZE - PATTERN_SIZE; i++) {
+                for (let j = 0; j <= BOARD_SIZE - PATTERN_SIZE; j++) {
+                    if (matchPattern(i, j, pattern)) {
+                        scores[currentPlayer]++;
+                        patterns[currentPlayer].splice(index, 1);
+                        displayPatterns(currentPlayer);
+                        markCompletedCells(i, j, pattern);
+                        if (scores[currentPlayer] === 2) {
+                            showCongratsModal();
+                            return;
+                        }
+                    }
                 }
             }
-        } else {
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                if (!board[row][col]) {
-                    placeColor(row, col);
-                    break;
+        });
+    }
+
+    function matchPattern(startRow, startCol, pattern) {
+        for (let i = 0; i < PATTERN_SIZE; i++) {
+            for (let j = 0; j < PATTERN_SIZE; j++) {
+                if (pattern[i][j] && board[startRow + i][startCol + j] !== currentPlayer) {
+                    return false;
                 }
             }
         }
+        return true;
     }
 
-    function placeColor(row, col) {
-        if (!board[row][col]) {
-            board[row][col] = { color: currentColor };
-        } else if (board[row][col].color === currentColor) {
-            // Do nothing
-        } else {
-            board[row][col] = null;
-        }
-        updateBoard();
-        checkWin(row);
-        switchPlayer();
-    }
-
-    function checkWin(row) {
-        if ((currentPlayer === 1 && row === 0) || (currentPlayer === 2 && row === BOARD_SIZE - 1)) {
-            endGame();
+    function markCompletedCells(startRow, startCol, pattern) {
+        for (let i = 0; i < PATTERN_SIZE; i++) {
+            for (let j = 0; j < PATTERN_SIZE; j++) {
+                if (pattern[i][j]) {
+                    const index = (startRow + i) * BOARD_SIZE + (startCol + j);
+                    completedCells.add(index);
+                }
+            }
         }
     }
 
     function switchPlayer() {
-        currentPlayer = currentPlayer === 1 ? 2 : 1;
-        gamePhase = 'roll';
-        document.getElementById('message').textContent = `Player ${currentPlayer}'s turn. Roll the dice!`;
-        document.getElementById('dice').className = '';
-        document.getElementById('dice').style.backgroundColor = '#fff';
-        document.getElementById('dice').textContent = '';
+        currentPlayer = currentPlayer === 'red' ? 'blue' : 'red';
+        updateDisplay();
     }
 
-    function endGame() {
-        document.getElementById('message').textContent = `Player ${currentPlayer} wins!`;
-        document.getElementById('roll-button').disabled = true;
-        document.getElementById('restart-button').style.display = 'inline-block';
-        document.querySelectorAll('.cell').forEach(cell => {
-            cell.onclick = null;
-            cell.onmouseenter = null;
-            cell.onmouseleave = null;
-        });
+    function showCongratsModal() {
+        const modal = document.getElementById('modal');
+        const congratsMessage = document.getElementById('congrats-message');
+        congratsMessage.textContent = `Congratulations! Player ${currentPlayer === 'red' ? '1' : '2'} wins!`;
+        congratsMessage.style.color = currentPlayer === 'red' ? '#ff6b6b' : '#4ecdc4';
+        modal.style.display = 'block';
     }
 
-    function restartGame() {
-        board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(null));
-        currentPlayer = 1;
-        currentColor = null;
-        gamePhase = 'roll';
-        document.getElementById('message').textContent = `Player ${currentPlayer}'s turn. Roll the dice!`;
-        document.getElementById('dice').className = '';
-        document.getElementById('dice').style.backgroundColor = '#fff';
-        document.getElementById('dice').textContent = '';
-        document.getElementById('roll-button').disabled = false;
-        document.getElementById('restart-button').style.display = 'none';
-        createBoard();
-        updateBoard();
+    document.querySelector('.close').onclick = function() {
+        document.getElementById('modal').style.display = 'none';
+        initializeGame();rlhf
     }
 
-    function highlightColumn(col) {
-        if ((currentPlayer === 1 && col >= SECTION_SIZE) || (currentPlayer === 2 && col < SECTION_SIZE)) {
-            return;
-        }
-        const cells = document.querySelectorAll('.cell');
-        for (let i = 0; i < BOARD_SIZE; i++) {
-            cells[i * BOARD_SIZE + col].classList.add('highlight');
+    window.onclick = function(event) {
+        const modal = document.getElementById('modal');
+        if (event.target == modal) {
+            modal.style.display = 'none';
+            initializeGame();
         }
     }
 
-    function removeHighlight(col) {
-        const cells = document.querySelectorAll('.cell');
-        for (let i = 0; i < BOARD_SIZE; i++) {
-            cells[i * BOARD_SIZE + col].classList.remove('highlight');
-        }
-    }
+    document.getElementById('restart-button').addEventListener('click', initializeGame);
 
-    createBoard();
-    updateBoard();
-    document.getElementById('roll-button').onclick = rollDice;
-    document.getElementById('restart-button').onclick = restartGame;
+    initializeGame();
 </script>
 </body>
 </html>

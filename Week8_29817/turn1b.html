@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Color Towers</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        #gameBoard {
+            width: 300px;
+            height: 300px;
+            margin: auto;
+            display: flex;
+            flex-wrap: wrap;
+            border: 2px solid #000;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+        .player-section {
+            display: flex;
+            flex-direction: column;
+        }
+        .column:hover {
+            background-color: rgba(220, 220, 220, 0.5);
+        }
+        #dice {
+            margin: 20px auto;
+            display: block;
+            width: 50px;
+            height: 50px;
+            background-color: #fff;
+            border: 2px solid #000;
+            font-size: 24px;
+            text-align: center;
+            line-height: 50px;
+            cursor: pointer;
+        }
+        .score, #message {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .restart {
+            display: block;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+<div id="message"></div>
+<div class="score" id="scoreDisplay"></div>
+<div id="gameBoard"></div>
+<div id="dice" onclick="rollDice()">🎲</div>
+<button class="restart btn btn-primary" onclick="restartGame()" style="display:none;">Restart Game</button>
+
+<script>
+    const colors = ['red', 'blue', 'green', 'yellow'];
+    let currentPlayer = 1;
+    let gameBoard = Array(6).fill().map(() => Array(6).fill({color: null, number: 0}));
+    let playerScores = {1: 0, 2: 0};
+
+    function createBoard() {
+        const board = document.getElementById('gameBoard');
+        for (let i = 0; i < 6; i++) {
+            for (let j = 0; j < 3; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell column';
+                cell.onmouseover = function() { highlightColumn(j + (currentPlayer - 1) * 3); };
+                cell.onclick = function() { placePiece(i, j + (currentPlayer - 1) * 3); };
+                board.appendChild(cell);
+            }
+        }
+    }
+
+    function highlightColumn(col) {
+        if (gameEnded()) return;
+        document.querySelectorAll('.cell').forEach((cell, index) => {
+            if (Math.floor(index / 6) === col) {
+                cell.style.backgroundColor = 'rgba(220, 220, 220, 0.5)';
+            } else {
+                cell.style.backgroundColor = '';
+            }
+        });
+    }
+
+    function rollDice() {
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    function placePiece(row, col) {
+        if (gameBoard[row][col].color === null) {
+            const color = rollDice();
+            gameBoard[row][col] = {color: color, number: 1};
+            updateDisplay(row, col, color, 1);
+            if (checkStack(row, col, color)) {
+                gameBoard[row][col].number++;
+            }
+            if (!gameEnded()) switchPlayer();
+            updateScore();
+        }
+    }
+
+    function checkStack(row, col, color) {
+        let count = 0;
+        for (let i = row; i < 6; i++) {
+            if (gameBoard[i][col].color === color) count++;
+            else break;
+        }
+        return count > 1;
+    }
+
+    function updateDisplay(row, col, color, number) {
+        const index = row * 6 + col;
+        const cell = document.getElementsByClassName('cell')[index];
+        cell.style.backgroundColor = color;
+        cell.textContent = number;
+    }
+
+    function switchPlayer() {
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+        document.getElementById('message').textContent = `Player ${currentPlayer}'s turn`;
+    }
+
+    function updateScore() {
+        playerScores[1] = playerScores[2] = 0;
+        gameBoard.forEach((row, i) => row.forEach((cell, j) => {
+            if (cell.color) {
+                playerScores[Math.floor(j / 3) + 1] += cell.number;
+            }
+        }));
+        document.getElementById('scoreDisplay').innerHTML = `Player 1: ${playerScores[1]} | Player 2: ${playerScores[2]}`;
+    }
+
+    function gameEnded() {
+        return gameBoard.every(row => row.every(cell => cell.color !== null));
+    }
+
+    function restartGame() {
+        gameBoard = Array(6).fill().map(() => Array(6).fill({color: null, number: 0}));
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.style.backgroundColor = '';
+            cell.textContent = '';
+        });
+        document.querySelector('.restart').style.display = 'none';
+        currentPlayer = 1;
+        document.getElementById('message').textContent = `Player 1's turn`;
+        updateScore();
+    }
+
+    // Initialize game
+    createBoard();
+    document.getElementById('message').textContent = `Player 1's turn`;
+</script>
+</body>
+</html>
