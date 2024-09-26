@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Habits Game</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f0f0; }
+        .game-container { text-align: center; }
+        #grid { display: grid; grid-template-columns: repeat(9, 40px); grid-gap: 2px; margin: 20px auto; }
+        .cell { width: 40px; height: 40px; background: #e0e0e0; display: flex; justify-content: center; align-items: center; font-size: 20px; cursor: pointer; }
+        .cell:hover { background: #d0d0d0; }
+        #turn, #score { margin: 10px 0; font-size: 18px; }
+        button { margin-top: 10px; padding: 10px; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <div id="turn">Player 1's Turn</div>
+    <div id="grid"></div>
+    <div id="score">Player 1: 0 | Player 2: 0</div>
+    <button onclick="restartGame()">Restart Game</button>
+</div>
+
+<script>
+    const emojis = {
+        animals: ['🐘', '🐱', '🐼', '🐧', '🦒'],
+        foods: ['🍃', '🍎', '🐟', '🍖', '🎍', '🦑', '🌳']
+    };
+    let board = Array(81).fill(null);
+    let currentPlayer = 1;
+    let scores = [0, 0];
+    const grid = document.getElementById('grid');
+    const turnIndicator = document.getElementById('turn');
+    const scoreDisplay = document.getElementById('score');
+
+    function initializeGame() {
+        for(let i = 0; i < 51; i++) {
+            let index = Math.floor(Math.random() * 81);
+            while(board[index] !== null) {
+                index = Math.floor(Math.random() * 81);
+            }
+            board[index] = { type: 'food', emoji: emojis.foods[Math.floor(Math.random() * emojis.foods.length)] };
+        }
+
+        board.forEach((cell, index) => {
+            const div = document.createElement('div');
+            div.className = 'cell';
+            div.id = index;
+            if(cell) {
+                div.textContent = cell.emoji;
+            } else {
+                div.onclick = () => placeAnimal(index);
+            }
+            grid.appendChild(div);
+        });
+        updateUI();
+    }
+
+    function placeAnimal(index) {
+        if(board[index] !== null) return;
+        board[index] = { type: 'animal', emoji: emojis.animals[currentPlayer - 1] };
+        document.getElementById(index).textContent = emojis.animals[currentPlayer - 1];
+        document.getElementById(index).style.backgroundColor = currentPlayer === 1 ? 'lightcoral' : 'lightblue';
+        calculateScore(index);
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+        checkGameEnd();
+        updateUI();
+    }
+
+    function calculateScore(index) {
+        const directions = [-10, -9, -8, -1, 1, 8, 9, 10];
+        let score = 0;
+        directions.forEach(dir => {
+            const newIndex = index + dir;
+            if(newIndex >= 0 && newIndex < 81 && board[newIndex] && board[newIndex].type === 'food') {
+                score++;
+            }
+        });
+        scores[currentPlayer - 1] += score;
+    }
+
+    function checkGameEnd() {
+        if(!board.includes(null)) {
+            const winner = scores[0] > scores[1] ? 'Player 1' : (scores[1] > scores[0] ? 'Player 2' : 'It\'s a tie');
+            turnIndicator.textContent = `Game Over! ${winner} wins!`;
+            document.querySelectorAll('.cell').forEach(cell => cell.onclick = null);
+        }
+    }
+
+    function updateUI() {
+        turnIndicator.textContent = `Player ${currentPlayer}'s Turn`;
+        scoreDisplay.textContent = `Player 1: ${scores[0]} | Player 2: ${scores[1]}`;
+    }
+
+    function restartGame() {
+        board.fill(null);
+        scores = [0, 0];
+        currentPlayer = 1;
+        grid.innerHTML = '';
+        initializeGame();
+    }
+
+    initializeGame();
+</script>
+</body>
+</html>

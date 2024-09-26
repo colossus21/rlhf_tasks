@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Food Habits Game</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        #gameContainer { text-align: center; }
+        #grid { display: grid; grid-template-columns: repeat(9, 40px); gap: 2px; margin: 20px 0; }
+        .cell { width: 40px; height: 40px; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .player1 { background-color: #ffcccc; }
+        .player2 { background-color: #cce6ff; }
+        #turnIndicator, #scoreBoard { margin: 10px 0; }
+        button { padding: 10px; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div id="gameContainer">
+    <div id="turnIndicator">Player 1's Turn</div>
+    <div id="grid"></div>
+    <div id="scoreBoard">Player 1: 0 | Player 2: 0</div>
+    <button id="restartButton" style="display:none;">Restart Game</button>
+</div>
+
+<script>
+    const grid = document.getElementById('grid');
+    const turnIndicator = document.getElementById('turnIndicator');
+    const scoreBoard = document.getElementById('scoreBoard');
+    const restartButton = document.getElementById('restartButton');
+
+    const animals = ['🐘', '🐱', '🐼', '🐧', '🐒']; // Giraffe emoji changed to Monkey for visibility
+    const foods = ['🍃', '🍎', '🐟', '🍖', '🎋', '🦑', '🌳'];
+    let currentPlayer = 1;
+    let scores = {1: 0, 2: 0};
+    let gameBoard = [];
+
+    function initializeBoard() {
+        gameBoard = Array(81).fill().map(() => foods[Math.floor(Math.random() * foods.length)]);
+        renderBoard();
+    }
+
+    function renderBoard() {
+        grid.innerHTML = '';
+        gameBoard.forEach((cell, index) => {
+            const div = document.createElement('div');
+            div.className = 'cell';
+            div.textContent = cell;
+            div.onclick = () => placeAnimal(index);
+            grid.appendChild(div);
+        });
+    }
+
+    function placeAnimal(index) {
+        if (!animals.includes(gameBoard[index])) {
+            gameBoard[index] = animals[currentPlayer - 1];
+            const points = calculatePoints(index);
+            scores[currentPlayer] += points;
+            updateDisplay();
+            if (gameBoard.filter(cell => animals.includes(cell)).length === 40) endGame(); // 40 because 5*2 players = 10 animals, 81-10=71, 71/2=35.5, so 40 max placements
+            else {
+                currentPlayer = currentPlayer === 1 ? 2 : 1;
+                turnIndicator.textContent = `Player ${currentPlayer}'s Turn`;
+            }
+        }
+    }
+
+    function calculatePoints(index) {
+        const directions = [-9, -8, -7, -1, 1, 7, 8, 9];
+        return directions.reduce((score, dir) => {
+            const neighbor = index + dir;
+            if (neighbor >= 0 && neighbor < 81 && neighbor % 9 !== (index % 9 + 1) % 9) { // Avoid wrap-around
+                const food = gameBoard[neighbor];
+                if (food && foods.slice(0, 2).includes(food) && currentPlayer === 1 || // Elephant foods
+                    food === '🐟' && currentPlayer === 2 || // Cat and Penguin common food
+                    (food === '🎋' && currentPlayer === 1) || // Panda bamboo
+                    (food === '🌳' && currentPlayer === 2)) { // Giraffe tree bark, approximated
+                    return score + 1;
+                }
+            }
+            return score;
+        }, 0);
+    }
+
+    function updateDisplay() {
+        renderBoard();
+        scoreBoard.textContent = `Player 1: ${scores[1]} | Player 2: ${scores[2]}`;
+    }
+
+    function endGame() {
+        const winner = scores[1] > scores[2] ? 'Player 1' : (scores[1] < scores[2] ? 'Player 2' : 'No one, it\'s a tie');
+        turnIndicator.textContent = `${winner} wins!`;
+        restartButton.style.display = 'block';
+    }
+
+    restartButton.onclick = function() {
+        currentPlayer = 1;
+        scores = {1: 0, 2: 0};
+        initializeBoard();
+        turnIndicator.textContent = `Player 1's Turn`;
+        restartButton.style.display = 'none';
+        updateDisplay();
+    };
+
+    initializeBoard();
+</script>
+
+</body>
+</html>

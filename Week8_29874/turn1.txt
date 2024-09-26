@@ -2,7 +2,7 @@ Create a 9x9 grid based game called "Food Habits" in which:
 i) Two players take turn placing one of the 5 emojis based on animals - a) Elephant, b) Cat, c) Panda, d) Penguin and e) Giraffe
 ii) These animals love to eat 2 types of food: a) Elephants - Leaves, Apples b) Cat- Fish, Meat, c) Panda - Bamboo, Leaves d) Penguin - Fish, Squid and e) Giraffe - Leaves, Tree Bark
 iii) 51 cells of the 9x9 pieces would be filled with random food emojis from these 8 food emojis
-iv) Player places an animal emoji on the board on one of the remaining cells - player receives a point equal to the favorite player of that animal in the surrounding 8 spaces.
+iv) Player places an animal emoji on the board on one of the remaining cells each turn - player receives a point equal to the favorite player of that animal in the surrounding 8 spaces.
 v) Player with the highest points win the game after game ends, show a restart button.
-vi) Make the bg color red or blue (red for p1, blue of p2) when pieces are placed.
+vi) Make the bg color light red or blue (red for p1, blue of p2) with respective emoji when pieces are placed.
 vii) Show turn indicator above the game grid, score below the grid. Also, below the grid, declare winner and add a restart button.
