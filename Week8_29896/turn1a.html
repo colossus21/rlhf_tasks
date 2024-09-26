@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Periodic Table Dash</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        .periodic-table {
+            display: grid;
+            grid-template-columns: repeat(18, 50px);
+            gap: 2px;
+        }
+        .element {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 10px;
+            border: 1px solid #000;
+            cursor: pointer;
+        }
+        .player1 { background-color: #ff9999; }
+        .player2 { background-color: #99ccff; }
+        .info, .winner { margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+    <h2 id="turnIndicator">Player 1's Turn</h2>
+    <div class="periodic-table" id="periodicTable"></div>
+    <button class="btn btn-primary" onclick="rollDice()">Roll Dice</button>
+    <div class="info" id="gameInfo"></div>
+    <div class="winner" id="winnerInfo"></div>
+</div>
+
+<script>
+    const elements = [
+        // Here you would list out elements with their atomic numbers, symbols, and perhaps a color class or actual color. For brevity, let's simulate with numbers:
+        {number: 1, symbol: 'H'}, {number: 2, symbol: 'He'}, /* ... up to at least 90 or all 118 ... */
+    ];
+
+    let currentPlayer = 1;
+    let playerPositions = {1: 0, 2: 0};
+    let playerScores = {1: 0, 2: 0};
+    const tableEnd = 90; // or 118 for all elements
+
+    function initializeGame() {
+        const table = document.getElementById('periodicTable');
+        elements.slice(0, tableEnd).forEach((element, index) => {
+            const cell = document.createElement('div');
+            cell.className = 'element';
+            cell.textContent = element.number;
+            cell.id = `element${index + 1}`;
+            table.appendChild(cell);
+        });
+    }
+
+    function rollDice() {
+        const roll = Math.floor(Math.random() * 6) + 1;
+        movePlayer(roll);
+        updateGameInfo(`Player ${currentPlayer} rolled a ${roll}`);
+    }
+
+    function movePlayer(spaces) {
+        if (playerPositions[currentPlayer] + spaces >= tableEnd) {
+            playerPositions[currentPlayer] = tableEnd;
+            endTurn(true);
+        } else {
+            playerPositions[currentPlayer] += spaces;
+            const element = document.getElementById(`element${playerPositions[currentPlayer] + 1}`);
+            element.classList.add(`player${currentPlayer}`);
+            playerScores[currentPlayer] += elements[playerPositions[currentPlayer]].number;
+            endTurn(false);
+        }
+    }
+
+    function endTurn(gameEnded) {
+        if (!gameEnded) {
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            document.getElementById('turnIndicator').textContent = `Player ${currentPlayer}'s Turn`;
+        } else {
+            checkWinner();
+        }
+    }
+
+    function updateGameInfo(message) {
+        document.getElementById('gameInfo').textContent = message;
+    }
+
+    function checkWinner() {
+        if (playerPositions[1] === tableEnd && playerPositions[2] === tableEnd) {
+            let winner = playerScores[1] > playerScores[2] ? 'Player 1' : 'Player 2';
+            if (playerScores[1] === playerScores[2]) winner = 'It\'s a tie!';
+            document.getElementById('winnerInfo').textContent = `Game Over! ${winner} wins with ${Math.max(playerScores[1], playerScores[2])} points!`;
+            document.querySelector('button').disabled = true;
+        }
+    }
+
+    initializeGame();
+</script>
+
+</body>
+</html>

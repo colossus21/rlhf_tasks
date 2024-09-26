@@ -1,0 +1,6 @@
+Create a space themed Checkers game named "Space Checkers" with the following features:
+i) Played in a 6x6 grid
+ii) The board would have a glowing neon background
+iii) For pieces, one user would be UFO and other Rocket, use emojis
+iv) Add an animated star field background
+v) Highlight pieces, add player indicator

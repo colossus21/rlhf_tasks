@@ -1,0 +1,10 @@
+Create a 9x9 turn based grid game called City Defusers in which:
+i) Player 1 starts top left, Player 2 starts bottom right
+ii) There should be 5 hidden bombs. Bombs are hidden and explodes in 5, 10, 15, 20, 25 turns. When a bomb explodes show an animation - first reveal the bomb then after 1 second 8 surrounding cells including the bomb cell will have fire. Only emoticons and CSS based animation.
+iii) If any of the player falls in the fire or explosion loses the game instantly, other player wins. If both player dies at the same turn, game is tied.
+iv) Player 1 uses WASD to move up-down-left-right, Player 2 uses Arrow keys
+v) Show player indicator (with distinct colors) top of the board, turn indicator below the board. How many bombs are defused per player above the board.
+vi) The cell in which the player moves, if the cell has a bomb defuse the bomb and mark the cell with background green. Then add 1 points to the player.
+vii) If both player survives the game, player who defused the highest number of bombs wins, if same, tied.
+viii) Show congratulatory messages after game is over in a centered modal relative to the board.
+ix) The game should have deep blue and red theme, add a neon red border to the game container. Player 1 should have light red bg with a payer walking emoticon, player 2 the same with light blue. Add a restart button after game. Fonts should be red as well.

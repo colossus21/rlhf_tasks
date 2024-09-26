@@ -1,0 +1,7 @@
+Can you create this interesting game called "Periodic Table Dash", I will explain the features below:
+1. The game board is basically a periodic table, each element would have atomic number and its color just like periodic table. 2 players play this game in alternating turns.
+2. Players take turns rolling the dice by clicking the "Roll Dice" button. Each cell has an element.
+3. Below the game there should be game info section. The element name, movement and point changes are displayed in the game info section.
+4. Show at least 90 elements to complete the periodic table if not 118. Each player gains point equal to the element's atomic number per move until last cell is reached.
+5. The game continues until both players reach the end of the table. One player waits if the other player has finished reaching the end of the table.
+6. After game ends, show the winner and the winner's points below the game. There should be turn indicator above of the table.

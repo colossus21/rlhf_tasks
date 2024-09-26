@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Periodic Table Dash</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        #gameBoard {
+            display: grid;
+            grid-template-columns: repeat(18, 1fr);
+            gap: 2px;
+        }
+        .element {
+            border: 1px solid #000;
+            text-align: center;
+            padding: 5px;
+            background-color: #f0f0f0;
+        }
+        .player1 { background-color: #ffcccc; }
+        .player2 { background-color: #cce5ff; }
+        #gameInfo, #winnerInfo { margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Periodic Table Dash</h1>
+    <div id="turnIndicator">Player 1's Turn</div>
+    <div id="gameBoard"></div>
+    <button id="rollDice" class="btn btn-primary">Roll Dice</button>
+    <div id="gameInfo"></div>
+    <div id="winnerInfo"></div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script>
+    $(document).ready(function() {
+        const elements = [
+            // Here you would list out at least 90 to 118 elements with their atomic number and a color if desired
+            {number: 1, name: 'Hydrogen', color: '#FFFFFF'},
+            //... continue with all elements
+        ];
+
+        let gameBoard = $('#gameBoard');
+        let currentPlayer = 1;
+        let playerPositions = {1: 0, 2: 0};
+        let gameInfo = $('#gameInfo');
+        let winnerInfo = $('#winnerInfo');
+
+        // Setup board
+        elements.forEach((element, index) => {
+            let div = $('<div class="element"></div>').css('background-color', element.color).text(element.number);
+            gameBoard.append(div);
+        });
+
+        function updateGameInfo(message) {
+            gameInfo.html(message);
+        }
+
+        function switchPlayer() {
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            $('#turnIndicator').text(`Player ${currentPlayer}'s Turn`);
+        }
+
+        function checkWin() {
+            if (playerPositions[1] >= elements.length - 1 && playerPositions[2] >= elements.length - 1) {
+                let winner = playerPositions[1] > playerPositions[2] ? 'Player 1' : 'Player 2';
+                if (playerPositions[1] === playerPositions[2]) winner = 'Draw';
+                winnerInfo.html(`Game Over! Winner: ${winner}, Points: ${Math.max(playerPositions[1], playerPositions[2])}`);
+                $('#rollDice').prop('disabled', true);
+            }
+        }
+
+        $('#rollDice').on('click', function() {
+            let diceRoll = Math.floor(Math.random() * 6) + 1;
+            let currentPosition = playerPositions[currentPlayer];
+            let newPosition = Math.min(currentPosition + diceRoll, elements.length - 1);
+
+            playerPositions[currentPlayer] = newPosition;
+            updateGameInfo(`Player ${currentPlayer} rolled a ${diceRoll}, moved to ${elements[newPosition].name}, Points: ${newPosition + 1}`);
+
+            if (newPosition === elements.length - 1) {
+                updateGameInfo(`Player ${currentPlayer} has reached the end!`);
+            }
+
+            checkWin();
+            if (newPosition < elements.length - 1) switchPlayer();
+        });
+    });
+</script>
+</body>
+</html>

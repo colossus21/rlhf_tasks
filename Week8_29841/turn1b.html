@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>City Defusers</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #000033;
+            color: #ff0000;
+            font-family: 'Arial', sans-serif;
+        }
+        #gameContainer {
+            border: 3px solid #ff0000;
+            padding: 10px;
+            background: #00001a;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(9, 40px);
+            gap: 2px;
+            margin-top: 20px;
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            background: #000066;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        .player1 { background: rgba(255, 0, 0, 0.3); }
+        .player2 { background: rgba(0, 0, 255, 0.3); }
+        .bomb { background: #ff4d4d; }
+        .defused { background: #00ff00; }
+        .fire {
+            background: #ff6600;
+            animation: explode 1s forwards;
+        }
+        @keyframes explode {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        #status, #turnIndicator {
+            margin: 10px 0;
+            color: #ff0000;
+        }
+        #modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #00001a;
+            border: 2px solid #ff0000;
+            padding: 20px;
+            display: none;
+        }
+        button {
+            background: #ff0000;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div id="gameContainer">
+    <div id="status">Player 1: 0 | Player 2: 0</div>
+    <div id="board"></div>
+    <div id="turnIndicator">Player 1's Turn</div>
+    <button onclick="restartGame()">Restart</button>
+</div>
+<div id="modal"></div>
+
+<script>
+    const board = document.getElementById('board');
+    const status = document.getElementById('status');
+    const turnIndicator = document.getElementById('turnIndicator');
+    const modal = document.getElementById('modal');
+    let gameState = {
+        board: Array(9).fill().map(() => Array(9).fill(null)),
+        player1: { x: 0, y: 0, score: 0 },
+        player2: { x: 8, y: 8, score: 0 },
+        currentPlayer: 1,
+        bombs: [],
+        turnsLeft: [5, 10, 15, 20, 25],
+        gameOver: false
+    };
+
+    function createBoard() {
+        for(let y = 0; y < 9; y++) {
+            for(let x = 0; x < 9; x++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.x = x;
+                cell.dataset.y = y;
+                cell.onclick = () => movePlayer(x, y);
+                board.appendChild(cell);
+            }
+        }
+    }
+
+    function placeBombs() {
+        let bombsPlaced = 0;
+        while(bombsPlaced < 5) {
+            const x = Math.floor(Math.random() * 9);
+            const y = Math.floor(Math.random() * 9);
+            if(gameState.board[y][x] === null &&
+                (x !== 0 || y !== 0) &&
+                (x !== 8 || y !== 8)) {
+                gameState.board[y][x] = 'bomb';
+                gameState.bombs.push({x, y});
+                bombsPlaced++;
+            }
+        }
+    }
+
+    function movePlayer(x, y) {
+        if(gameState.gameOver) return;
+
+        let player = gameState.currentPlayer === 1 ? gameState.player1 : gameState.player2;
+        if(Math.abs(player.x - x) + Math.abs(player.y - y) !== 1) return;
+
+        const cell = board.children[y * 9 + x];
+        if(cell.classList.contains('fire')) return;
+
+        if(gameState.board[y][x] === 'bomb') {
+            gameState.board[y][x] = 'defused';
+            player.score++;
+            cell.classList.add('defused');
+        }
+
+        cell.classList.add(`player${gameState.currentPlayer}`);
+        cell.innerHTML = gameState.currentPlayer === 1 ? '🚶‍♂️' : '🚶‍♀️';
+
+        // Clear old position
+        const oldCell = board.children[player.y * 9 + player.x];
+        oldCell.classList.remove(`player${gameState.currentPlayer}`);
+        oldCell.innerHTML = '';
+        if(gameState.board[player.y][player.x] === 'defused') oldCell.classList.add('defused');
+
+        player.x = x;
+        player.y = y;
+
+        updateStatus();
+        checkBombExplosions();
+        if(!gameState.gameOver) switchPlayer();
+    }
+
+    function checkBombExplosions() {
+        gameState.turnsLeft = gameState.turnsLeft.filter(turns => {
+            turns--;
+            if(turns === 0) {
+                const bomb = gameState.bombs.shift();
+                explode(bomb.x, bomb.y);
+                return false;
+            }
+            return true;
+        });
+    }
+
+    function explode(x, y) {
+        for(let dy = -1; dy <= 1; dy++) {
+            for(let dx = -1; dx <= 1; dx++) {
+                if(y + dy >= 0 && y + dy < 9 && x + dx >= 0 && x + dx < 9) {
+                    const cell = board.children[(y + dy) * 9 + (x + dx)];
+                    setTimeout(() => {
+                        cell.classList.add('fire');
+                        if(cell.classList.contains('player1') || cell.classList.contains('player2')) {
+                            endGame('Game Over! Both players caught in explosion.', 'Tie');
+                        }
+                    }, 1000);
+                }
+            }
+        }
+    }
+
+    function switchPlayer() {
+        gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+        turnIndicator.textContent = `Player ${gameState.currentPlayer}'s Turn`;
+    }
+
+    function updateStatus() {
+        status.textContent = `Player 1: ${gameState.player1.score} | Player 2: ${gameState.player2.score}`;
+    }
+
+    function endGame(message, result) {
+        gameState.gameOver = true;
+        modal.style.display = 'block';
+        modal.innerHTML = `<h2>${message}</h2><p>Result: ${result}</p>`;
+    }
+
+    function restartGame() {
+        gameState = {
+            ...gameState,
+            board: Array(9).fill().map(() => Array(9).fill(null)),
+            bombs: [],
+            turnsLeft: [5, 10, 15, 20, 25],
+            gameOver: false,
+            player1: { ...gameState.player1, score: 0 },
+            player2: { ...gameState.player2, score: 0 }
+        };
+        board.innerHTML = '';
+        createBoard();
+        placeBombs();
+        updateStatus();
+        turnIndicator.textContent = "Player 1's Turn";
+        modal.style.display = 'none';
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if(gameState.gameOver) return;
+        let {x, y} = gameState.currentPlayer === 1 ? gameState.player1 : gameState.player2;
+        switch(e.key) {
+            case 'ArrowUp': case 'w': if(y > 0) movePlayer(x, y - 1); break;
+            case 'ArrowDown': case 's': if(y < 8) movePlayer(x, y + 1); break;
+            case 'ArrowLeft': case 'a': if(x > 0) movePlayer(x - 1, y); break;
+            case 'ArrowRight': case 'd': if(x < 8) movePlayer(x + 1, y); break;
+        }
+    });
+
+    createBoard();
+    placeBombs();
+</script>
+</body>
+</html>

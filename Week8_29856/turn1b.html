@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Space Checkers</title>
+    <style>
+        body {
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #gameBoard {
+            width: 360px;
+            height: 360px;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(6, 1fr);
+            background: #0e1a40;
+            box-shadow: 0 0 20px #0ff, 0 0 30px #0ff, inset 0 0 10px #0ff;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .square {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .square:hover {
+            transform: scale(1.1);
+        }
+
+        .dark {
+            background: #1a2a5a;
+        }
+
+        .light {
+            background: #2a3a6a;
+        }
+
+        .piece {
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #0ff, 0 0 20px #0ff;
+        }
+
+        #playerTurn {
+            color: white;
+            font-family: 'Arial', sans-serif;
+            position: absolute;
+            top: -50px;
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #0ff;
+        }
+
+        /* Starfield Animation */
+        @keyframes starMove {
+            from {transform: translateY(0);}
+            to {transform: translateY(-100vh);}
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: starMove 10s linear infinite;
+            box-shadow: 0 0 5px #fff;
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="gameContainer">
+    <div id="playerTurn">UFO's Turn</div>
+    <div id="gameBoard"></div>
+</div>
+
+<script>
+    // Starfield generation
+    for(let i = 0; i < 100; i++) {
+        let star = document.createElement('div');
+        star.className = 'star';
+        star.style.left = `${Math.random() * 100}vw`;
+        star.style.top = `${Math.random() * 100}vh`;
+        star.style.animationDelay = `${Math.random() * -10}s`;
+        document.body.appendChild(star);
+    }
+
+    const board = document.getElementById('gameBoard');
+    const playerTurn = document.getElementById('playerTurn');
+    let currentPlayer = 'UFO';
+
+    // Setup the board
+    function setupBoard() {
+        for(let i = 0; i < 6; i++) {
+            for(let j = 0; j < 6; j++) {
+                let square = document.createElement('div');
+                square.className = `square ${(i+j)%2 ? 'dark' : 'light'}`;
+                square.dataset.row = i;
+                square.dataset.col = j;
+                if((i < 2 || i > 3) && (i+j)%2 === 0) {
+                    square.innerHTML = i < 2 ? '🚀' : '👽';
+                    square.classList.add('piece');
+                    square.dataset.player = i < 2 ? 'Rocket' : 'UFO';
+                }
+                board.appendChild(square);
+            }
+        }
+    }
+
+    // Game logic would go here - this includes:
+    // - Movement rules for 6x6 checkers
+    // - Turn switching
+    // - Highlighting valid moves
+    // - Capturing logic
+
+    function switchPlayer() {
+        currentPlayer = currentPlayer === 'UFO' ? 'Rocket' : 'UFO';
+        playerTurn.textContent = `${currentPlayer}'s Turn`;
+    }
+
+    // Initial setup
+    setupBoard();
+    playerTurn.textContent = `${currentPlayer}'s Turn`;
+
+    // Here you would add click event listeners to squares for gameplay
+</script>
+
+</body>
+</html>

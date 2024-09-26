@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>City Defusers</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #000033;
+            color: #ff4d4d;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #game-container {
+            border: 3px solid #ff3333;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px #ff3333;
+        }
+        #grid {
+            display: grid;
+            grid-template-columns: repeat(9, 30px);
+            gap: 2px;
+            margin-bottom: 10px;
+        }
+        .cell {
+            width: 30px;
+            height: 30px;
+            background: #000066;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+        }
+        .player1 { background: #ff6666; }
+        .player2 { background: #66b3ff; }
+        .bomb { background: #ff0000; }
+        .defused { background: #00cc00; }
+        .fire { background: #ff9900; animation: fire 1s infinite; }
+        @keyframes fire {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+        #status, #turn, #modal {
+            text-align: center;
+            margin-top: 10px;
+        }
+        #modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 51, 0.9);
+            padding: 20px;
+            border: 2px solid #ff3333;
+            z-index: 10;
+        }
+        button {
+            background: #ff3333;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div id="game-container">
+    <div id="status">Player 1: 0 | Player 2: 0</div>
+    <div id="grid"></div>
+    <div id="turn"></div>
+    <div id="modal">
+        <h2 id="gameResult"></h2>
+        <button onclick="restartGame()">Restart</button>
+    </div>
+</div>
+<script>
+    const gridSize = 9;
+    let grid = [];
+    let player1 = {x: 0, y: 0, score: 0};
+    let player2 = {x: gridSize-1, y: gridSize-1, score: 0};
+    let currentPlayer = 1;
+    let bombs = [];
+    let turnCount = 0;
+
+    function setupGame() {
+        for(let i = 0; i < gridSize; i++) {
+            grid[i] = [];
+            for(let j = 0; j < gridSize; j++) {
+                grid[i][j] = {bomb: false, defused: false};
+            }
+        }
+        placeBombs();
+        renderGrid();
+    }
+
+    function placeBombs() {
+        const bombTurns = [5, 10, 15, 20, 25];
+        for(let i of bombTurns) {
+            let x, y;
+            do {
+                x = Math.floor(Math.random() * gridSize);
+                y = Math.floor(Math.random() * gridSize);
+            } while(grid[x][y].bomb || (x === 0 && y === 0) || (x === gridSize-1 && y === gridSize-1));
+            grid[x][y].bomb = {turn: i, exploded: false};
+            bombs.push({x, y, turn: i});
+        }
+    }
+
+    function renderGrid() {
+        $('#grid').empty();
+        for(let i = 0; i < gridSize; i++) {
+            for(let j = 0; j < gridSize; j++) {
+                let cell = $('<div class="cell"></div>');
+                if(i === player1.x && j === player1.y) cell.addClass('player1').html('🚶‍♂️');
+                else if(i === player2.x && j === player2.y) cell.addClass('player2').html('🚶‍♂️');
+                else if(grid[i][j].bomb && grid[i][j].bomb.exploded) cell.addClass('fire');
+                else if(grid[i][j].defused) cell.addClass('defused');
+                else if(grid[i][j].bomb) cell.addClass('bomb').html('💣');
+                $('#grid').append(cell);
+            }
+        }
+        updateStatus();
+    }
+
+    function updateStatus() {
+        $('#status').text(`Player 1: ${player1.score} | Player 2: ${player2.score}`);
+        $('#turn').text(`Turn: Player ${currentPlayer}`);
+    }
+
+    function movePlayer(player, direction) {
+        let newX = player.x, newY = player.y;
+        if(player === player1) {
+            if(direction === 'w') newX--;
+            else if(direction === 's') newX++;
+            else if(direction === 'a') newY--;
+            else if(direction === 'd') newY++;
+        } else {
+            if(direction === 'ArrowUp') newX--;
+            else if(direction === 'ArrowDown') newX++;
+            else if(direction === 'ArrowLeft') newY--;
+            else if(direction === 'ArrowRight') newY++;
+        }
+
+        if(newX >= 0 && newX < gridSize && newY >= 0 && newY < gridSize && !grid[newX][newY].bomb.exploded) {
+            player.x = newX;
+            player.y = newY;
+            checkForBomb(player);
+            nextTurn();
+        }
+    }
+
+    function checkForBomb(player) {
+        if(grid[player.x][player.y].bomb && !grid[player.x][player.y].bomb.exploded) {
+            grid[player.x][player.y].defused = true;
+            player.score++;
+        }
+    }
+
+    function nextTurn() {
+        turnCount++;
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+        checkBombs();
+        renderGrid();
+        if(checkGameOver()) return;
+        if(currentPlayer === 1) document.addEventListener('keydown', handleKeyPress);
+    }
+
+    function checkBombs() {
+        bombs.forEach(bomb => {
+            if(turnCount === bomb.turn) {
+                grid[bomb.x][bomb.y].bomb.exploded = true;
+                setTimeout(() => {
+                    for(let dx = -1; dx <= 1; dx++) {
+                        for(let dy = -1; dy <= 1; dy++) {
+                            let nx = bomb.x + dx, ny = bomb.y + dy;
+                            if(nx >= 0 && nx < gridSize && ny >= 0 && ny < gridSize) {
+                                grid[nx][ny].bomb.exploded = true;
+                            }
+                        }
+                    }
+                    renderGrid();
+                }, 1000);
+            }
+        });
+    }
+
+    function checkGameOver() {
+        if((grid[player1.x][player1.y].bomb && grid[player1.x][player1.y].bomb.exploded) ||
+            (grid[player2.x][player2.y].bomb && grid[player2.x][player2.y].bomb.exploded)) {
+            let result = player1.score === player2.score ? "It's a tie!" :
+                (player1.score > player2.score ? "Player 1 Wins!" : "Player 2 Wins!");
+            $('#gameResult').text(result);
+            $('#modal').show();
+            document.removeEventListener('keydown', handleKeyPress);
+            return true;
+        }
+        return false;
+    }
+
+    function handleKeyPress(e) {
+        const directions = {
+            'w': 'w', 's': 's', 'a': 'a', 'd': 'd',
+            'ArrowUp': 'ArrowUp', 'ArrowDown': 'ArrowDown', 'ArrowLeft': 'ArrowLeft', 'ArrowRight': 'ArrowRight'
+        };
+        if(directions[e.key]) movePlayer(currentPlayer === 1 ? player1 : player2, e.key);
+    }
+
+    function restartGame() {
+        $('#modal').hide();
+        grid = [];
+        bombs = [];
+        player1 = {x: 0, y: 0, score: 0};
+        player2 = {x: gridSize-1, y: gridSize-1, score: 0};
+        currentPlayer = 1;
+        turnCount = 0;
+        setupGame();
+        document.addEventListener('keydown', handleKeyPress);
+    }
+
+    setupGame();
+    document.addEventListener('keydown', handleKeyPress);
+</script>
+</body>
+</html>
