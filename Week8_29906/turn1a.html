@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Meteor Rush</title>
+    <style>
+        body {
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            position: relative;
+            background: rgba(0, 0, 255, 0.3);
+            border: 2px solid #00ffff;
+            width: 450px;
+            height: 450px;
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            grid-template-rows: repeat(9, 1fr);
+        }
+
+        .cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+        }
+
+        #player1, #player2, .meteor {
+            position: absolute;
+        }
+
+        #player1 {
+            background: rgba(255, 0, 0, 0.5);
+            border-radius: 50%;
+        }
+
+        #player2 {
+            background: rgba(0, 0, 255, 0.5);
+            border-radius: 50%;
+        }
+
+        #gameOver {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        #gameOver h2, #gameOver p { margin: 10px 0; }
+    </style>
+</head>
+<body>
+<div id="gameContainer"></div>
+<div id="gameOver">
+    <h2>Game Over!</h2>
+    <p id="winner"></p>
+    <p id="survivalTime"></p>
+</div>
+<script>
+    const gridSize = 9;
+    const container = document.getElementById('gameContainer');
+    const gameOverScreen = document.getElementById('gameOver');
+    let player1, player2, meteors = [], gameInterval, meteorInterval, level = 1, timeSurvived = 0, gameActive = true;
+
+    function setupGame() {
+        // Create grid
+        for(let i = 0; i < gridSize * gridSize; i++) {
+            let cell = document.createElement('div');
+            cell.className = 'cell';
+            container.appendChild(cell);
+        }
+
+        // Initialize players
+        player1 = { pos: 76, emoji: '🚀' };
+        player2 = { pos: 80, emoji: '🛸' };
+        updatePlayerPosition(player1);
+        updatePlayerPosition(player2);
+
+        document.addEventListener('keydown', movePlayer);
+        startMeteorFall();
+        gameInterval = setInterval(gameLoop, 100);
+    }
+
+    function updatePlayerPosition(player) {
+        const playerElement = document.createElement('div');
+        playerElement.id = player === player1 ? 'player1' : 'player2';
+        playerElement.textContent = player.emoji;
+        playerElement.style.left = `${(player.pos % gridSize) * 50}px`;
+        playerElement.style.top = `${Math.floor(player.pos / gridSize) * 50}px`;
+        container.appendChild(playerElement);
+    }
+
+    function movePlayer(e) {
+        if(!gameActive) return;
+        let move = 0;
+        if(e.key === 'a' && player1.pos % gridSize > 0 && player1.pos + 1 !== player2.pos) move = -1;
+        else if(e.key === 'd' && player1.pos % gridSize < gridSize - 1 && player1.pos - 1 !== player2.pos) move = 1;
+        else if(e.key === 'j' && player2.pos % gridSize > 0 && player2.pos + 1 !== player1.pos) move = -1;
+        else if(e.key === 'l' && player2.pos % gridSize < gridSize - 1 && player2.pos - 1 !== player1.pos) move = 1;
+
+        if(move !== 0) {
+            if(e.key === 'a' || e.key === 'd') player1.pos += move;
+            else player2.pos += move;
+            updatePlayerPosition(e.key === 'a' || e.key === 'd' ? player1 : player2);
+        }
+    }
+
+    function startMeteorFall() {
+        meteorInterval = setInterval(() => {
+            if(Math.random() < 0.7 + (level * 0.1)) { // Increase meteor spawn rate with level
+                meteors.push({pos: Math.floor(Math.random() * gridSize), row: 0});
+            }
+        }, 1000 - (level * 100)); // Speed up meteor spawn with level
+    }
+
+    function gameLoop() {
+        timeSurvived += 100;
+        if(timeSurvived % 10000 === 0) level++; // Increase level every 10 seconds
+
+        meteors.forEach((meteor, index) => {
+            if(meteor.row < gridSize - 1) {
+                meteor.row++;
+                let meteorElement = document.querySelector(`.meteor[data-index="${index}"]`);
+                if(!meteorElement) {
+                    meteorElement = document.createElement('div');
+                    meteorElement.className = 'meteor';
+                    meteorElement.textContent = '☄️';
+                    meteorElement.dataset.index = index;
+                    container.appendChild(meteorElement);
+                }
+                meteorElement.style.left = `${(meteor.pos % gridSize) * 50}px`;
+                meteorElement.style.top = `${meteor.row * 50}px`;
+
+                // Check collision
+                if(meteor.row === gridSize - 1 && (meteor.pos === player1.pos % gridSize || meteor.pos === player2.pos % gridSize)) {
+                    endGame(meteor.pos === player1.pos % gridSize ? 2 : 1);
+                }
+            } else {
+                meteors.splice(index, 1);
+                container.removeChild(document.querySelector(`.meteor[data-index="${index}"]`));
+            }
+        });
+    }
+
+    function endGame(winner) {
+        clearInterval(gameInterval);
+        clearInterval(meteorInterval);
+        gameActive = false;
+        document.removeEventListener('keydown', movePlayer);
+        gameOverScreen.style.display = 'block';
+        document.getElementById('winner').textContent = `Player ${winner} wins!`;
+        document.getElementById('survivalTime').textContent = `Survived for ${timeSurvived / 1000} seconds at Level ${level}`;
+    }
+
+    setupGame();
+</script>
+</body>
+</html>

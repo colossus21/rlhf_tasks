@@ -1,0 +1,46 @@
+Can you create a quiz game called "All About Space Modules" with the following features:
+i) Make a GET request to: "https://ll.thespacedevs.com/2.2.0/config/spacecraft/?format=json", you'll get a response like this:
+{
+  "count": 42,
+  "next": "https://ll.thespacedevs.com/2.2.0/config/spacecraft/?format=json&limit=10&offset=10",
+  "previous": null,
+  "results": [
+    {
+      "id": 10,
+      "url": "https://ll.thespacedevs.com/2.2.0/config/spacecraft/10/?format=json",
+      "name": "Apollo Command/Service Module",
+      "agency": {
+        "id": 999,
+        "url": "https://ll.thespacedevs.com/2.2.0/agencies/999/?format=json",
+        "name": "North American Aviation",
+        "featured": false,
+        "type": "Commercial",
+        "country_code": "USA",
+        "abbrev": "",
+        "description": "North American Aviation (NAA) was a major American aerospace manufacturer, responsible for a number of historic aircraft, including the T-6 Texan trainer, the P-51 Mustang fighter, the B-25 Mitchell bomber, the F-86 Sabre jet fighter, the X-15 rocket plane, and the XB-70, as well as Apollo command and service module, the second stage of the Saturn V rocket, the Space Shuttle orbiter and the B-1 Lancer.",
+        "administrator": null,
+        "founding_year": "1928",
+        "launchers": "North American X-15",
+        "spacecraft": "",
+        "parent": "Boeing",
+        "image_url": null,
+        "logo_url": "https://thespacedevs-prod.nyc3.digitaloceanspaces.com/media/images/north2520american2520aviation_logo_20200711032022.png"
+      },
+      "in_use": false,
+      "capability": "Cargo and Human Transportation to Lunar Orbit",
+      "maiden_flight": "1966-02-26",
+      "human_rated": true,
+      "crew_capacity": 3,
+      "image_url": "https://thespacedevs-prod.nyc3.digitaloceanspaces.com/media/images/apollo2520command2fservice2520module_image_20190207032507.jpeg",
+      "nation_url": null,
+      "wiki_link": "https://en.wikipedia.org/wiki/Apollo_Command/Service_Module",
+      "info_link": ""
+    },
+	...
+]
+
+ii) You would be interested in the following properties - name, capability, crew_capacity, image_url, maiden_flight
+iii) Create a quiz with 10 random elements from the array, the quiz would contain - title, progress bar, question, 4 options
+iv) questions would be - "Guess the Spaceship Module?" then provide an image, user has to guess with 4 options
+v) After the answer whether right or wrong reveal more info on the space module with Capability, Crew Capacity, Maiden Flight, user presses next to move to the next question
+vi) Make it space themed, use starry night images on the background: https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80. A dark color scheme with accents of bright neon-like colors such as cyan, magenta, yellow. Also add subtle glow effects.

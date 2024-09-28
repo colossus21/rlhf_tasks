@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All About Space Modules</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: url('https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        .quiz-container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px #ff00ff;
+        }
+
+        button {
+            background-color: #00ffff;
+            border: none;
+            color: black;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            box-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+        }
+
+        #progress {
+            width: 100%;
+            background-color: grey;
+        }
+
+        #bar {
+            width: 0%;
+            height: 30px;
+            background-color: #ff00ff;
+        }
+
+        #spacecraftImage {
+            max-width: 100%;
+            height: auto;
+            border: 2px solid #00ffff;
+            box-shadow: 0 0 10px #00ffff;
+        }
+
+        #info {
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(255, 0, 255, 0.1);
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <h1>All About Space Modules</h1>
+    <div id="progress"><div id="bar"></div></div>
+    <h2 id="question">Guess the Spaceship Module?</h2>
+    <img id="spacecraftImage" src="" alt="Spacecraft Module">
+    <div id="options"></div>
+    <div id="info" style="display:none;">
+        <p><strong>Capability:</strong> <span id="capability"></span></p>
+        <p><strong>Crew Capacity:</strong> <span id="crew_capacity"></span></p>
+        <p><strong>Maiden Flight:</strong> <span id="maiden_flight"></span></p>
+    </div>
+    <button id="nextBtn" style="display:none;">Next</button>
+</div>
+
+<script>
+    let spacecrafts = [];
+    let currentQuestion = 0;
+    let score = 0;
+    let questions = [];
+
+    // Fetch spacecraft data
+    fetch('https://ll.thespacedevs.com/2.2.0/config/spacecraft/?format=json')
+        .then(response => response.json())
+        .then(data => {
+            spacecrafts = data.results;
+            startQuiz();
+        });
+
+    function startQuiz() {
+        // Randomly select 10 spacecraft for the quiz
+        questions = spacecrafts.sort(() => 0.5 - Math.random()).slice(0, 10);
+        showQuestion();
+    }
+
+    function showQuestion() {
+        let question = questions[currentQuestion];
+        document.getElementById('question').textContent = "Guess the Spaceship Module?";
+        document.getElementById('spacecraftImage').src = question.image_url;
+        document.getElementById('options').innerHTML = '';
+
+        // Create options, including the correct answer and three random incorrect ones
+        let options = [question.name];
+        while (options.length < 4) {
+            let randomSpacecraft = spacecrafts[Math.floor(Math.random() * spacecrafts.length)];
+            if (!options.includes(randomSpacecraft.name)) options.push(randomSpacecraft.name);
+        }
+        options.sort(() => 0.5 - Math.random());
+
+        options.forEach(option => {
+            let button = document.createElement('button');
+            button.textContent = option;
+            button.onclick = () => checkAnswer(option, question.name);
+            document.getElementById('options').appendChild(button);
+        });
+
+        // Update progress bar
+        document.getElementById('bar').style.width = `${((currentQuestion + 1) / 10) * 100}%`;
+    }
+
+    function checkAnswer(selected, correct) {
+        if (selected === correct) {
+            score++;
+        }
+        document.getElementById('info').style.display = 'block';
+        document.getElementById('capability').textContent = questions[currentQuestion].capability;
+        document.getElementById('crew_capacity').textContent = questions[currentQuestion].crew_capacity;
+        document.getElementById('maiden_flight').textContent = questions[currentQuestion].maiden_flight;
+        document.getElementById('nextBtn').style.display = 'inline-block';
+        document.querySelectorAll('#options button').forEach(btn => btn.disabled = true);
+    }
+
+    document.getElementById('nextBtn').onclick = () => {
+        currentQuestion++;
+        if (currentQuestion < questions.length) {
+            document.getElementById('info').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'none';
+            showQuestion();
+        } else {
+            alert(`Quiz completed! Your score: ${score}/10`);
+            // Optionally, reset or end the game here
+        }
+    };
+</script>
+
+</body>
+</html>

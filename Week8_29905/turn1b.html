@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Cross</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/neon-glow/1.0.0/neon-glow.min.css">
+    <style>
+        body {
+            background: #000 url('stars.jpg') repeat top center;
+            color: #0ff;
+            font-family: 'Arial', sans-serif;
+        }
+        #gameContainer {
+            width: 80%;
+            margin: auto;
+            text-align: center;
+        }
+        .grid {
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+        .grid td {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #0ff;
+            text-align: center;
+            font-size: 1.5em;
+        }
+        .clues div {
+            margin: 10px 0;
+            text-align: left;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            background-color: #ff00ff; /* Different bg colors can be applied here */
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        .reveal { background-color: #00ffff; }
+        .forfeit { background-color: #ff0000; }
+    </style>
+</head>
+<body>
+
+<div id="gameContainer">
+    <h1>Space Cross</h1>
+    <table id="crossword" class="grid"></table>
+    <div id="clues">
+        <div id="acrossClues">Across:</div>
+        <div id="downClues">Down:</div>
+    </div>
+    <div>
+        <button onclick="checkAnswers()">Check Answers</button>
+        <button onclick="revealLetter()" class="reveal">Reveal Letter (5 left)</button>
+        <button onclick="forfeit()" class="forfeit">Forfeit</button>
+    </div>
+</div>
+
+<script>
+    let words = ['NOVA', 'STAR', 'MOON', 'SUN', 'MARS', 'COMET', 'ORBIT', 'VENUS', 'EARTH', 'TITAN', 'NEBULA', 'GALAXY', 'QUASAR', 'METEOR', 'SATURN', 'COSMIC', 'LUNAR', 'SOLAR'];
+    let gameState = { grid: [], answers: {}, clues: {}, revealCount: 5 };
+
+    function initializeGame() {
+        const grid = document.getElementById('crossword');
+        for(let i = 0; i < 6; i++) {
+            let row = grid.insertRow();
+            gameState.grid[i] = [];
+            for(let j = 0; j < 6; j++) {
+                let cell = row.insertCell();
+                let input = document.createElement('input');
+                input.type = 'text';
+                input.maxLength = 1;
+                input.oninput = function() { if(this.value) moveToNextCell(this); };
+                cell.appendChild(input);
+                gameState.grid[i][j] = input;
+            }
+        }
+        setupWordsAndClues();
+    }
+
+    function setupWordsAndClues() {
+        words.forEach(word => {
+            fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`)
+                .then(response => response.json())
+                .then(data => {
+                    const definition = data[0] ? data[0].meanings[0].definitions[0].definition : "Space-related term";
+                    gameState.clues[word] = definition;
+                    gameState.answers[word] = word.split('');
+                }).catch(() => {
+                gameState.clues[word] = "Space-related term";
+                gameState.answers[word] = word.split('');
+            }).finally(() => updateCluesUI());
+        });
+    }
+
+    function updateCluesUI() {
+        ['across', 'down'].forEach(dir => {
+            let div = document.getElementById(`${dir}Clues`);
+            div.innerHTML = ''; // Clear previous clues
+            Object.keys(gameState.clues).forEach(word => {
+                if (word.toLowerCase().startsWith(dir === 'across' ? gameState.grid[0][0].value.toLowerCase() : gameState.grid[0][0].value.toLowerCase())) {
+                    div.innerHTML += `<p><strong>${word}</strong>: ${gameState.clues[word]}</p>`;
+                }
+            });
+        });
+    }
+
+    function moveToNextCell(current) {
+        let cellIndex = Array.from(current.parentNode.parentNode.children).indexOf(current.parentNode);
+        let rowIndex = current.parentNode.parentNode.rowIndex;
+        if (cellIndex < 5) {
+            gameState.grid[rowIndex][cellIndex + 1].focus();
+        }
+    }
+
+    function checkAnswers() {
+        let correct = true;
+        for(let word in gameState.answers) {
+            if(!checkWord(word)) {
+                correct = false;
+                break;
+            }
+        }
+        alert(correct ? 'Congratulations!' : 'Keep trying!');
+    }
+
+    function checkWord(word) {
+        let answer = gameState.answers[word];
+        // Here you would implement logic to check if the word in the grid matches the answer
+        // This is simplified for brevity
+        return answer.every((char, idx) => char === gameState.grid[Math.floor(idx/6)][idx%6].value.toUpperCase());
+    }
+
+    function revealLetter() {
+        if(gameState.revealCount > 0) {
+            // Implement logic to reveal a letter
+            gameState.revealCount--;
+            alert('A letter has been revealed!');
+        } else {
+            alert('No more reveals left!');
+        }
+    }
+
+    function forfeit() {
+        for(let word in gameState.answers) {
+            gameState.answers[word].forEach((char, idx) => {
+                gameState.grid[Math.floor(idx/6)][idx%6].value = char;
+            });
+        }
+    }
+
+    initializeGame();
+</script>
+
+</body>
+</html>

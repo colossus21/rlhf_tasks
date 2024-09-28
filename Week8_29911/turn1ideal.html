@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All About Space Modules Quiz</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.3.4/axios.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #000;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            background-image: url('https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+        #quiz-container {
+            background-color: rgba(0, 0, 0, 0.85);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 0 20px rgba(0, 200, 255, 0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #00e6ff;
+            text-shadow: 0 0 5px rgba(0, 230, 255, 0.7);
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        #progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #001a1a;
+            border-radius: 5px;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+        #progress {
+            width: 0%;
+            height: 100%;
+            background-color: #00e6ff;
+            transition: width 0.5s ease-in-out;
+        }
+        #question {
+            text-align: center;
+            font-size: 1.3em;
+            margin-bottom: 25px;
+            color: #ff80ff;
+            font-weight: bold;
+        }
+        #image-container {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        #module-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+        #options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .option {
+            background-color: #001a33;
+            color: #b3e6ff;
+            border: 2px solid #0080ff;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            font-weight: bold;
+        }
+        .option:hover {
+            background-color: #003366;
+            box-shadow: 0 0 10px rgba(0, 128, 255, 0.5);
+        }
+        .option:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        #result {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        #next-btn {
+            display: none;
+            margin: 25px auto;
+            background-color: #004d00;
+            color: #80ff80;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        #next-btn:hover {
+            background-color: #006600;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+        #score {
+            text-align: center;
+            font-size: 1.3em;
+            margin-top: 25px;
+            color: #ffff80;
+            font-weight: bold;
+        }
+        #info {
+            background-color: rgba(0, 51, 102, 0.6);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 25px;
+            display: none;
+            border: 1px solid #0080ff;
+            color: #e6f3ff;
+            font-size: 1em;
+            line-height: 1.5;
+        }
+        #info h3 {
+            color: #80ffff;
+            margin-top: 0;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+<div id="quiz-container">
+    <h1>All About Space Modules</h1>
+    <div id="progress-bar">
+        <div id="progress"></div>
+    </div>
+    <div id="question"></div>
+    <div id="image-container">
+        <img id="module-image" src="" alt="Space Module">
+    </div>
+    <div id="options"></div>
+    <div id="result"></div>
+    <div id="info"></div>
+    <button id="next-btn">Next Question</button>
+    <div id="score"></div>
+</div>
+
+<script>
+    const quizContainer = document.getElementById('quiz-container');
+    const questionEl = document.getElementById('question');
+    const imageEl = document.getElementById('module-image');
+    const optionsEl = document.getElementById('options');
+    const resultEl = document.getElementById('result');
+    const infoEl = document.getElementById('info');
+    const nextBtn = document.getElementById('next-btn');
+    const scoreEl = document.getElementById('score');
+    const progressEl = document.getElementById('progress');
+
+    let spaceModules = [];
+    let currentQuestion = 0;
+    let score = 0;
+
+    async function fetchSpaceModules() {
+        try {
+            const response = await axios.get('https://ll.thespacedevs.com/2.2.0/config/spacecraft/?format=json');
+            const allModules = response.data.results;
+            spaceModules = allModules
+                .filter(module => module.name && module.capability && module.crew_capacity && module.image_url && module.maiden_flight)
+                .sort(() => 0.5 - Math.random())
+                .slice(0, 10);
+            startQuiz();
+        } catch (error) {
+            console.error('Error fetching space modules:', error);
+            quizContainer.innerHTML = '<p style="text-align: center; color: #ff6666;">Error loading quiz. Please try again later.</p>';
+        }
+    }
+
+    function startQuiz() {
+        showQuestion();
+        updateScore();
+    }
+
+    function showQuestion() {
+        const module = spaceModules[currentQuestion];
+        questionEl.textContent = `Question ${currentQuestion + 1}: Identify this Space Module`;
+        imageEl.src = module.image_url;
+        imageEl.alt = 'Space Module';
+
+        optionsEl.innerHTML = '';
+        const options = getRandomOptions();
+        options.forEach(option => {
+            const button = document.createElement('button');
+            button.className = 'option';
+            button.textContent = option;
+            button.addEventListener('click', () => checkAnswer(option));
+            optionsEl.appendChild(button);
+        });
+
+        resultEl.textContent = '';
+        infoEl.style.display = 'none';
+        nextBtn.style.display = 'none';
+        updateProgress();
+    }
+
+    function getRandomOptions() {
+        const options = [spaceModules[currentQuestion].name];
+        const otherModules = spaceModules.filter(m => m.name !== spaceModules[currentQuestion].name);
+        while (options.length < 4) {
+            const randomModule = otherModules[Math.floor(Math.random() * otherModules.length)];
+            if (!options.includes(randomModule.name)) {
+                options.push(randomModule.name);
+            }
+        }
+        return options.sort(() => 0.5 - Math.random());
+    }
+
+    function checkAnswer(answer) {
+        const module = spaceModules[currentQuestion];
+        const isCorrect = answer === module.name;
+
+        if (isCorrect) {
+            score++;
+            resultEl.textContent = 'Correct! Well done, space explorer!';
+            resultEl.style.color = '#80ff80';
+        } else {
+            resultEl.textContent = `Incorrect. The correct answer is ${module.name}.`;
+            resultEl.style.color = '#ff8080';
+        }
+
+        infoEl.innerHTML = `
+                <h3>${module.name}</h3>
+                <p><strong>Capability:</strong> ${module.capability}</p>
+                <p><strong>Crew Capacity:</strong> ${module.crew_capacity}</p>
+                <p><strong>Maiden Flight:</strong> ${module.maiden_flight}</p>
+            `;
+        infoEl.style.display = 'block';
+
+        Array.from(optionsEl.children).forEach(button => {
+            button.disabled = true;
+            if (button.textContent === module.name) {
+                button.style.backgroundColor = '#008000';
+                button.style.color = '#ffffff';
+                button.style.borderColor = '#00ff00';
+            } else if (button.textContent === answer && !isCorrect) {
+                button.style.backgroundColor = '#800000';
+                button.style.color = '#ffffff';
+                button.style.borderColor = '#ff0000';
+            }
+        });
+
+        nextBtn.style.display = 'block';
+        updateScore();
+    }
+
+    function nextQuestion() {
+        currentQuestion++;
+        if (currentQuestion < spaceModules.length) {
+            showQuestion();
+        } else {
+            finishQuiz();
+        }
+    }
+
+    function updateScore() {
+        scoreEl.textContent = `Score: ${score}/${spaceModules.length}`;
+    }
+
+    function updateProgress() {
+        const progress = ((currentQuestion + 1) / spaceModules.length) * 100;
+        progressEl.style.width = `${progress}%`;
+    }
+
+    function finishQuiz() {
+        quizContainer.innerHTML = `
+                <h1>Mission Completed!</h1>
+                <p style="text-align: center; font-size: 1.3em; color: #80ffff; margin-bottom: 20px;">Your final score: ${score}/${spaceModules.length}</p>
+                <p style="text-align: center; font-size: 1.1em; color: #e6e6e6; margin-bottom: 30px;">
+                    ${score === spaceModules.length ? "Perfect score! You're a true space expert!" :
+            score >= spaceModules.length * 0.8 ? "Great job! You really know your space modules!" :
+                score >= spaceModules.length * 0.6 ? "Good effort! You're on your way to becoming a space expert." :
+                    "Keep exploring! There's always more to learn about space technology."}
+                </p>
+                <button onclick="location.reload()" style="display: block; margin: 0 auto; background-color: #004080; color: #ffffff; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; font-size: 1.1em; font-weight: bold;">Launch Another Mission</button>
+            `;
+    }
+
+    nextBtn.addEventListener('click', nextQuestion);
+    fetchSpaceModules();
+</script>
+</body>
+</html>

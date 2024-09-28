@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Space Cross</title>
+    <style>
+        body {
+            background: url('https://images.unsplash.com/photo-1506318137071-a8e063b4bec0') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Arial', sans-serif;
+            color: #fff;
+        }
+        #game-container {
+            width: 80%;
+            margin: 20px auto;
+            text-align: center;
+        }
+        #crossword {
+            display: grid;
+            grid-template-columns: repeat(6, 40px);
+            gap: 2px;
+            margin: 20px auto;
+            border: 2px solid #00FFFF;
+        }
+        .cell {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #00FFFF;
+            text-align: center;
+            line-height: 40px;
+            font-size: 20px;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.5);
+        }
+        .clue-list {
+            display: flex;
+            justify-content: space-around;
+        }
+        .clue-item {
+            color: #FFD700;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        #check { background: #4CAF50; }
+        #reveal { background: #008CBA; }
+        #forfeit { background: #f44336; }
+    </style>
+</head>
+<body>
+<div id="game-container">
+    <div id="crossword"></div>
+    <div class="clue-list">
+        <div id="across-clues"></div>
+        <div id="down-clues"></div>
+    </div>
+    <button id="check">Check Answers</button>
+    <button id="reveal">Reveal Letter (5 left)</button>
+    <button id="forfeit">Forfeit</button>
+</div>
+
+<script>
+    const words = ['NOVA', 'STAR', 'MOON', 'SUN', 'MARS', 'COMET', 'ORBIT', 'VENUS', 'EARTH', 'TITAN', 'NEBULA', 'GALAXY', 'QUASAR', 'METEOR', 'SATURN', 'COSMIC', 'LUNAR', 'SOLAR'];
+    const grid = Array(6).fill().map(() => Array(6).fill(''));
+    let solution = [...grid];
+    const apiUrl = 'https://api.dictionaryapi.dev/api/v2/entries/en/';
+    let revealCount = 5;
+
+    function placeWords() {
+        // Simplified word placement logic for demonstration
+        ['STAR', 'MOON', 'SUN', 'MARS', 'COMET', 'ORBIT'].forEach((word, index) => {
+            for (let i = 0; i < word.length; i++) {
+                solution[index][i] = word[i];
+            }
+        });
+    }
+
+    function fetchClue(word) {
+        fetch(apiUrl + word)
+            .then(response => response.json())
+            .then(data => {
+                const definition = data[0] ? data[0].meanings[0].definitions[0].definition : "Space-related term";
+                document.getElementById(word.toLowerCase() + '-clue').textContent = definition;
+            }).catch(() => {
+            document.getElementById(word.toLowerCase() + '-clue').textContent = "Space-related term";
+        });
+    }
+
+    function setupGame() {
+        placeWords();
+        const crossword = document.getElementById('crossword');
+        grid.forEach((row, i) => {
+            row.forEach((_, j) => {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.row = i;
+                cell.dataset.col = j;
+                cell.contentEditable = true;
+                crossword.appendChild(cell);
+            });
+        });
+        words.forEach(word => {
+            const direction = Math.random() < 0.5 ? 'across' : 'down';
+            const clueDiv = document.createElement('div');
+            clueDiv.id = `${word.toLowerCase()}-clue`;
+            clueDiv.className = 'clue-item';
+            (direction === 'across' ? document.getElementById('across-clues') : document.getElementById('down-clues')).appendChild(clueDiv);
+            fetchClue(word);
+        });
+    }
+
+    document.getElementById('check').onclick = function() {
+        let correct = true;
+        document.querySelectorAll('.cell').forEach(cell => {
+            if (cell.textContent.toUpperCase() !== solution[cell.dataset.row][cell.dataset.col]) {
+                correct = false;
+            }
+        });
+        alert(correct ? "Correct!" : "Try again!");
+    };
+
+    document.getElementById('reveal').onclick = function() {
+        if (revealCount > 0) {
+            let emptyCells = Array.from(document.querySelectorAll('.cell')).filter(cell => cell.textContent === '');
+            if (emptyCells.length) {
+                let cell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                cell.textContent = solution[cell.dataset.row][cell.dataset.col];
+                revealCount--;
+                this.textContent = `Reveal Letter (${revealCount} left)`;
+            }
+        }
+    };
+
+    document.getElementById('forfeit').onclick = function() {
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.textContent = solution[cell.dataset.row][cell.dataset.col];
+        });
+    };
+
+    setupGame();
+</script>
+</body>
+</html>

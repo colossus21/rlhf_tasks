@@ -1,0 +1,7 @@
+Create a 9x9 grid game called "Meteor Rush" in which:
+i) 2 players can move left and right using AD (p1) and JL (p2) and are positioned above the last rows. both players start in the last row. one player cannot go left or right crossing the other player.
+ii) meteor keeps falling from above at random intervals at random columns towards bottom which is destroyed after reaching the last rows
+iii) each meteor goes down one block within 500ms-750ms. increase difficulty as time goes on
+iv) player dies touching the meteor, make the p1 have rocket emoji with red circular bg, p2 should have ufo emoji with blue circular bg
+v) add a starry background to give it a space vibe, the centered grid should have blue theme with transparency to show the stars. meteors should be emoji as well
+vi) after game over, show which player wins and mention the time of survival. add level system if possible.

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>All About Space Modules</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+    <style>
+        body {
+            background: url('https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+        }
+        .quiz-container {
+            background: rgba(0, 0, 0, 0.7);
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px cyan;
+        }
+        .progress-bar {
+            width: 100%;
+            background: #333;
+            height: 20px;
+            border-radius: 10px;
+        }
+        .progress {
+            height: 100%;
+            width: 0%;
+            background-color: cyan;
+            border-radius: 10px;
+            transition: width 0.5s;
+        }
+        .question-image {
+            max-width: 100%;
+            border: 2px solid cyan;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .option {
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .option:hover {
+            background: cyan;
+            color: #000;
+            box-shadow: 0 0 10px magenta;
+        }
+        .info {
+            color: yellow;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="quiz-container">
+    <div class="progress-bar"><div class="progress"></div></div>
+    <h1>All About Space Modules</h1>
+    <div id="quiz"></div>
+    <div id="result" class="info"></div>
+    <button id="nextBtn" style="display:none;">Next</button>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        let spacecrafts = [];
+        let currentQuestion = 0;
+        let score = 0;
+        const questions = 10;
+
+        $.getJSON('https://ll.thespacedevs.com/2.2.0/config/spacecraft/?format=json', function(data) {
+            spacecrafts = data.results;
+            startQuiz();
+        });
+
+        function startQuiz() {
+            spacecrafts = spacecrafts.sort(() => .5 - Math.random()).slice(0, questions);
+            showQuestion();
+        }
+
+        function showQuestion() {
+            if (currentQuestion >= questions) {
+                $('#quiz').html(`<h2>Quiz Completed! Your Score: ${score}/${questions}</h2>`);
+                return;
+            }
+            let spacecraft = spacecrafts[currentQuestion];
+            let options = getRandomOptions(spacecraft);
+
+            $('#quiz').html(`
+                <p>Question ${currentQuestion + 1}: Guess the Spaceship Module?</p>
+                <img src="${spacecraft.image_url}" class="question-image" alt="Spacecraft">
+                ${options.map(option => `<button class="option" data-name="${option}">${option}</button>`).join('')}
+            `);
+            $('.progress').css('width', `${((currentQuestion + 1) / questions) * 100}%`);
+        }
+
+        function getRandomOptions(correctOption) {
+            let options = [correctOption.name];
+            while(options.length < 4) {
+                let randomSpacecraft = spacecrafts[Math.floor(Math.random() * spacecrafts.length)];
+                if(!options.includes(randomSpacecraft.name)) {
+                    options.push(randomSpacecraft.name);
+                }
+            }
+            return options.sort(() => .5 - Math.random());
+        }
+
+        $(document).on('click', '.option', function() {
+            let selected = $(this).data('name');
+            let correctAnswer = spacecrafts[currentQuestion].name;
+            if (selected === correctAnswer) {
+                score++;
+                $('#result').html(`<span style="color:cyan;">Correct!</span> <br> ${spacecrafts[currentQuestion].capability}`);
+            } else {
+                $('#result').html(`<span style="color:magenta;">Incorrect!</span> The correct answer was ${correctAnswer}. <br> ${spacecrafts[currentQuestion].capability}`);
+            }
+            $('#result').append(`<br>Crew Capacity: ${spacecrafts[currentQuestion].crew_capacity}, Maiden Flight: ${spacecrafts[currentQuestion].maiden_flight}`);
+            $('#nextBtn').show();
+        });
+
+        $('#nextBtn').on('click', function() {
+            currentQuestion++;
+            $('#result').html('');
+            $('#nextBtn').hide();
+            showQuestion();
+        });
+    });
+</script>
+</body>
+</html>

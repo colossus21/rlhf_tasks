@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Meteor Rush</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="30" r="1" fill="white"/><circle cx="70" cy="60" r="1" fill="white"/><circle cx="40" cy="80" r="0.5" fill="white"/></svg>') repeat;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        #game-container {
+            background: rgba(0, 0, 255, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .row {
+            display: flex;
+        }
+        .cell {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .player1 { background: red; border-radius: 50%; }
+        .player2 { background: blue; border-radius: 50%; }
+        .meteor { font-size: 20px; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="game-grid"></div>
+    <div id="game-info"></div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        const gridSize = 9;
+        let gameGrid = [];
+        let player1 = { x: 4, y: 8, emoji: '🚀' };
+        let player2 = { x: 4, y: 8, emoji: '🛸' };
+        let meteors = [];
+        let gameInterval;
+        let gameSpeed = 750;
+        let level = 1;
+        let startTime;
+
+        function initGrid() {
+            gameGrid = Array(gridSize).fill().map(() => Array(gridSize).fill(null));
+            let gridHTML = '';
+            for (let i = 0; i < gridSize; i++) {
+                gridHTML += '<div class="row">';
+                for (let j = 0; j < gridSize; j++) {
+                    gridHTML += '<div class="cell"></div>';
+                }
+                gridHTML += '</div>';
+            }
+            $('#game-grid').html(gridHTML);
+        }
+
+        function placeEntity(entity, x, y) {
+            $(`.row:nth-child(${y+1}) .cell:nth-child(${x+1})`).html(entity.emoji).addClass(entity == player1 ? 'player1' : 'player2');
+        }
+
+        function moveMeteor() {
+            meteors.forEach((meteor, index) => {
+                if (meteor.y < gridSize - 1) {
+                    $(`.row:nth-child(${meteor.y+1}) .cell:nth-child(${meteor.x+1})`).html('');
+                    meteor.y++;
+                    $(`.row:nth-child(${meteor.y+1}) .cell:nth-child(${meteor.x+1})`).html('☄️').addClass('meteor');
+                } else {
+                    $(`.row:nth-child(${meteor.y+1}) .cell:nth-child(${meteor.x+1})`).html('').removeClass('meteor');
+                    meteors.splice(index, 1);
+                }
+            });
+        }
+
+        function dropMeteor() {
+            let x = Math.floor(Math.random() * gridSize);
+            meteors.push({ x: x, y: 0 });
+        }
+
+        function checkCollision() {
+            meteors.forEach(meteor => {
+                if ((meteor.x === player1.x && meteor.y === player1.y) ||
+                    (meteor.x === player2.x && meteor.y === player2.y)) {
+                    gameOver();
+                }
+            });
+        }
+
+        function gameOver() {
+            clearInterval(gameInterval);
+            let endTime = new Date();
+            let timeDiff = endTime - startTime; // in ms
+            timeDiff /= 1000; // seconds
+            $('#game-info').html(`Game Over! Player ${player1.x === player2.x ? '1 & 2' : (player1.x < player2.x ? '2' : '1')} Wins!<br>Survival Time: ${Math.round(timeDiff)} seconds`);
+        }
+
+        function startGame() {
+            initGrid();
+            placeEntity(player1, player1.x, player1.y);
+            placeEntity(player2, player2.x, player2.y);
+            startTime = new Date();
+            gameInterval = setInterval(() => {
+                moveMeteor();
+                checkCollision();
+                if (Math.random() < 0.05) dropMeteor(); // Random meteor drop
+                // Increase difficulty
+                if (gameSpeed > 300 && (new Date() - startTime) % 30000 === 0) {
+                    gameSpeed -= 50;
+                    level++;
+                    clearInterval(gameInterval);
+                    gameInterval = setInterval(arguments.callee, gameSpeed);
+                }
+            }, gameSpeed);
+        }
+
+        $(document).keydown(function(e) {
+            let newX1 = player1.x, newX2 = player2.x;
+            switch(e.key) {
+                case 'a': if (player1.x > 0 && player1.x - 1 !== player2.x) newX1--; break;
+                case 'd': if (player1.x < gridSize - 1 && player1.x + 1 !== player2.x) newX1++; break;
+                case 'j': if (player2.x > 0 && player2.x - 1 !== player1.x) newX2--; break;
+                case 'l': if (player2.x < gridSize - 1 && player2.x + 1 !== player1.x) newX2++; break;
+            }
+            if (newX1 !== player1.x || newX2 !== player2.x) {
+                $('.player1, .player2').html('').removeClass('player1 player2');
+                player1.x = newX1; player2.x = newX2;
+                placeEntity(player1, newX1, player1.y);
+                placeEntity(player2, newX2, player2.y);
+            }
+        });
+
+        startGame();
+    });
+</script>
+
+</body>
+</html>

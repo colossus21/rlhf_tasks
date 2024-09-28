@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Steam Sales Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #1a1a1a; color: #e1e1e1; }
+        .card { background-color: #2c2c2c; }
+        .card-title { color: cyan; }
+        .on-sale { color: #4CAF50; }
+        .rating-good { color: #4CAF50; }
+        .rating-medium { color: #FFC107; }
+        .rating-bad { color: #F44336; }
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+    <h1 class="text-center" style="color: cyan;">Steam Sales Tracker</h1>
+    <div class="mb-3">
+        <label>Price Range: $<span id="priceRangeValue">0 - 15</span></label>
+        <input type="range" class="form-range" min="0" max="30" step="1" id="priceRange" value="15">
+        <label>Steam Rating: <span id="ratingValue">100</span>%</label>
+        <input type="range" class="form-range" min="0" max="100" id="steamRating" value="100">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="" id="aaaCheck" checked>
+            <label class="form-check-label">AAA Games</label>
+        </div>
+    </div>
+    <div id="gameContainer" class="row"></div>
+</div>
+
+<script>
+    const gameContainer = document.getElementById('gameContainer');
+    const priceRange = document.getElementById('priceRange');
+    const steamRating = document.getElementById('steamRating');
+    const aaaCheck = document.getElementById('aaaCheck');
+
+    function fetchGames() {
+        const upperPrice = priceRange.value;
+        const lowerPrice = 0; // assuming we start from 0
+        const rating = steamRating.value;
+        const aaa = aaaCheck.checked ? 1 : 0;
+        const url = `https://www.cheapshark.com/api/1.0/deals?upperPrice=${upperPrice}&lowerPrice=${lowerPrice}&aaa=${aaa}&steamRating=${rating}`;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                gameContainer.innerHTML = '';
+                data.forEach(game => {
+                    const card = `
+                        <div class="col-md-4 mb-4">
+                            <div class="card">
+                                <img src="${game.thumb}" class="card-img-top" alt="${game.title}">
+                                <div class="card-body">
+                                    <h5 class="card-title">${game.title}</h5>
+                                    <p class="card-text ${game.steamRatingPercent >= 75 ? 'rating-good' : game.steamRatingPercent >= 50 ? 'rating-medium' : 'rating-bad'}">
+                                        ${game.steamRatingText} (${game.steamRatingPercent}%)
+                                    </p>
+                                    <p><s>$${game.normalPrice}</s> <strong>$${game.salePrice}</strong> <span class="on-sale">You Save ${((1 - game.salePrice/game.normalPrice) * 100).toFixed(2)}%</span></p>
+                                    ${game.isOnSale == '1' ? '<span class="on-sale">On Sale!</span>' : ''}
+                                    ${game.steamAppID ? `<a href="https://store.steampowered.com/app/${game.steamAppID}/" class="btn btn-primary">Go to Store</a>` : ''}
+                                </div>
+                            </div>
+                        </div>`;
+                    gameContainer.innerHTML += card;
+                });
+            });
+    }
+
+    // Initial fetch
+    fetchGames();
+
+    // Event listeners for dynamic updates
+    priceRange.addEventListener('input', function() {
+        document.getElementById('priceRangeValue').textContent = `0 - ${this.value}`;
+        fetchGames();
+    });
+
+    steamRating.addEventListener('input', function() {
+        document.getElementById('ratingValue').textContent = this.value;
+        fetchGames();
+    });
+
+    aaaCheck.addEventListener('change', fetchGames);
+</script>
+</body>
+</html>

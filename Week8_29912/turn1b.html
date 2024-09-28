@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steam Sales Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #1a1a1a; color: #e1e1e1; }
+        .card { background-color: #2a2a2a; border: 1px solid #0ff; margin: 10px; }
+        .card-title { color: cyan; }
+        .btn-steam { background-color: #1b2838; color: white; border: none; }
+        .btn-steam:hover { background-color: #2a475e; }
+        .on-sale { color: #50fa7b; }
+        .slider-label { color: cyan; }
+        .slider-container { margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<div class="container mt-4">
+    <h1 class="text-center" style="color: cyan;">Steam Sales Tracker</h1>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="slider-container">
+                <label for="priceRange" class="slider-label">Price Range: $<span id="priceValue">14 - 15</span></label>
+                <input type="range" class="form-range" min="0" max="50" step="1" value="14" id="lowerPrice" oninput="updatePriceRange()">
+                <input type="range" class="form-range" min="0" max="50" step="1" value="15" id="upperPrice" oninput="updatePriceRange()">
+            </div>
+            <div class="slider-container">
+                <label for="steamRating" class="slider-label">Steam Rating: <span id="ratingValue">100</span>%</label>
+                <input type="range" class="form-range" min="0" max="100" value="100" id="steamRating" oninput="updateRatingValue()">
+            </div>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="aaaCheck" checked>
+                <label class="form-check-label slider-label" for="aaaCheck">AAA Games</label>
+            </div>
+            <button class="btn btn-info" onclick="loadGames()">Update Games</button>
+        </div>
+        <div class="col-md-8">
+            <div id="gamesContainer" class="row"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const gamesContainer = document.getElementById('gamesContainer');
+    let lowerPrice = 14, upperPrice = 15, steamRating = 100, aaa = 1;
+
+    function updatePriceRange() {
+        lowerPrice = document.getElementById('lowerPrice').value;
+        upperPrice = document.getElementById('upperPrice').value;
+        document.getElementById('priceValue').textContent = `${lowerPrice} - ${upperPrice}`;
+        loadGames();
+    }
+
+    function updateRatingValue() {
+        steamRating = document.getElementById('steamRating').value;
+        document.getElementById('ratingValue').textContent = steamRating;
+        loadGames();
+    }
+
+    document.getElementById('aaaCheck').addEventListener('change', function() {
+        aaa = this.checked ? 1 : 0;
+        loadGames();
+    });
+
+    function loadGames() {
+        const url = `https://www.cheapshark.com/api/1.0/deals?upperPrice=${upperPrice}&lowerPrice=${lowerPrice}&aaa=${aaa}&steamRating=${steamRating}`;
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                gamesContainer.innerHTML = '';
+                data.forEach(game => {
+                    const card = `
+                    <div class="col-sm-6">
+                        <div class="card">
+                            <img src="${game.thumb}" class="card-img-top" alt="${game.title}">
+                            <div class="card-body">
+                                <h5 class="card-title ${game.isOnSale === '1' ? 'on-sale' : ''}">${game.title}</h5>
+                                <p class="card-text">
+                                    ${game.steamRatingText} (${game.steamRatingPercent}%)<br>
+                                    <s>$${game.normalPrice}</s> <strong>$${game.salePrice}</strong><br>
+                                    You Save: ${((1 - game.salePrice / game.normalPrice) * 100).toFixed(2)}%
+                                </p>
+                                ${game.steamAppID ? `<a href="https://store.steampowered.com/app/${game.steamAppID}/" class="btn btn-steam">Go to Store</a>` : ''}
+                            </div>
+                        </div>
+                    </div>`;
+                    gamesContainer.innerHTML += card;
+                });
+            });
+    }
+
+    loadGames();
+</script>
+</body>
+</html>

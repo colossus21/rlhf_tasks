@@ -1,0 +1,30 @@
+I want to create a personal Steam Sales Tracker:
+
+i) Make a get request to: https://www.cheapshark.com/api/1.0/deals?upperPrice=15&lowerPrice=14&aaa=1&steamRating=100. You'll get a response like this:
+[
+  {
+    "internalName": "SLIMESAN",
+    "title": "Slime-San",
+    "metacriticLink": "/game/slime-san/",
+    "dealID": "b1TwQ9PE%2Fl7v1Tvvp7VvDI0aHUyxlmpdpzgFTC2qTDE%3D",
+    "storeID": "15",
+    "gameID": "167954",
+    "salePrice": "1.49",
+    "normalPrice": "14.99",
+    "isOnSale": "1",
+    "savings": "90.060040",
+    "metacriticScore": "78",
+    "steamRatingText": "Positive",
+    "steamRatingPercent": "100",
+    "steamRatingCount": "21",
+    "steamAppID": null,
+    "releaseDate": 1491523200,
+    "lastChange": 1726475345,
+    "dealRating": "6.9",
+    "thumb": "https://sttc.gamersgate.com/images/product/slime-san/cover-180-00b42c.jpg"
+  }
+  ii) The widget should show: a) Range slider for Price Range - will modify url's upperPrice and lowerPrice, b) checkbox for AAA games - in url aaa will be 1 for AAA games else 0, c) steamRating should be a slider 0-100 would modify urls steamRating
+  iii) Widget should show Cards of games - each having Title (title), Image (thumb), Steam Rating Text (steamRatingText), Steam Rating Percent (steamRatingPercent), Normal Price (normalPrice), Sale Price (salePrice), also show You Save in percentage (salePrice/normalPrice * 100)
+  iv) Make necessary change based on the data - i.e. if isOnSale is 1 - show a On Sale tag, color changes from Red, Yellow to Green on Steam Rating Percent and Steam Rating Text based on percentage
+  v) Add a Go to Store button - link: https://store.steampowered.com/app/<steamAppID>/ - if it's null - don't show this button
+  vi) Use a dark theme, can have cyan title and good layout for the games. Contain the image thumbnails as well.

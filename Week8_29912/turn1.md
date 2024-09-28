@@ -1,0 +1,403 @@
+### Code Plan:
+
+1. UI Components:
+   1. Header with title "Steam Sales Tracker"
+   2. Control panel
+       - Price range sliders (min and max)
+       - AAA games checkbox
+       - Steam rating slider
+       - Update button
+   3. Loading indicator
+   4. Deals container (grid of game cards)
+   5. Game card component
+
+2. Gameplay/Functionality:
+   1. Initialize default values
+   2. Fetch initial deals on page load
+   3. Update deals when control values change
+   4. Display loading indicator during fetch
+   5. Render game cards or no items message
+   6. Apply color coding to Steam ratings
+   7. Show/hide "Go to Store" button based on steamAppID
+   8. Calculate and display savings percentage
+
+### Code:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steam Sales Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #81e6d9;
+            margin-bottom: 30px;
+        }
+        .controls {
+            background-color: #2d3748;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        .controls-flex {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+        }
+        .control-col {
+            flex: 1;
+            min-width: 200px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #a0aec0;
+        }
+        input[type="range"] {
+            width: 100%;
+            background-color: #4a5568;
+        }
+        .update-btn {
+            background-color: #4299e1;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        .update-btn:hover {
+            background-color: #3182ce;
+        }
+        .deals-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .deal-card {
+            background-color: #2d3748;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .deal-card:hover {
+            transform: translateY(-5px);
+        }
+        .deal-image-container {
+            height: 150px;
+            overflow: hidden;
+        }
+        .deal-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .deal-info {
+            padding: 15px;
+            position: relative;
+        }
+        .deal-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #e2e8f0;
+        }
+        .deal-price {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        .original-price {
+            text-decoration: line-through;
+            color: #a0aec0;
+        }
+        .sale-price {
+            font-weight: bold;
+            color: #68d391;
+            font-size: 1.2em;
+        }
+        .deal-rating {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .on-sale-badge {
+            background-color: #f56565;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            display: inline-block;
+        }
+        .savings {
+            font-weight: bold;
+            color: #63b3ed;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        .store-btn {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background-color: #4299e1;
+            color: white;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            font-size: 14px;
+        }
+        .store-btn:hover {
+            background-color: #3182ce;
+        }
+        .price-range-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .price-slider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .price-slider input {
+            flex-grow: 1;
+        }
+        .price-slider span {
+            min-width: 40px;
+            text-align: right;
+        }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+        .loader-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+        .loader {
+            border: 5px solid #4a5568;
+            border-top: 5px solid #4299e1;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .no-items {
+            text-align: center;
+            padding: 20px;
+            background-color: #2d3748;
+            border-radius: 10px;
+            color: #a0aec0;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Steam Sales Tracker</h1>
+    <div class="controls">
+        <div class="controls-flex">
+            <div class="control-col">
+                <div class="control-group price-range-container">
+                    <label>Price Range:</label>
+                    <div class="price-slider">
+                        <span>Min: $</span>
+                        <input type="range" id="minPriceRange" min="0" max="100" step="1" value="0">
+                        <span id="minPriceValue">0</span>
+                    </div>
+                    <div class="price-slider">
+                        <span>Max: $</span>
+                        <input type="range" id="maxPriceRange" min="0" max="100" step="1" value="15">
+                        <span id="maxPriceValue">15</span>
+                    </div>
+                </div>
+            </div>
+            <div class="control-col">
+                <div class="control-group">
+                    <label for="steamRating">Minimum Steam Rating: <span id="steamRatingValue">0</span>%</label>
+                    <input type="range" id="steamRating" min="0" max="100" step="1" value="0">
+                </div>
+            </div>
+            <div class="control-col">
+                <div class="control-group checkbox-container">
+                    <label for="aaaGames">
+                        <input type="checkbox" id="aaaGames"> AAA Games Only
+                    </label>
+                </div>
+            </div>
+        </div>
+        <button id="updateBtn" class="update-btn">Update Deals</button>
+    </div>
+    <div id="loaderContainer" class="loader-container" style="display: none;">
+        <div class="loader"></div>
+    </div>
+    <div id="dealsContainer" class="deals-container"></div>
+</div>
+
+<script>
+    const minPriceRangeInput = document.getElementById('minPriceRange');
+    const maxPriceRangeInput = document.getElementById('maxPriceRange');
+    const minPriceValue = document.getElementById('minPriceValue');
+    const maxPriceValue = document.getElementById('maxPriceValue');
+    const aaaGamesCheckbox = document.getElementById('aaaGames');
+    const steamRatingInput = document.getElementById('steamRating');
+    const steamRatingValue = document.getElementById('steamRatingValue');
+    const dealsContainer = document.getElementById('dealsContainer');
+    const updateBtn = document.getElementById('updateBtn');
+    const loaderContainer = document.getElementById('loaderContainer');
+
+    function updatePriceRange() {
+        const minValue = parseInt(minPriceRangeInput.value);
+        const maxValue = parseInt(maxPriceRangeInput.value);
+
+        if (minValue > maxValue) {
+            maxPriceRangeInput.value = minValue;
+        }
+
+        minPriceValue.textContent = minPriceRangeInput.value;
+        maxPriceValue.textContent = maxPriceRangeInput.value;
+    }
+
+    function updateSteamRating() {
+        steamRatingValue.textContent = steamRatingInput.value;
+    }
+
+    function fetchDeals() {
+        const lowerPrice = minPriceRangeInput.value;
+        const upperPrice = maxPriceRangeInput.value;
+        const aaa = aaaGamesCheckbox.checked ? 1 : 0;
+        const steamRating = steamRatingInput.value;
+
+        const url = `https://www.cheapshark.com/api/1.0/deals?upperPrice=${upperPrice}&lowerPrice=${lowerPrice}&aaa=${aaa}&steamRating=${steamRating}`;
+
+        loaderContainer.style.display = 'flex';
+        dealsContainer.innerHTML = '';
+
+        fetch(url)
+                .then(response => response.json())
+                .then(deals => {
+                    displayDeals(deals);
+                })
+                .catch(error => {
+                    console.error('Error fetching deals:', error);
+                    displayNoItems('An error occurred while fetching deals. Please try again.');
+                })
+                .finally(() => {
+                    loaderContainer.style.display = 'none';
+                });
+    }
+
+    function displayDeals(deals) {
+        dealsContainer.innerHTML = '';
+        if (deals.length === 0) {
+            displayNoItems('No deals found matching your criteria.');
+            return;
+        }
+        deals.forEach(deal => {
+            const dealCard = document.createElement('div');
+            dealCard.className = 'deal-card';
+
+            const savings = ((1 - parseFloat(deal.salePrice) / parseFloat(deal.normalPrice)) * 100).toFixed(2);
+            const ratingColor = getRatingColor(parseFloat(deal.steamRatingPercent));
+
+            const storeButton = deal.steamAppID
+                    ? `<a href="https://store.steampowered.com/app/${deal.steamAppID}/" target="_blank" class="store-btn">Go to Store</a>`
+                    : '';
+
+            dealCard.innerHTML = `
+                    <div class="deal-image-container">
+                        <img src="${deal.thumb}" alt="${deal.title}" class="deal-image">
+                    </div>
+                    <div class="deal-info">
+                        <div class="deal-title">${deal.title}</div>
+                        <div class="deal-rating">
+                            <span style="color: ${ratingColor}">${deal.steamRatingTex || "None"}</span>
+                            <span style="color: ${ratingColor}">${deal.steamRatingPercent}%</span>
+                        </div>
+                        <div class="deal-price">
+                            <span class="original-price">$${deal.normalPrice}</span>
+                            <span class="sale-price">$${deal.salePrice}</span>
+                        </div>
+                        <div class="savings">You Save: ${savings}%</div>
+                        ${deal.isOnSale === "1" ? '<span class="on-sale-badge">On Sale</span>' : ''}
+                        ${storeButton}
+                    </div>
+                `;
+
+            dealsContainer.appendChild(dealCard);
+        });
+    }
+
+    function displayNoItems(message) {
+        dealsContainer.innerHTML = `<div class="no-items">${message}</div>`;
+    }
+
+    function getRatingColor(percent) {
+        if (percent >= 70) return '#68d391';
+        if (percent >= 40) return '#faf089';
+        return '#fc8181';
+    }
+
+    minPriceRangeInput.addEventListener('input', updatePriceRange);
+    maxPriceRangeInput.addEventListener('input', updatePriceRange);
+    steamRatingInput.addEventListener('input', updateSteamRating);
+    updateBtn.addEventListener('click', fetchDeals);
+
+    updatePriceRange();
+    updateSteamRating();
+    fetchDeals();
+</script>
+</body>
+</html>
+```
+
+###  Explanation:
+
+- The HTML structure provides the basic layout for the tracker, including the control panel and deals container.
+- CSS styles implement a dark theme with cyan accents:
+  - Applies a dark blue-gray background (#1a1c2c)
+  - Uses cyan (#5468ff) for the title and accent elements
+  - Implements responsive grid layout for game cards
+
+- JavaScript handles the core functionality:
+  - Fetches deals from the CheapShark API using the provided URL
+  - Updates URL parameters based on user input (price range, AAA games, Steam rating)
+  - Calculates savings percentage
+  - Applies color coding to Steam ratings (red, yellow, green)
+  - Shows "On Sale" tag when applicable
+  - Displays "Go to Store" button only when steamAppID is available
+
+This implementation provides a functional Steam Sales Tracker with a dark theme and user-friendly controls.
