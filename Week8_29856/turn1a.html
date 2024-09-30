@@ -14,110 +14,98 @@
             margin: 0;
             font-family: 'Arial', sans-serif;
         }
-        #starfield {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-        }
-        .board {
+        #gameBoard {
             display: grid;
             grid-template-columns: repeat(6, 50px);
-            grid-gap: 2px;
-            background: #001f3f;
-            border: 2px solid #00ff00;
-            box-shadow: 0 0 20px #00ff00, 0 0 10px #00ff00 inset;
+            grid-template-rows: repeat(6, 50px);
+            gap: 2px;
+            background: url('data:image/svg+xml;base64,...'); /* Placeholder for starfield SVG or use canvas */
+            border: 2px solid #0ff;
+            box-shadow: 0 0 20px #0ff, 0 0 30px #0ff;
         }
-        .cell {
-            width: 50px;
-            height: 50px;
+        .square {
             background: #000;
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             font-size: 2em;
             cursor: pointer;
         }
-        .cell:hover {
+        .square:nth-child(-2n+6),
+        .square:nth-child(12) ~ div:nth-child(-2n+17),
+        .square:nth-child(18) ~ div:nth-child(-2n+24),
+        .square:nth-child(24) ~ div:nth-child(-2n+29),
+        .square:nth-child(30) ~ div:nth-child(-2n+36),
+        .square:nth-child(36) ~ div:nth-child(-2n+41) {
             background: #111;
-        }
-        .player-indicator {
-            color: #fff;
-            text-align: center;
-            margin-bottom: 20px;
-            text-shadow: 0 0 10px #fff;
         }
         .piece {
             transition: all 0.3s;
+            text-shadow: 0 0 10px #fff;
         }
-        .highlight {
-            background: rgba(0, 255, 0, 0.3);
+        .piece:hover {
+            transform: scale(1.1);
+        }
+        .playerIndicator {
+            position: absolute;
+            top: 10px;
+            color: #fff;
+            text-shadow: 0 0 10px #fff;
+        }
+        @keyframes starTwinkle {
+            0% { opacity: 0.2; }
+            50% { opacity: 1; }
+            100% { opacity: 0.2; }
+        }
+        .star {
+            animation: starTwinkle 2s infinite;
         }
     </style>
 </head>
 <body>
-<div id="starfield"></div>
-<div class="player-indicator" id="playerTurn">Player 1's Turn</div>
-<div class="board" id="gameBoard"></div>
+<div id="playerIndicator" class="playerIndicator">UFO's Turn</div>
+<div id="gameBoard"></div>
 
 <script>
-    // Starfield background animation
-    function createStar() {
-        const star = document.createElement('div');
-        star.style.position = 'absolute';
-        star.style.width = '1px';
-        star.style.height = '1px';
-        star.style.background = 'white';
-        star.style.left = `${Math.random() * 100}%`;
-        star.style.top = `${Math.random() * 100}%`;
-        star.style.animation = `twinkle ${Math.random() * 5 + 1}s infinite`;
-        document.getElementById('starfield').appendChild(star);
-    }
-    for (let i = 0; i < 200; i++) createStar();
-
-    // Game logic
     const board = document.getElementById('gameBoard');
-    const pieces = ['🚀', '🛸'];
-    let currentPlayer = 0;
-    let gameState = Array(6).fill().map(() => Array(6).fill(null));
-    const playerIndicator = document.getElementById('playerTurn');
+    const playerIndicator = document.getElementById('playerIndicator');
+    let currentPlayer = '👽'; // UFO
+    let gameState = Array(36).fill(null);
 
-    // Initialize board
-    function setupBoard() {
-        for(let i = 0; i < 6; i++) {
-            for(let j = 0; j < 6; j++) {
-                if((i + j) % 2 !== 0) {
-                    let cell = document.createElement('div');
-                    cell.className = 'cell';
-                    cell.onclick = () => selectPiece(j, i);
-                    board.appendChild(cell);
-                    if(i < 2) cell.innerHTML = pieces[0];
-                    if(i > 3) cell.innerHTML = pieces[1];
-                    gameState[i][j] = i < 2 ? 0 : (i > 3 ? 1 : null);
-                }
+    // Initialize board with pieces
+    const setupBoard = () => {
+        for(let i = 0; i < 36; i++) {
+            let square = document.createElement('div');
+            square.className = 'square';
+            if((i < 12 || i >= 24) && (i % 2 !== 0)) {
+                square.innerHTML = i < 12 ? '🚀' : '👽';
+                gameState[i] = i < 12 ? '🚀' : '👽';
             }
+            square.onclick = () => handleClick(i, square);
+            board.appendChild(square);
         }
-    }
+    };
 
-    function selectPiece(x, y) {
-        // Basic game logic - this would need to be expanded for full checkers rules
-        if(gameState[y][x] === currentPlayer) {
-            // Highlight possible moves (simplified)
-            document.querySelectorAll('.cell').forEach(c => c.classList.remove('highlight'));
-            document.querySelector(`[data-x="${x}"][data-y="${y+1}"]`)?.classList.add('highlight');
+    const handleClick = (index, square) => {
+        // Logic for moving, capturing, and turn management goes here
+        // This is a placeholder for actual game logic
+        if (gameState[index]) {
+            // Highlight possible moves
+        } else if (currentPlayer === gameState[index - 5] || gameState[index - 7]) {
+            // Move or jump logic
+            gameState[index] = currentPlayer;
+            square.innerHTML = currentPlayer;
+            switchPlayer();
         }
-    }
+    };
 
-    function switchPlayer() {
-        currentPlayer = 1 - currentPlayer;
-        playerIndicator.textContent = `Player ${currentPlayer + 1}'s Turn`;
-    }
+    const switchPlayer = () => {
+        currentPlayer = currentPlayer === '👽' ? '🚀' : '👽';
+        playerIndicator.textContent = `${currentPlayer === '👽' ? "UFO's" : "Rocket's"} Turn`;
+    };
 
+    // Start the game
     setupBoard();
-    // Simple player switching for demonstration
-    document.addEventListener('click', switchPlayer);
 </script>
 </body>
 </html>

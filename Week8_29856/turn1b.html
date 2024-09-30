@@ -5,7 +5,7 @@
     <title>Space Checkers</title>
     <style>
         body {
-            background: #000;
+            background: black;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -13,128 +13,162 @@
             margin: 0;
             overflow: hidden;
         }
-
-        #gameBoard {
-            width: 360px;
-            height: 360px;
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            grid-template-rows: repeat(6, 1fr);
-            background: #0e1a40;
-            box-shadow: 0 0 20px #0ff, 0 0 30px #0ff, inset 0 0 10px #0ff;
-            border-radius: 10px;
-            position: relative;
-        }
-
-        .square {
-            width: 60px;
-            height: 60px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 2em;
-            cursor: pointer;
-            transition: transform 0.1s;
-        }
-
-        .square:hover {
-            transform: scale(1.1);
-        }
-
-        .dark {
-            background: #1a2a5a;
-        }
-
-        .light {
-            background: #2a3a6a;
-        }
-
-        .piece {
-            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #0ff, 0 0 20px #0ff;
-        }
-
-        #playerTurn {
-            color: white;
-            font-family: 'Arial', sans-serif;
-            position: absolute;
-            top: -50px;
-            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #0ff;
-        }
-
-        /* Starfield Animation */
-        @keyframes starMove {
-            from {transform: translateY(0);}
-            to {transform: translateY(-100vh);}
-        }
-
         .star {
             position: absolute;
             width: 2px;
             height: 2px;
             background: white;
-            border-radius: 50%;
-            animation: starMove 10s linear infinite;
-            box-shadow: 0 0 5px #fff;
+            animation: twinkle 5s infinite;
         }
-
+        @keyframes twinkle {
+            0% {opacity: 0.1;}
+            50% {opacity: 1;}
+            100% {opacity: 0.1;}
+        }
+        #gameBoard {
+            display: grid;
+            grid-template-columns: repeat(6, 50px);
+            grid-template-rows: repeat(6, 50px);
+            background: #000033;
+            border: 2px solid #00ff00;
+            box-shadow: 0 0 20px #00ff00, 0 0 5px #00ff00 inset;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+        }
+        .cell:nth-child(even):nth-child(-n+6),
+        .cell:nth-child(odd):nth-child(n+7):nth-child(-n+12),
+        .cell:nth-child(even):nth-child(n+13):nth-child(-n+18),
+        .cell:nth-child(odd):nth-child(n+19):nth-child(-n+24),
+        .cell:nth-child(even):nth-child(n+25):nth-child(-n+30),
+        .cell:nth-child(odd):nth-child(n+31):nth-child(-n+36) {
+            background: #1a1a1a;
+        }
+        .playerTurn {
+            color: white;
+            text-align: center;
+            margin-top: 20px;
+            text-shadow: 0 0 10px #fff;
+        }
+        .highlight {
+            background: rgba(0, 255, 0, 0.3) !important;
+        }
     </style>
 </head>
 <body>
 
-<div id="gameContainer">
-    <div id="playerTurn">UFO's Turn</div>
-    <div id="gameBoard"></div>
-</div>
+<div id="gameBoard"></div>
+<div class="playerTurn" id="playerTurn">UFO's Turn</div>
 
 <script>
-    // Starfield generation
-    for(let i = 0; i < 100; i++) {
-        let star = document.createElement('div');
-        star.className = 'star';
-        star.style.left = `${Math.random() * 100}vw`;
-        star.style.top = `${Math.random() * 100}vh`;
-        star.style.animationDelay = `${Math.random() * -10}s`;
-        document.body.appendChild(star);
-    }
-
     const board = document.getElementById('gameBoard');
     const playerTurn = document.getElementById('playerTurn');
-    let currentPlayer = 'UFO';
+    const pieces = {
+        ufo: '👽',
+        rocket: '🚀',
+        ufoKing: '👑👽',
+        rocketKing: '👑🚀'
+    };
+    let gameState = {
+        board: Array(6).fill().map(() => Array(6).fill(null)),
+        currentPlayer: 'ufo',
+        selectedPiece: null
+    };
 
-    // Setup the board
-    function setupBoard() {
-        for(let i = 0; i < 6; i++) {
-            for(let j = 0; j < 6; j++) {
-                let square = document.createElement('div');
-                square.className = `square ${(i+j)%2 ? 'dark' : 'light'}`;
-                square.dataset.row = i;
-                square.dataset.col = j;
-                if((i < 2 || i > 3) && (i+j)%2 === 0) {
-                    square.innerHTML = i < 2 ? '🚀' : '👽';
-                    square.classList.add('piece');
-                    square.dataset.player = i < 2 ? 'Rocket' : 'UFO';
+    // Initialize board
+    function initBoard() {
+        for(let row = 0; row < 6; row++) {
+            for(let col = 0; col < 6; col++) {
+                if((row + col) % 2 !== 0) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    if(row < 2) {
+                        cell.textContent = pieces.rocket;
+                        gameState.board[row][col] = 'rocket';
+                    } else if(row > 3) {
+                        cell.textContent = pieces.ufo;
+                        gameState.board[row][col] = 'ufo';
+                    }
+                    cell.addEventListener('click', () => handleCellClick(row, col));
+                    board.appendChild(cell);
                 }
-                board.appendChild(square);
             }
         }
     }
 
-    // Game logic would go here - this includes:
-    // - Movement rules for 6x6 checkers
-    // - Turn switching
-    // - Highlighting valid moves
-    // - Capturing logic
-
-    function switchPlayer() {
-        currentPlayer = currentPlayer === 'UFO' ? 'Rocket' : 'UFO';
-        playerTurn.textContent = `${currentPlayer}'s Turn`;
+    function handleCellClick(row, col) {
+        const piece = gameState.board[row][col];
+        if(gameState.selectedPiece) {
+            if(piece === null && isValidMove(row, col)) {
+                movePiece(row, col);
+                checkForKing(row, col);
+                if(!checkForJump(row, col)) {
+                    switchPlayer();
+                }
+            }
+            resetHighlight();
+            gameState.selectedPiece = null;
+        } else if(piece && piece.startsWith(gameState.currentPlayer)) {
+            gameState.selectedPiece = {row, col};
+            highlightMoves(row, col);
+        }
     }
 
-    // Initial setup
-    setupBoard();
-    playerTurn.textContent = `${currentPlayer}'s Turn`;
+    function isValidMove(newRow, newCol) {
+        // Logic for valid move including jumps
+        // ...
+    }
 
-    // Here you would add click event listeners to squares for gameplay
+    function movePiece(newRow, newCol) {
+        const {row, col} = gameState.selectedPiece;
+        gameState.board[newRow][newCol] = gameState.board[row][col];
+        gameState.board[row][col] = null;
+        document.querySelector(`[style*="grid-row: ${row + 1}; grid-column: ${col + 1}"]`).textContent = '';
+        document.querySelector(`[style*="grid-row: ${newRow + 1}; grid-column: ${newCol + 1}"]`).textContent = gameState.board[newRow][newCol];
+    }
+
+    function checkForKing(row, col) {
+        if((gameState.currentPlayer === 'ufo' && row === 0) || (gameState.currentPlayer === 'rocket' && row === 5)) {
+            gameState.board[row][col] += 'King';
+            document.querySelector(`[style*="grid-row: ${row + 1}; grid-column: ${col + 1}"]`).textContent = pieces[gameState.currentPlayer + 'King'];
+        }
+    }
+
+    function switchPlayer() {
+        gameState.currentPlayer = gameState.currentPlayer === 'ufo' ? 'rocket' : 'ufo';
+        playerTurn.textContent = `${gameState.currentPlayer === 'ufo' ? 'UFO' : 'Rocket'}'s Turn`;
+    }
+
+    function highlightMoves(row, col) {
+        // Highlight possible moves for the selected piece
+        // ...
+    }
+
+    function resetHighlight() {
+        document.querySelectorAll('.highlight').forEach(cell => cell.classList.remove('highlight'));
+    }
+
+    function checkForJump(row, col) {
+        // Check if there are any mandatory jumps available
+        // ...
+    }
+
+    // Star field animation
+    for(let i = 0; i < 200; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        star.style.left = `${Math.random() * 100}vw`;
+        star.style.top = `${Math.random() * 100}vh`;
+        star.style.animationDelay = `${Math.random() * 5}s`;
+        document.body.appendChild(star);
+    }
+
+    initBoard();
 </script>
 
 </body>
